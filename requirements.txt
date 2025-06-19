@@ -1,0 +1,11 @@
+pandas
+openpyxl
+pdfplumber
+python-docx
+transformers
+textblob
+vaderSentiment
+scikit-learn
+jinja2
+numpy
+matplotlib

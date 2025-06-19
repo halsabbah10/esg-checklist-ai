@@ -1,0 +1,10 @@
+echo "__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints
+venv/
+.env/
+.vscode/
+*.log
+*.csv
+*.xlsx" > .gitignore
