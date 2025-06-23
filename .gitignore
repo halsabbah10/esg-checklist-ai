@@ -1,10 +1,37 @@
-echo "__pycache__/
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[cod]
 *$py.class
-.ipynb_checkpoints
+
+# Virtual environments
 venv/
+.venv/
+env/
 .env/
+
+# Environment variables
+.env
+backend/.env
+
+# IDE
 .vscode/
+.idea/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Logs
 *.log
+
+# Data files
 *.csv
-*.xlsx" > .gitignore
+*.xlsx
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
