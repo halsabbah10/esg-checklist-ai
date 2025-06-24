@@ -1,6 +1,6 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class User(SQLModel, table=True):
@@ -9,7 +9,7 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True)
     password_hash: str
     role: str  # e.g., "admin", "auditor", "reviewer"
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class Checklist(SQLModel, table=True):
@@ -17,7 +17,7 @@ class Checklist(SQLModel, table=True):
     title: str
     description: Optional[str]
     created_by: int = Field(foreign_key="user.id")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     items: List["ChecklistItem"] = Relationship(back_populates="checklist")
 
 
@@ -34,5 +34,14 @@ class Submission(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     checklist_id: int = Field(foreign_key="checklist.id")
     user_id: int = Field(foreign_key="user.id")
-    submitted_at: datetime = Field(default_factory=datetime.utcnow)
+    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     status: str = "pending"
+
+
+class FileUpload(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    checklist_id: int = Field(foreign_key="checklist.id")
+    user_id: int = Field(foreign_key="user.id")
+    filename: str
+    filepath: str
+    uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

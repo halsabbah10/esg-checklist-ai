@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from .routers import users
+from .routers import users, checklists
 from .database import engine
 from .models import SQLModel
 
@@ -15,6 +15,8 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.include_router(users.router)
+
+app.include_router(checklists.router)
 
 
 @app.get("/health")

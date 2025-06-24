@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from typing import Optional, List
 
 
 class UserCreate(BaseModel):
@@ -23,3 +24,29 @@ class Token(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class ChecklistItemCreate(BaseModel):
+    question_text: str
+    weight: Optional[float] = None
+    category: Optional[str] = None
+
+
+class ChecklistItemRead(BaseModel):
+    id: int
+    question_text: str
+    weight: Optional[float]
+    category: Optional[str]
+
+
+class ChecklistCreate(BaseModel):
+    title: str
+    description: Optional[str] = None
+    items: List[ChecklistItemCreate]
+
+
+class ChecklistRead(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    items: List[ChecklistItemRead] = []
