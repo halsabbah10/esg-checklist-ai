@@ -11,7 +11,9 @@ import pdfplumber
 from docx import Document
 import openpyxl
 import csv
-
+from fastapi.responses import StreamingResponse
+import pandas as pd
+from io import StringIO, BytesIO
 
 router = APIRouter(prefix="/checklists", tags=["checklists"])
 
@@ -151,6 +153,14 @@ def upload_file(
     # AI/NLP scoring using Gemini
     score, feedback = ai_score_text_with_gemini(raw_text)
 
+    # Truncate text if too long for database (TEXT can hold ~65k chars)
+    max_text_length = 65000
+    if len(raw_text) > max_text_length:
+        raw_text = raw_text[:max_text_length] + "...[truncated]"
+
+    if len(feedback) > max_text_length:
+        feedback = feedback[:max_text_length] + "...[truncated]"
+
     # Store AI result in DB
     ai_result = AIResult(
         file_upload_id=file_record.id,  # Now guaranteed to be int
@@ -171,3 +181,58 @@ def upload_file(
         "ai_score": score,
         "ai_feedback": feedback,
     }
+
+
+@router.get("/{checklist_id}/export", tags=["checklists"])
+def export_checklist_results(
+    checklist_id: int,
+    format: str = "csv",
+    db: Session = Depends(get_session),
+    current_user=Depends(require_role("admin")),
+):
+    # Query all uploads & AI results for this checklist
+    results = db.exec(
+        select(FileUpload, AIResult)
+        .where(FileUpload.checklist_id == checklist_id)
+        .where(FileUpload.id == AIResult.file_upload_id)
+    ).all()
+
+    # Prepare data
+    data = []
+    for upload, ai in results:
+        data.append(
+            {
+                "file_id": upload.id,
+                "filename": upload.filename,
+                "user_id": upload.user_id,
+                "ai_score": ai.score,
+                "ai_feedback": ai.feedback,
+                "uploaded_at": upload.uploaded_at,
+            }
+        )
+
+    df = pd.DataFrame(data)
+    if format == "csv":
+        buf = StringIO()
+        df.to_csv(buf, index=False)
+        buf.seek(0)
+        return StreamingResponse(
+            buf,
+            media_type="text/csv",
+            headers={
+                "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.csv"
+            },
+        )
+    elif format == "excel":
+        buf = BytesIO()
+        df.to_excel(buf, index=False)
+        buf.seek(0)
+        return StreamingResponse(
+            buf,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.xlsx"
+            },
+        )
+    else:
+        raise HTTPException(status_code=400, detail="Unsupported format")

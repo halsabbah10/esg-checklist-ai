@@ -1,5 +1,6 @@
 from typing import Optional, List
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Text
 from datetime import datetime, timezone
 
 
@@ -52,7 +53,7 @@ class AIResult(SQLModel, table=True):
     file_upload_id: int = Field(foreign_key="fileupload.id")
     checklist_id: int = Field(foreign_key="checklist.id")
     user_id: int = Field(foreign_key="user.id")
-    raw_text: str
+    raw_text: str = Field(sa_type=Text)
     score: float
-    feedback: str
+    feedback: str = Field(sa_type=Text)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
