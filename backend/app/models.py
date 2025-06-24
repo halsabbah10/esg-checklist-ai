@@ -45,3 +45,14 @@ class FileUpload(SQLModel, table=True):
     filename: str
     filepath: str
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class AIResult(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_upload_id: int = Field(foreign_key="fileupload.id")
+    checklist_id: int = Field(foreign_key="checklist.id")
+    user_id: int = Field(foreign_key="user.id")
+    raw_text: str
+    score: float
+    feedback: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
