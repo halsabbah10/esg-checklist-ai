@@ -82,6 +82,14 @@ def upload_file(
     db: Session = Depends(get_session),
     current_user=Depends(require_role("auditor")),
 ):
+    # Validate checklist exists
+    checklist = db.exec(select(Checklist).where(Checklist.id == checklist_id)).first()
+    if not checklist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Checklist with ID {checklist_id} not found",
+        )
+
     # Validate file has a filename
     if not file.filename:
         raise HTTPException(
