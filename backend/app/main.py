@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from .routers import users, checklists
 from .database import engine
 from .models import SQLModel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 @asynccontextmanager
