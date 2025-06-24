@@ -9,6 +9,7 @@ from .database import get_session
 from .models import User
 from sqlmodel import Session, select
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 # Hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

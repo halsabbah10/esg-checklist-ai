@@ -16,6 +16,7 @@ backend/.env
 # IDE
 .vscode/
 .idea/
+uploads/
 
 # Jupyter Notebook
 .ipynb_checkpoints

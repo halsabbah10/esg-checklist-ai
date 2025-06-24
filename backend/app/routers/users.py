@@ -5,6 +5,7 @@ from ..schemas import UserCreate, UserRead, Token, UserLogin
 from ..database import get_session
 from ..auth import hash_password, verify_password, create_access_token, require_role
 from datetime import timedelta
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -27,9 +28,11 @@ def register(user: UserCreate, db: Session = Depends(get_session)):
 
 
 @router.post("/login", response_model=Token)
-def login(form: UserLogin, db: Session = Depends(get_session)):
-    user = db.exec(select(User).where(User.email == form.email)).first()
-    if not user or not verify_password(form.password, user.password_hash):
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)
+):
+    user = db.exec(select(User).where(User.email == form_data.username)).first()
+    if not user or not verify_password(form_data.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Incorrect email or password.")
     token = create_access_token(
         {"sub": user.email, "role": user.role, "user_id": user.id},
