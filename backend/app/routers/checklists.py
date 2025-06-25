@@ -4,6 +4,7 @@ from ..models import Checklist, ChecklistItem, FileUpload
 from ..schemas import ChecklistCreate, ChecklistRead, ChecklistItemRead
 from ..database import get_session
 import os
+from datetime import datetime
 from ..auth import require_role
 from app.utils.ai import ai_score_text_with_gemini
 from ..models import AIResult
@@ -14,6 +15,7 @@ import csv
 from fastapi.responses import StreamingResponse
 import pandas as pd
 from io import StringIO, BytesIO
+from fpdf import FPDF
 
 router = APIRouter(prefix="/checklists", tags=["checklists"])
 
@@ -212,7 +214,15 @@ def export_checklist_results(
         )
 
     df = pd.DataFrame(data)
+
+    # Ensure exports folder exists
+    os.makedirs("exports", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    export_filename = f"exports/checklist_{checklist_id}_results_{timestamp}.{format}"
+
+    # Export as CSV
     if format == "csv":
+        df.to_csv(export_filename, index=False)
         buf = StringIO()
         df.to_csv(buf, index=False)
         buf.seek(0)
@@ -223,7 +233,10 @@ def export_checklist_results(
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.csv"
             },
         )
+
+    # Export as Excel
     elif format == "excel":
+        df.to_excel(export_filename, index=False)
         buf = BytesIO()
         df.to_excel(buf, index=False)
         buf.seek(0)
@@ -234,5 +247,61 @@ def export_checklist_results(
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.xlsx"
             },
         )
+
+    # Export as Word
+    elif format == "word":
+        doc = Document()
+        doc.add_heading(f"Checklist {checklist_id} Results", 0)
+        table = doc.add_table(rows=1, cols=len(df.columns))
+        hdr_cells = table.rows[0].cells
+        for idx, column in enumerate(df.columns):
+            hdr_cells[idx].text = column
+        for row in df.itertuples(index=False):
+            row_cells = table.add_row().cells
+            for idx, value in enumerate(row):
+                row_cells[idx].text = str(value)
+        doc.save(export_filename)
+        buf = BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return StreamingResponse(
+            buf,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.docx"
+            },
+        )
+
+    # Export as PDF
+    elif format == "pdf":
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=10)
+        pdf.cell(0, 10, f"Checklist {checklist_id} Results", ln=True)
+        # Table header
+        for col in df.columns:
+            pdf.cell(40, 10, col, border=1)
+        pdf.ln()
+        # Table rows
+        for row in df.itertuples(index=False):
+            for value in row:
+                # Only print first 30 chars to keep things neat
+                cell = str(value)[:30] if value is not None else ""
+                pdf.cell(40, 10, cell, border=1)
+            pdf.ln()
+        pdf.output(export_filename)
+        # Serve file
+        with open(export_filename, "rb") as f:
+            pdf_bytes = f.read()
+        buf = BytesIO(pdf_bytes)
+        buf.seek(0)
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.pdf"
+            },
+        )
+
     else:
         raise HTTPException(status_code=400, detail="Unsupported format")
