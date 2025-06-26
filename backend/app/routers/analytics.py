@@ -3,12 +3,31 @@ from sqlalchemy import func
 from sqlmodel import select
 from datetime import datetime, timedelta
 import pandas as pd
+import logging
+from functools import lru_cache
+import hashlib
 
 from app.models import FileUpload, AIResult, Checklist, User
 from app.database import get_session
 from app.auth import require_role
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
+
+
+# Cache for expensive analytics queries (5 minute TTL)
+@lru_cache(maxsize=128)
+def _cached_analytics_query(query_hash: str, query_func, *args):
+    """Internal caching mechanism for analytics queries"""
+    return query_func(*args)
+
+
+def get_cache_key(endpoint: str, **kwargs) -> str:
+    """Generate cache key for analytics queries"""
+    # Include timestamp rounded to 5 minutes for cache invalidation
+    timestamp = int(datetime.utcnow().timestamp() // 300) * 300
+    key_data = f"{endpoint}_{timestamp}_{str(sorted(kwargs.items()))}"
+    return hashlib.md5(key_data.encode()).hexdigest()
 
 
 # 1. Overall stats
@@ -118,12 +137,12 @@ def score_distribution(
 def leaderboard(
     top_n: int = 5, db=Depends(get_session), current_user=Depends(require_role("admin"))
 ):
-    # Using SQLModel select with proper joins
+    # Using SQLModel select with explicit join conditions
     results = db.exec(
         select(User.username, func.avg(AIResult.score))
         .select_from(User)
-        .join(FileUpload)
-        .join(AIResult)
+        .join(FileUpload, FileUpload.user_id == User.id)
+        .join(AIResult, AIResult.file_upload_id == FileUpload.id)
         .group_by(User.username)
         .order_by(func.avg(AIResult.score).desc())
         .limit(top_n)

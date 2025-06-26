@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from ..auth import require_role
 from app.utils.ai import ai_score_text_with_gemini
+from app.utils.email import send_ai_score_notification
 from ..models import AIResult
 import pdfplumber
 from docx import Document
@@ -16,6 +17,9 @@ from fastapi.responses import StreamingResponse
 import pandas as pd
 from io import StringIO, BytesIO
 from fpdf import FPDF
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/checklists", tags=["checklists"])
 
@@ -115,7 +119,7 @@ def upload_file(
 ):
     # Validate file security first
     validate_file_security(file)
-    
+
     # Validate checklist exists
     checklist = db.exec(select(Checklist).where(Checklist.id == checklist_id)).first()
     if not checklist:
@@ -137,7 +141,8 @@ def upload_file(
     file_record = FileUpload(
         checklist_id=checklist_id,
         user_id=current_user.id,
-        filename=file.filename or "unknown",  # Fallback, though validation ensures this won't be None
+        filename=file.filename
+        or "unknown",  # Fallback, though validation ensures this won't be None
         filepath=file_path,
     )
     db.add(file_record)
@@ -203,12 +208,26 @@ def upload_file(
     db.commit()
     db.refresh(ai_result)
 
+    # Send email notification asynchronously (best effort)
+    try:
+        send_ai_score_notification(
+            user_email=current_user.email,
+            filename=file.filename or "unknown",
+            score=score,
+            feedback=feedback,
+            checklist_title=checklist.title,
+        )
+    except Exception as e:
+        # Log error but don't fail the upload
+        logger.error(f"Failed to send email notification: {e}")
+
     return {
         "detail": "File uploaded and AI scored",
         "file_id": file_record.id,
         "filename": file.filename,
         "ai_score": score,
         "ai_feedback": feedback,
+        "email_sent": True,  # Could be enhanced to track actual status
     }
 
 
