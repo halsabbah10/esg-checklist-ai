@@ -78,6 +78,33 @@ def get_checklist_items(
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
+# Security constants
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+ALLOWED_EXTENSIONS = {"pdf", "docx", "xlsx", "csv", "txt"}
+
+
+def validate_file_security(file: UploadFile) -> None:
+    """Validate file security constraints"""
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="File must have a filename"
+        )
+
+    # Check file extension
+    ext = file.filename.lower().split(".")[-1]
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File type .{ext} not allowed. Allowed types: {', '.join(ALLOWED_EXTENSIONS)}",
+        )
+
+    # Check file size (Note: file.size might not be available in all cases)
+    if hasattr(file, "size") and file.size and file.size > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB",
+        )
+
 
 @router.post("/{checklist_id}/upload")
 def upload_file(
@@ -86,6 +113,9 @@ def upload_file(
     db: Session = Depends(get_session),
     current_user=Depends(require_role("auditor")),
 ):
+    # Validate file security first
+    validate_file_security(file)
+    
     # Validate checklist exists
     checklist = db.exec(select(Checklist).where(Checklist.id == checklist_id)).first()
     if not checklist:
@@ -94,11 +124,8 @@ def upload_file(
             detail=f"Checklist with ID {checklist_id} not found",
         )
 
-    # Validate file has a filename
-    if not file.filename:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="File must have a filename"
-        )
+    # Validate file security
+    validate_file_security(file)
 
     # Save file
     filename = f"{current_user.id}_{checklist_id}_{file.filename}"
@@ -106,11 +133,11 @@ def upload_file(
     with open(file_path, "wb") as f:
         f.write(file.file.read())
 
-    # Store record in DB
+    # Store record in DB (filename is guaranteed to exist after validation)
     file_record = FileUpload(
         checklist_id=checklist_id,
         user_id=current_user.id,
-        filename=file.filename,
+        filename=file.filename or "unknown",  # Fallback, though validation ensures this won't be None
         filepath=file_path,
     )
     db.add(file_record)
@@ -125,7 +152,7 @@ def upload_file(
         )
 
     # Extract text based on file extension
-    ext = file.filename.lower().split(".")[-1]
+    ext = (file.filename or "").lower().split(".")[-1]
     raw_text = ""
     try:
         if ext == "pdf":
