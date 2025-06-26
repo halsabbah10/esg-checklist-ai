@@ -101,6 +101,15 @@ class Submission(BaseModel, table=True):
     completion_percentage: float = Field(default=0.0)
 
 
+class Comment(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    file_upload_id: int = Field(foreign_key="fileupload.id")
+    user_id: int = Field(foreign_key="user.id")
+    text: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # file_upload: Optional["FileUpload"] = Relationship(back_populates="comments")
+
+
 class FileUpload(BaseModel, table=True):
     __tablename__ = "fileupload"  # type: ignore
     __table_args__ = (
@@ -125,6 +134,9 @@ class FileUpload(BaseModel, table=True):
     # user: Optional[User] = Relationship(back_populates="file_uploads")
     # checklist: Optional[Checklist] = Relationship(back_populates="file_uploads")
     # ai_results: List["AIResult"] = Relationship(back_populates="file_upload")
+
+    status: str = Field(default="pending")  # "pending", "approved", "rejected"
+    # comments: List["Comment"] = Relationship(back_populates="file_upload")
 
 
 class AIResult(BaseModel, table=True):
