@@ -57,12 +57,12 @@ def dashboard_overall(
 def score_by_checklist(
     db=Depends(get_session), current_user=Depends(require_role("admin"))
 ):
-    # Using SQLModel select with proper joins
+    # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
         select(Checklist.title, func.avg(AIResult.score))
-        .select_from(Checklist)
-        .join(FileUpload)
-        .join(AIResult)
+        .select_from(Checklist, FileUpload, AIResult)
+        .where(Checklist.id == FileUpload.checklist_id)
+        .where(FileUpload.id == AIResult.file_upload_id)
         .group_by(Checklist.title)
     ).all()
 
@@ -75,12 +75,12 @@ def score_by_checklist(
 # 3. Average AI Score Per User
 @router.get("/score-by-user")
 def score_by_user(db=Depends(get_session), current_user=Depends(require_role("admin"))):
-    # Using SQLModel select with proper joins
+    # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
         select(User.username, func.avg(AIResult.score))
-        .select_from(User)
-        .join(FileUpload)
-        .join(AIResult)
+        .select_from(User, FileUpload, AIResult)
+        .where(User.id == FileUpload.user_id)
+        .where(FileUpload.id == AIResult.file_upload_id)
         .group_by(User.username)
     ).all()
 
@@ -137,12 +137,12 @@ def score_distribution(
 def leaderboard(
     top_n: int = 5, db=Depends(get_session), current_user=Depends(require_role("admin"))
 ):
-    # Using SQLModel select with explicit join conditions
+    # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
         select(User.username, func.avg(AIResult.score))
-        .select_from(User)
-        .join(FileUpload, FileUpload.user_id == User.id)
-        .join(AIResult, AIResult.file_upload_id == FileUpload.id)
+        .select_from(User, FileUpload, AIResult)
+        .where(User.id == FileUpload.user_id)
+        .where(FileUpload.id == AIResult.file_upload_id)
         .group_by(User.username)
         .order_by(func.avg(AIResult.score).desc())
         .limit(top_n)
