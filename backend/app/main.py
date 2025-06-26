@@ -4,6 +4,7 @@ from .routers import users, checklists
 from .database import engine
 from .models import SQLModel
 from dotenv import load_dotenv
+from app.routers.analytics import router as analytics_router
 
 load_dotenv()
 
@@ -20,6 +21,8 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(users.router)
 
 app.include_router(checklists.router)
+
+app.include_router(analytics_router)
 
 
 @app.get("/health")

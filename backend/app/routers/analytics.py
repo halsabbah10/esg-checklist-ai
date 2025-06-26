@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy import func, text
+from sqlalchemy import func
 from sqlmodel import select
 from datetime import datetime, timedelta
 import pandas as pd
@@ -38,16 +38,15 @@ def dashboard_overall(
 def score_by_checklist(
     db=Depends(get_session), current_user=Depends(require_role("admin"))
 ):
-    # Using raw SQL for complex joins to avoid type issues
-    query = text("""
-        SELECT c.title, AVG(a.score) as avg_score
-        FROM checklist c
-        JOIN fileupload f ON f.checklist_id = c.id
-        JOIN airesult a ON a.file_upload_id = f.id
-        GROUP BY c.title
-    """)
+    # Using SQLModel select with proper joins
+    results = db.exec(
+        select(Checklist.title, func.avg(AIResult.score))
+        .select_from(Checklist)
+        .join(FileUpload)
+        .join(AIResult)
+        .group_by(Checklist.title)
+    ).all()
 
-    results = db.exec(query).all()
     return [
         {"checklist": row[0], "average_score": round(row[1], 2) if row[1] else None}
         for row in results
@@ -57,15 +56,15 @@ def score_by_checklist(
 # 3. Average AI Score Per User
 @router.get("/score-by-user")
 def score_by_user(db=Depends(get_session), current_user=Depends(require_role("admin"))):
-    query = text("""
-        SELECT u.username, AVG(a.score) as avg_score
-        FROM user u
-        JOIN fileupload f ON f.user_id = u.id
-        JOIN airesult a ON a.file_upload_id = f.id
-        GROUP BY u.username
-    """)
+    # Using SQLModel select with proper joins
+    results = db.exec(
+        select(User.username, func.avg(AIResult.score))
+        .select_from(User)
+        .join(FileUpload)
+        .join(AIResult)
+        .group_by(User.username)
+    ).all()
 
-    results = db.exec(query).all()
     return [
         {"user": row[0], "average_score": round(row[1], 2) if row[1] else None}
         for row in results
@@ -79,15 +78,14 @@ def score_trend(
 ):
     cutoff = datetime.utcnow() - timedelta(days=days)
 
-    query = text("""
-        SELECT DATE(created_at) as date, AVG(score) as avg_score
-        FROM airesult
-        WHERE created_at >= :cutoff
-        GROUP BY DATE(created_at)
-        ORDER BY DATE(created_at)
-    """)
+    # Using SQLModel select for proper parameter binding
+    results = db.exec(
+        select(func.date(AIResult.created_at), func.avg(AIResult.score))
+        .where(AIResult.created_at >= cutoff)
+        .group_by(func.date(AIResult.created_at))
+        .order_by(func.date(AIResult.created_at))
+    ).all()
 
-    results = db.exec(query, {"cutoff": cutoff}).all()
     return [
         {"date": str(row[0]), "average_score": round(row[1], 2) if row[1] else None}
         for row in results
@@ -120,17 +118,17 @@ def score_distribution(
 def leaderboard(
     top_n: int = 5, db=Depends(get_session), current_user=Depends(require_role("admin"))
 ):
-    query = text("""
-        SELECT u.username, AVG(a.score) as avg_score
-        FROM user u
-        JOIN fileupload f ON f.user_id = u.id
-        JOIN airesult a ON a.file_upload_id = f.id
-        GROUP BY u.username
-        ORDER BY avg_score DESC
-        LIMIT :top_n
-    """)
+    # Using SQLModel select with proper joins
+    results = db.exec(
+        select(User.username, func.avg(AIResult.score))
+        .select_from(User)
+        .join(FileUpload)
+        .join(AIResult)
+        .group_by(User.username)
+        .order_by(func.avg(AIResult.score).desc())
+        .limit(top_n)
+    ).all()
 
-    results = db.exec(query, {"top_n": top_n}).all()
     return [
         {"user": row[0], "average_score": round(row[1], 2) if row[1] else None}
         for row in results
