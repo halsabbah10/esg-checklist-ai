@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
-from .routers import users, checklists, reviews
+from .routers import users, checklists, reviews, submissions
 from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
@@ -90,6 +90,7 @@ app.add_middleware(
 app.include_router(users.router)
 app.include_router(checklists.router)
 app.include_router(reviews.router)
+app.include_router(submissions.router)
 app.include_router(analytics_router)
 
 
