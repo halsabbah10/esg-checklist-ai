@@ -234,7 +234,11 @@ class Notification(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     title: str = Field(max_length=255)
     message: str = Field(sa_type=Text)
-    link: Optional[str] = Field(default=None, max_length=500)  # e.g., link to file or submission
+    link: Optional[str] = Field(
+        default=None, max_length=500
+    )  # e.g., link to file or submission
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     read: bool = Field(default=False)
-    type: str = Field(default="info", max_length=20)  # e.g., info, warning, error, success
+    type: str = Field(
+        default="info", max_length=20
+    )  # e.g., info, warning, error, success

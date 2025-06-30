@@ -7,6 +7,7 @@ from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
 from app.routers.analytics import router as analytics_router
+from app.utils.audit import router as audit_router
 import os
 import time
 import logging
@@ -93,6 +94,7 @@ app.include_router(reviews.router)
 app.include_router(submissions.router)
 app.include_router(notifications.router)
 app.include_router(analytics_router)
+app.include_router(audit_router)
 
 
 @app.get("/health")
