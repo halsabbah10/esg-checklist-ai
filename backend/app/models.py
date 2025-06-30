@@ -102,6 +102,8 @@ class Submission(BaseModel, table=True):
 
 
 class Comment(SQLModel, table=True):
+    __tablename__ = "comment"  # type: ignore
+
     id: Optional[int] = Field(default=None, primary_key=True)
     file_upload_id: int = Field(foreign_key="fileupload.id")
     user_id: int = Field(foreign_key="user.id")

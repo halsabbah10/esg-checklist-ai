@@ -48,6 +48,9 @@ def get_session():
     try:
         with Session(engine) as session:
             yield session
+    except HTTPException:
+        # Re-raise FastAPI HTTPExceptions (like authentication errors)
+        raise
     except Exception as e:
         logging.error(f"Database session error: {e}")
         raise HTTPException(status_code=500, detail="Database connection error")

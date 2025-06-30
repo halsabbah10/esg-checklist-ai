@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
-from .routers import users, checklists
+from .routers import users, checklists, reviews
 from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
@@ -66,9 +66,14 @@ app = FastAPI(
 app.middleware("http")(log_requests)
 
 # Security middleware
+allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",")
+# Add testserver for FastAPI TestClient compatibility
+if "testserver" not in allowed_hosts:
+    allowed_hosts.append("testserver")
+
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","),
+    allowed_hosts=allowed_hosts,
 )
 
 # CORS middleware
@@ -84,6 +89,7 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(checklists.router)
+app.include_router(reviews.router)
 app.include_router(analytics_router)
 
 

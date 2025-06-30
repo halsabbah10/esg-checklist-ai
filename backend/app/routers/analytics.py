@@ -33,7 +33,7 @@ def get_cache_key(endpoint: str, **kwargs) -> str:
 # 1. Overall stats
 @router.get("/overall")
 def dashboard_overall(
-    db=Depends(get_session), current_user=Depends(require_role("admin"))
+    current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
     # Count queries
     total_uploads = db.exec(select(func.count()).select_from(FileUpload)).one()
@@ -55,7 +55,7 @@ def dashboard_overall(
 # 2. Average AI Score Per Checklist
 @router.get("/score-by-checklist")
 def score_by_checklist(
-    db=Depends(get_session), current_user=Depends(require_role("admin"))
+    current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
     # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
@@ -74,7 +74,7 @@ def score_by_checklist(
 
 # 3. Average AI Score Per User
 @router.get("/score-by-user")
-def score_by_user(db=Depends(get_session), current_user=Depends(require_role("admin"))):
+def score_by_user(current_user=Depends(require_role("admin")), db=Depends(get_session)):
     # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
         select(User.username, func.avg(AIResult.score))
@@ -93,7 +93,7 @@ def score_by_user(db=Depends(get_session), current_user=Depends(require_role("ad
 # 4. AI Score Trend Over Time (Daily)
 @router.get("/score-trend")
 def score_trend(
-    days: int = 30, db=Depends(get_session), current_user=Depends(require_role("admin"))
+    days: int = 30, current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
     cutoff = datetime.utcnow() - timedelta(days=days)
 
@@ -114,7 +114,7 @@ def score_trend(
 # 5. AI Score Distribution (Histogram)
 @router.get("/score-distribution")
 def score_distribution(
-    db=Depends(get_session), current_user=Depends(require_role("admin"))
+    current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
     # Get all scores
     scores = db.exec(select(AIResult.score)).all()
@@ -135,7 +135,7 @@ def score_distribution(
 # 6. Leaderboard
 @router.get("/leaderboard")
 def leaderboard(
-    top_n: int = 5, db=Depends(get_session), current_user=Depends(require_role("admin"))
+    top_n: int = 5, current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
     # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(

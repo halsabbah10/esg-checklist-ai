@@ -3,15 +3,26 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta
 from typing import Optional
 import os
+import warnings
+import logging
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from .database import get_session
 from .models import User
 from sqlmodel import Session, select
 
+# Suppress BCrypt version warning (known compatibility issue with passlib)
+warnings.filterwarnings("ignore", message=".*bcrypt.*", category=UserWarning)
+warnings.filterwarnings("ignore", message=".*trapped.*", category=UserWarning)
+logging.getLogger("passlib").setLevel(logging.ERROR)
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
-# Hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# Hashing with improved configuration
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=12,  # Explicit rounds configuration
+)
 
 
 def hash_password(password: str) -> str:
