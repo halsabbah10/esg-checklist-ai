@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
-from .routers import users, checklists, reviews, submissions
+from .routers import users, checklists, reviews, submissions, notifications
 from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
@@ -10,7 +10,7 @@ from app.routers.analytics import router as analytics_router
 import os
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Configure logging
 logging.basicConfig(
@@ -91,6 +91,7 @@ app.include_router(users.router)
 app.include_router(checklists.router)
 app.include_router(reviews.router)
 app.include_router(submissions.router)
+app.include_router(notifications.router)
 app.include_router(analytics_router)
 
 
@@ -101,7 +102,7 @@ async def health_check():
 
     health_status = {
         "status": "healthy" if db_healthy else "unhealthy",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "version": "1.0.0",
         "checks": {
             "database": "healthy" if db_healthy else "unhealthy",

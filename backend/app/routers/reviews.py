@@ -3,6 +3,7 @@ from sqlmodel import Session, select
 from app.models import FileUpload, Comment
 from app.database import get_session
 from app.auth import require_role, get_current_user
+from app.utils.notifications import notify_file_status_change, notify_file_commented
 from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
@@ -85,7 +86,7 @@ def add_comment(
     - **Returns**: Created comment with metadata
     """
     # Validate that the file upload exists (will raise 404 if not found)
-    get_file_upload_or_404(db, file_upload_id)
+    upload = get_file_upload_or_404(db, file_upload_id)
 
     comment = Comment(
         file_upload_id=file_upload_id,
@@ -95,6 +96,20 @@ def add_comment(
     db.add(comment)
     db.commit()
     db.refresh(comment)
+
+    # Send notification to file owner (only if they're not the commenter)
+    if upload.user_id != current_user.id:
+        try:
+            commenter_name = getattr(current_user, "username", "Reviewer")
+            notify_file_commented(
+                db=db, file_upload=upload, commenter_name=commenter_name
+            )
+        except Exception as e:
+            # Log error but don't fail the comment creation
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send comment notification: {e}")
 
     return CommentResponse(
         comment_id=comment.id or 0,  # Should never be None after commit/refresh
@@ -121,10 +136,31 @@ def set_status(
     """
     upload = get_file_upload_or_404(db, file_upload_id)
 
-    upload.status = status_request.status.value
+    # Store previous status to check if it changed
+    old_status = upload.status
+    new_status = status_request.status.value
+
+    upload.status = new_status
     db.add(upload)
     db.commit()
     db.refresh(upload)
+
+    # Send notification if status actually changed
+    if old_status != new_status:
+        try:
+            reviewer_name = getattr(current_user, "username", "Admin")
+            notify_file_status_change(
+                db=db,
+                file_upload=upload,
+                new_status=new_status,
+                reviewer_name=reviewer_name,
+            )
+        except Exception as e:
+            # Log error but don't fail the status change
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to send status change notification: {e}")
 
     return StatusResponse(
         status=ReviewStatus(upload.status),

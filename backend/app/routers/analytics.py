@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlmodel import select
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import logging
 from functools import lru_cache
@@ -25,7 +25,7 @@ def _cached_analytics_query(query_hash: str, query_func, *args):
 def get_cache_key(endpoint: str, **kwargs) -> str:
     """Generate cache key for analytics queries"""
     # Include timestamp rounded to 5 minutes for cache invalidation
-    timestamp = int(datetime.utcnow().timestamp() // 300) * 300
+    timestamp = int(datetime.now(timezone.utc).timestamp() // 300) * 300
     key_data = f"{endpoint}_{timestamp}_{str(sorted(kwargs.items()))}"
     return hashlib.md5(key_data.encode()).hexdigest()
 
@@ -95,7 +95,7 @@ def score_by_user(current_user=Depends(require_role("admin")), db=Depends(get_se
 def score_trend(
     days: int = 30, current_user=Depends(require_role("admin")), db=Depends(get_session)
 ):
-    cutoff = datetime.utcnow() - timedelta(days=days)
+    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
     # Using SQLModel select for proper parameter binding
     results = db.exec(

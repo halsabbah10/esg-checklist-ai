@@ -8,6 +8,7 @@ from datetime import datetime
 from ..auth import require_role
 from app.utils.ai import ai_score_text_with_gemini
 from app.utils.email import send_ai_score_notification
+from app.utils.notifications import notify_user
 from ..models import AIResult
 import pdfplumber
 from docx import Document
@@ -220,6 +221,20 @@ def upload_file(
     except Exception as e:
         # Log error but don't fail the upload
         logger.error(f"Failed to send email notification: {e}")
+
+    # Send in-app notification for successful upload
+    try:
+        notify_user(
+            db=db,
+            user_id=current_user.id,
+            title="File Upload Successful ✅",
+            message=f"Your file '{file.filename}' has been uploaded and analyzed. AI Score: {score:.1f}/100",
+            link=f"/uploads/{file_record.id}",
+            notification_type="success",
+        )
+    except Exception as e:
+        # Log error but don't fail the upload
+        logger.error(f"Failed to send upload notification: {e}")
 
     return {
         "detail": "File uploaded and AI scored",

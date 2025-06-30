@@ -219,3 +219,22 @@ class SubmissionAnswer(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     answer_text: str = Field(sa_type=Text)
     submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class Notification(SQLModel, table=True):
+    __tablename__ = "notification"  # type: ignore
+    __table_args__ = (
+        Index("idx_notification_user", "user_id"),
+        Index("idx_notification_created_at", "created_at"),
+        Index("idx_notification_read", "read"),
+        Index("idx_notification_type", "type"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    title: str = Field(max_length=255)
+    message: str = Field(sa_type=Text)
+    link: Optional[str] = Field(default=None, max_length=500)  # e.g., link to file or submission
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    read: bool = Field(default=False)
+    type: str = Field(default="info", max_length=20)  # e.g., info, warning, error, success
