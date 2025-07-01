@@ -31,6 +31,8 @@ huggingface-hub==0.33.0
 
 # --- Email Support ---
 jinja2==3.1.6
+msal==1.30.0
+requests==2.32.0
 
 # --- Async HTTP/Utils ---
 httpx==0.27.0

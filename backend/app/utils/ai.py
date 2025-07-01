@@ -187,3 +187,88 @@ def get_ai_service_status() -> dict:
         "last_failure_time": circuit_breaker.last_failure_time,
         "service_available": circuit_breaker.state != "OPEN",
     }
+
+
+# Enhanced ESG scoring based on real Internal Audit Checklist data
+REAL_ESG_CATEGORIES = {
+    "Environmental": {
+        "subcategories": ["Energy", "Emissions", "Water", "Waste"],
+        "keywords": ["energy", "carbon", "emission", "water", "waste", "renewable", "sustainability"],
+        "weight": 0.33
+    },
+    "Social": {
+        "subcategories": ["Diversity", "Health and Safety", "Learning and Development", "Community Engagement", "Consumer Rights"],
+        "keywords": ["diversity", "health", "safety", "training", "community", "consumer", "rights"],
+        "weight": 0.33
+    },
+    "Governance": {
+        "subcategories": ["Management", "Risk Management", "Reporting", "Ethical AI", "Data Integrity", "Procurement"],
+        "keywords": ["governance", "management", "risk", "reporting", "ethics", "data", "procurement"],
+        "weight": 0.34
+    }
+}
+
+ENHANCED_SYSTEM_PROMPT = """You are an expert ESG auditor trained on real Internal Audit Checklist data. 
+Analyze documents for Environmental, Social, and Governance compliance based on enterprise audit standards.
+Focus on specific evidence, policy implementation, and regulatory compliance indicators."""
+
+def calculate_enhanced_esg_score(document_analysis: dict, ai_response: str) -> dict:
+    """Calculate ESG score using enhanced rubric based on real data."""
+    
+    # Initialize scoring structure
+    scores = {
+        "Environmental": {"score": 0, "evidence": [], "risks": []},
+        "Social": {"score": 0, "evidence": [], "risks": []},
+        "Governance": {"score": 0, "evidence": [], "risks": []}
+    }
+    
+    # Analyze AI response for each category
+    response_lower = ai_response.lower()
+    
+    for category, category_data in REAL_ESG_CATEGORIES.items():
+        category_score = 0
+        evidence_count = 0
+        
+        # Check for category-specific keywords
+        for keyword in category_data["keywords"]:
+            if keyword in response_lower:
+                evidence_count += 1
+        
+        # Check for compliance indicators
+        compliance_indicators = ["compliant", "implemented", "established", "effective", "policy"]
+        non_compliance_indicators = ["non-compliant", "missing", "inadequate", "no policy", "not implemented"]
+        
+        compliance_score = sum(1 for indicator in compliance_indicators if indicator in response_lower)
+        non_compliance_score = sum(1 for indicator in non_compliance_indicators if indicator in response_lower)
+        
+        # Calculate category score (0-100)
+        if evidence_count > 0:
+            base_score = min(evidence_count * 20, 80)  # Max 80 from evidence
+            compliance_bonus = min(compliance_score * 10, 20)  # Max 20 from compliance
+            compliance_penalty = min(non_compliance_score * 15, 30)  # Max 30 penalty
+            
+            category_score = max(0, base_score + compliance_bonus - compliance_penalty)
+        
+        scores[category]["score"] = category_score
+        
+        # Extract evidence (simple implementation)
+        if evidence_count > 0:
+            scores[category]["evidence"] = [f"Found {evidence_count} relevant indicators"]
+        
+        # Assess risks
+        if category_score < 50:
+            scores[category]["risks"] = ["Low compliance score indicates potential risks"]
+    
+    # Calculate overall score
+    overall_score = sum(
+        scores[category]["score"] * REAL_ESG_CATEGORIES[category]["weight"]
+        for category in scores
+    )
+    
+    return {
+        "overall_score": round(overall_score, 2),
+        "category_scores": scores,
+        "risk_level": "High" if overall_score < 50 else "Medium" if overall_score < 75 else "Low",
+        "enhanced_scoring": True,
+        "data_source": "real_esg_audit_checklists"
+    }

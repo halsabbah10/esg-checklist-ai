@@ -1,0 +1,55 @@
+{
+  "version": "2.0_production_ready",
+  "data_source": "real_esg_internal_audit_checklists",
+  "processing": {
+    "supported_file_types": [
+      ".xlsx",
+      ".pdf",
+      ".docx",
+      ".txt"
+    ],
+    "max_file_size_mb": 50,
+    "batch_processing": true,
+    "concurrent_processing_limit": 5
+  },
+  "ai_model": {
+    "primary_model": "gemini-pro",
+    "fallback_model": "gpt-3.5-turbo",
+    "temperature": 0.1,
+    "max_tokens": 4000,
+    "context_window": 32000
+  },
+  "scoring": {
+    "algorithm": "weighted_composite",
+    "weights": {
+      "Environmental": 0.33,
+      "Social": 0.33,
+      "Governance": 0.34
+    },
+    "minimum_pass_score": 70,
+    "high_risk_threshold": 40,
+    "confidence_threshold": 0.8
+  },
+  "real_data_integration": {
+    "total_questions": 94,
+    "categories_covered": 4,
+    "mandatory_questions": 68,
+    "reference_standards": 71
+  },
+  "quality_assurance": {
+    "enable_human_review": true,
+    "auto_flag_low_confidence": true,
+    "require_evidence_citations": true,
+    "enable_audit_trail": true
+  },
+  "reporting": {
+    "generate_detailed_reports": true,
+    "include_recommendations": true,
+    "export_formats": [
+      "pdf",
+      "excel",
+      "json"
+    ],
+    "compliance_dashboard": true
+  }
+}

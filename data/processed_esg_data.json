@@ -1,0 +1,2353 @@
+{
+  "questions": [
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 1,
+      "category": "Environment ",
+      "subcategory": "Energy ",
+      "question": "Is there a policy for reducing energy consumption? ",
+      "reference": "ESG-Environment-01a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Energy ",
+        "Reference": "ESG-Environment-01a: ",
+        "Question": "Is there a policy for reducing energy consumption? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 2,
+      "category": "Environment ",
+      "subcategory": "Energy ",
+      "question": "Does the business unit have its own individual policy or follow the Group's policy?",
+      "reference": "ESG-Environment-01b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Energy ",
+        "Reference": "ESG-Environment-01b: ",
+        "Question": "Does the business unit have its own individual policy or follow the Group's policy?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 3,
+      "category": "Environment ",
+      "subcategory": "Energy ",
+      "question": "Is there any utilization of renewable resources as a source for energy?",
+      "reference": "ESG-Environment-02: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Energy ",
+        "Reference": "ESG-Environment-02: ",
+        "Question": "Is there any utilization of renewable resources as a source for energy?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 4,
+      "category": "Environment ",
+      "subcategory": "Energy ",
+      "question": "How is  energy consumption measured and reported? ",
+      "reference": "ESG-Environment-03a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Energy ",
+        "Reference": "ESG-Environment-03a: ",
+        "Question": "How is  energy consumption measured and reported? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 5,
+      "category": "Environment ",
+      "subcategory": "Energy ",
+      "question": "If yes, to whom is it reported?",
+      "reference": "ESG-Environment-03b:",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Energy ",
+        "Reference": "ESG-Environment-03b:",
+        "Question": "If yes, to whom is it reported?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 6,
+      "category": "Environment ",
+      "subcategory": "Emissions",
+      "question": "How are carbon emissions monitored and reported? ",
+      "reference": "ESG-Environment-04a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Emissions",
+        "Reference": "ESG-Environment-04a: ",
+        "Question": "How are carbon emissions monitored and reported? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 7,
+      "category": "Environment ",
+      "subcategory": "Emissions",
+      "question": "If yes, to whom is it reported?",
+      "reference": "ESG-Environment-04b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Emissions",
+        "Reference": "ESG-Environment-04b: ",
+        "Question": "If yes, to whom is it reported?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 8,
+      "category": "Environment ",
+      "subcategory": "Emissions",
+      "question": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+      "reference": "ESG-Environment-05: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Emissions",
+        "Reference": "ESG-Environment-05: ",
+        "Question": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 9,
+      "category": "Environment ",
+      "subcategory": "Emissions",
+      "question": "6.Does the business entity have carbon reduction strategies (e.g., carbon offsetting)? ",
+      "reference": "ESG-Environment-06: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Emissions",
+        "Reference": "ESG-Environment-06: ",
+        "Question": "6.Does the business entity have carbon reduction strategies (e.g., carbon offsetting)? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 10,
+      "category": "Environment ",
+      "subcategory": "Water",
+      "question": "Is there a process in place for waste water treament ?",
+      "reference": "ESG-Environment-07: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Water",
+        "Reference": "ESG-Environment-07: ",
+        "Question": "Is there a process in place for waste water treament ?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 11,
+      "category": "Environment ",
+      "subcategory": "Water",
+      "question": "How is water monitored and reported?",
+      "reference": "ESG-Environment-08a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Water",
+        "Reference": "ESG-Environment-08a: ",
+        "Question": "How is water monitored and reported?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 12,
+      "category": "Environment ",
+      "subcategory": "Water",
+      "question": "Who is it reported to?",
+      "reference": "ESG-Environment-08b: ",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Water",
+        "Reference": "ESG-Environment-08b: ",
+        "Question": "Who is it reported to?",
+        "Mandatory or Optional": NaN,
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 13,
+      "category": "Environment ",
+      "subcategory": "Water",
+      "question": "What are the water conservation practices in place?",
+      "reference": "ESG-Environment-09: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Water",
+        "Reference": "ESG-Environment-09: ",
+        "Question": "What are the water conservation practices in place?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 14,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "Is there a waste reduction program? ",
+      "reference": "ESG-Environment-010a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-010a: ",
+        "Question": "Is there a waste reduction program? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 15,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "Does the business unit have its own program or follow the Group's program ?",
+      "reference": "ESG-Environment-010b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-010b: ",
+        "Question": "Does the business unit have its own program or follow the Group's program ?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 16,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "Is there a process in place to manage Hazardous waste ? \n",
+      "reference": "ESG-Environment-011a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-011a: ",
+        "Question": "Is there a process in place to manage Hazardous waste ? \n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 17,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "If yes what is the process ?",
+      "reference": "ESG-Environment-011b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-011b: ",
+        "Question": "If yes what is the process ?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 18,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "Is recycling part of the business unit's operations?\n",
+      "reference": "ESG-Environment-012a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-012a: ",
+        "Question": "Is recycling part of the business unit's operations?\n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 19,
+      "category": "Environment ",
+      "subcategory": "Waste ",
+      "question": "How is it monitored and reported ?",
+      "reference": "ESG-Environment-012b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Environment ",
+        "Sub Category": "Waste ",
+        "Reference": "ESG-Environment-012b: ",
+        "Question": "How is it monitored and reported ?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 21,
+      "category": "Social ",
+      "subcategory": "Diversity,Equity & Inclusion ",
+      "question": "Does the business unit have policies in place to promote diversity, equity, and inclusion (DEI) in its workforce?",
+      "reference": "ESG-Social-01: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Diversity,Equity & Inclusion ",
+        "Reference": "ESG-Social-01: ",
+        "Question": "Does the business unit have policies in place to promote diversity, equity, and inclusion (DEI) in its workforce?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 22,
+      "category": "Social ",
+      "subcategory": "Diversity,Equity & Inclusion ",
+      "question": "How does the business unit track diversity (e.g., gender, age, nationality) at all levels, especially senior management?",
+      "reference": "ESG-Social-02: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Diversity,Equity & Inclusion ",
+        "Reference": "ESG-Social-02: ",
+        "Question": "How does the business unit track diversity (e.g., gender, age, nationality) at all levels, especially senior management?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 23,
+      "category": "Social ",
+      "subcategory": "Health and Safety ",
+      "question": "How does the business unit ensure employee health and safety, particularly for field workers who may be exposed to high-risk environments during infrastructure installations and maintenance? ",
+      "reference": "ESG-Social-03: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Health and Safety ",
+        "Reference": "ESG-Social-03: ",
+        "Question": "How does the business unit ensure employee health and safety, particularly for field workers who may be exposed to high-risk environments during infrastructure installations and maintenance? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 24,
+      "category": "Social ",
+      "subcategory": "Health and Safety ",
+      "question": "Does the business unit have measures to protect workers from heat stress, especially in  UAE’s extreme summer temperatures?",
+      "reference": "ESG-Social-04: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Health and Safety ",
+        "Reference": "ESG-Social-04: ",
+        "Question": "Does the business unit have measures to protect workers from heat stress, especially in  UAE’s extreme summer temperatures?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 25,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "How does the business unit promote continuous learning and development opportunities for employees? ",
+      "reference": "ESG-Social-05: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-05: ",
+        "Question": "How does the business unit promote continuous learning and development opportunities for employees? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 26,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "Please provide details about the business unit's training programs and resources designed to enhance employee knowledge and skills?",
+      "reference": "ESG-Social-06: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-06: ",
+        "Question": "Please provide details about the business unit's training programs and resources designed to enhance employee knowledge and skills?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 27,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "Are there specific initiatives or programs in place to support career advancement and professional growth within the business unit?",
+      "reference": "ESG-Social-07: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-07: ",
+        "Question": "Are there specific initiatives or programs in place to support career advancement and professional growth within the business unit?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 28,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "How does the business unit ensure accessibility and inclusivity in its L&D initiatives for all employees, including those with disabilities or diverse backgrounds?",
+      "reference": "ESG-Social-08: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-08: ",
+        "Question": "How does the business unit ensure accessibility and inclusivity in its L&D initiatives for all employees, including those with disabilities or diverse backgrounds?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 29,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "Are there any L&D initiatives to support the overall Group's Sustainability goals and values?",
+      "reference": "ESG-Social-09: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-09: ",
+        "Question": "Are there any L&D initiatives to support the overall Group's Sustainability goals and values?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 30,
+      "category": "Social ",
+      "subcategory": "Learning and Development ",
+      "question": "How do you measure the effectiveness and impact of the business unit's  L&D initiatives?",
+      "reference": "ESG-Social-10: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Learning and Development ",
+        "Reference": "ESG-Social-10: ",
+        "Question": "How do you measure the effectiveness and impact of the business unit's  L&D initiatives?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 31,
+      "category": "Social ",
+      "subcategory": "Community Engagement ",
+      "question": "Does the business unit have programs to improve access to their respective services in underserved or remote areas, especially in rural regions of UAE?",
+      "reference": "ESG-Social-11: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Community Engagement ",
+        "Reference": "ESG-Social-11: ",
+        "Question": "Does the business unit have programs to improve access to their respective services in underserved or remote areas, especially in rural regions of UAE?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 32,
+      "category": "Social ",
+      "subcategory": "Community Engagement ",
+      "question": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+      "reference": "ESG-Social-12: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Community Engagement ",
+        "Reference": "ESG-Social-12: ",
+        "Question": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 33,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "How does the business unit protect customer privacy and data security, especially in light of increasing data breaches and cyber threats?",
+      "reference": "ESG-Social-13: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-13: ",
+        "Question": "How does the business unit protect customer privacy and data security, especially in light of increasing data breaches and cyber threats?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 34,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "Does the business unit have a clear mechanism for addressing customer complaints and disputes? ",
+      "reference": "ESG-Social-14: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-14: ",
+        "Question": "Does the business unit have a clear mechanism for addressing customer complaints and disputes? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 35,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "Are fraudulent transactions and scams being proactively detected and prevented to protect customers?",
+      "reference": "ESG-Social-15: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-15: ",
+        "Question": "Are fraudulent transactions and scams being proactively detected and prevented to protect customers?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 36,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "How does the platform handle dispute, complaints, and refund policies?",
+      "reference": "ESG-Social-16: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-16: ",
+        "Question": "How does the platform handle dispute, complaints, and refund policies?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 37,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "Is customer consent and transparency maintained when collecting financial data?",
+      "reference": "ESG-Social-17: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-17: ",
+        "Question": "Is customer consent and transparency maintained when collecting financial data?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 38,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "How are unverified AML users flagged and resolved?",
+      "reference": "ESG-Social-18: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-18: ",
+        "Question": "How are unverified AML users flagged and resolved?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 39,
+      "category": "Social ",
+      "subcategory": "Consumer Rights",
+      "question": "Are defaulters and high-risk transactions being handled with a fair and ethical approach to avoid discrimination?",
+      "reference": "ESG-Social-19: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Rights",
+        "Reference": "ESG-Social-19: ",
+        "Question": "Are defaulters and high-risk transactions being handled with a fair and ethical approach to avoid discrimination?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 40,
+      "category": "Social ",
+      "subcategory": "Consumer Segmentation ",
+      "question": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+      "reference": "ESG-Social-20: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Segmentation ",
+        "Reference": "ESG-Social-20: ",
+        "Question": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 41,
+      "category": "Social ",
+      "subcategory": "Consumer Segmentation ",
+      "question": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+      "reference": "ESG-Social-21: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Segmentation ",
+        "Reference": "ESG-Social-21: ",
+        "Question": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 42,
+      "category": "Social ",
+      "subcategory": "Consumer Segmentation ",
+      "question": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+      "reference": "ESG-Social-22: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Segmentation ",
+        "Reference": "ESG-Social-22: ",
+        "Question": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 43,
+      "category": "Social ",
+      "subcategory": "Consumer Segmentation ",
+      "question": "Are ethical standards followed during the re-segmentation or handover processes?",
+      "reference": "ESG-Social-23: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Segmentation ",
+        "Reference": "ESG-Social-23: ",
+        "Question": "Are ethical standards followed during the re-segmentation or handover processes?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 44,
+      "category": "Social ",
+      "subcategory": "Consumer Profiling",
+      "question": "How is data privacy and ethical data handling ensured in profiling processes?",
+      "reference": "ESG-Social-24: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Profiling",
+        "Reference": "ESG-Social-24: ",
+        "Question": "How is data privacy and ethical data handling ensured in profiling processes?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 45,
+      "category": "Social ",
+      "subcategory": "Consumer Profiling",
+      "question": "Are customer screening processes aligned with anti-corruption and anti-money laundering (AML) standards?",
+      "reference": "ESG-Social-25: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Social ",
+        "Sub Category": "Consumer Profiling",
+        "Reference": "ESG-Social-25: ",
+        "Question": "Are customer screening processes aligned with anti-corruption and anti-money laundering (AML) standards?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 47,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+      "reference": "ESG-Governance-01: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-01: ",
+        "Question": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 48,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Is there a defined management and reporting structure with clear roles and responsibilities? ",
+      "reference": "ESG-Governance-02: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-02: ",
+        "Question": "Is there a defined management and reporting structure with clear roles and responsibilities? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 49,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Is there an established governance body (e.g., board, executive committee) overseeing the business unit's activities and sustainability efforts?",
+      "reference": "ESG-Governance-03: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-03: ",
+        "Question": "Is there an established governance body (e.g., board, executive committee) overseeing the business unit's activities and sustainability efforts?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 50,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Does the business unit’s management regularly report to the established governance body? ( e.g., board, steerco, executive committee) ",
+      "reference": "ESG-Governance-04: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-04: ",
+        "Question": "Does the business unit’s management regularly report to the established governance body? ( e.g., board, steerco, executive committee) ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 51,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n",
+      "reference": "ESG-Governance-05a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-05a: ",
+        "Question": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 52,
+      "category": "Unknown",
+      "subcategory": "Management and Leadership ",
+      "question": "Have these policies been implemented?",
+      "reference": "ESG-Governance-05b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": NaN,
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-05b: ",
+        "Question": "Have these policies been implemented?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 53,
+      "category": "Governance",
+      "subcategory": "Management and Leadership ",
+      "question": "Are the employees in the business unit aware of the Group's whistleblower policy or mechanism for reporting unethical behavior? \n",
+      "reference": "ESG-Governance-06a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-06a: ",
+        "Question": "Are the employees in the business unit aware of the Group's whistleblower policy or mechanism for reporting unethical behavior? \n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 54,
+      "category": "Unknown",
+      "subcategory": "Management and Leadership ",
+      "question": "Has it been implemented within the business unit? ",
+      "reference": "ESG-Governance-06b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": NaN,
+        "Sub Category": "Management and Leadership ",
+        "Reference": "ESG-Governance-06b: ",
+        "Question": "Has it been implemented within the business unit? ",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 55,
+      "category": "Governance",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "Does the business unit have a comprehensive risk management framework or risk register that includes sustainability and all other pertinent risks (e.g. climate-related risks, social risks)?",
+      "reference": "ESG-Governance-07: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-07: ",
+        "Question": "Does the business unit have a comprehensive risk management framework or risk register that includes sustainability and all other pertinent risks (e.g. climate-related risks, social risks)?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 56,
+      "category": "Governance",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "Does the business unit have an internal control framework to ensure compliance with policies, regulations, and risk management practices?",
+      "reference": "ESG-Governance-08: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-08: ",
+        "Question": "Does the business unit have an internal control framework to ensure compliance with policies, regulations, and risk management practices?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 57,
+      "category": "Governance",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "Are there documented processes for identifying, assessing, and mitigating operational, financial, and compliance risks within the business unit?",
+      "reference": "ESG-Governance-09: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-09: ",
+        "Question": "Are there documented processes for identifying, assessing, and mitigating operational, financial, and compliance risks within the business unit?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 58,
+      "category": "Governance",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "How does the business unit ensure the effectiveness of its internal controls? \n",
+      "reference": "ESG-Governance-10a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-10a: ",
+        "Question": "How does the business unit ensure the effectiveness of its internal controls? \n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 59,
+      "category": "Unknown",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "Are there periodic reviews, audits, or self-assessments conducted?",
+      "reference": "ESG-Governance-10b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": NaN,
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-10b: ",
+        "Question": "Are there periodic reviews, audits, or self-assessments conducted?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 60,
+      "category": "Governance",
+      "subcategory": "Risk Management and Control Environment",
+      "question": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+      "reference": "ESG-Governance-11: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Risk Management and Control Environment",
+        "Reference": "ESG-Governance-11: ",
+        "Question": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 61,
+      "category": "Governance",
+      "subcategory": "Reporting",
+      "question": "Are ESG metrics integrated into performance dashboards (e.g., customer diversity, inclusion metrics, environmental impact of services)?",
+      "reference": "ESG-Governance-12: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Reporting",
+        "Reference": "ESG-Governance-12: ",
+        "Question": "Are ESG metrics integrated into performance dashboards (e.g., customer diversity, inclusion metrics, environmental impact of services)?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 62,
+      "category": "Governance",
+      "subcategory": "Reporting",
+      "question": "Are ESG-related complaints or risks tracked and reported?",
+      "reference": "ESG-Governance-13: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Reporting",
+        "Reference": "ESG-Governance-13: ",
+        "Question": "Are ESG-related complaints or risks tracked and reported?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 63,
+      "category": "Governance",
+      "subcategory": "Reporting",
+      "question": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+      "reference": "ESG-Governance-14: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Reporting",
+        "Reference": "ESG-Governance-14: ",
+        "Question": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 64,
+      "category": "Governance",
+      "subcategory": "Reporting",
+      "question": "Does the business unit disclose ESG related metrics, to their governing body? \n",
+      "reference": "ESG-Governance-15a: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Reporting",
+        "Reference": "ESG-Governance-15a: ",
+        "Question": "Does the business unit disclose ESG related metrics, to their governing body? \n",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Yes",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 65,
+      "category": "Unknown",
+      "subcategory": "Reporting",
+      "question": "Please provide details on what is reported?",
+      "reference": "ESG-Governance-15b: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": NaN,
+        "Sub Category": "Reporting",
+        "Reference": "ESG-Governance-15b: ",
+        "Question": "Please provide details on what is reported?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 66,
+      "category": "Governance",
+      "subcategory": "Ethical AI ",
+      "question": "Are invalid accounts, fraud cases, and financial crimes being reported to authorities transparently?",
+      "reference": "ESG-Governance-16: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Ethical AI ",
+        "Reference": "ESG-Governance-16: ",
+        "Question": "Are invalid accounts, fraud cases, and financial crimes being reported to authorities transparently?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 67,
+      "category": "Governance",
+      "subcategory": "Ethical AI ",
+      "question": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+      "reference": "ESG-Governance-17: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Ethical AI ",
+        "Reference": "ESG-Governance-17: ",
+        "Question": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "Not Available ",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 68,
+      "category": "Governance",
+      "subcategory": "Data Integrity ",
+      "question": "Who owns and manages the data governance process?",
+      "reference": "ESG-Governance-18: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Data Integrity ",
+        "Reference": "ESG-Governance-18: ",
+        "Question": "Who owns and manages the data governance process?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 69,
+      "category": "Governance",
+      "subcategory": "Data Integrity ",
+      "question": "How frequently is the dashboard reviewed for accuracy, integrity, and biases?",
+      "reference": "ESG-Governance-19: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Data Integrity ",
+        "Reference": "ESG-Governance-19: ",
+        "Question": "How frequently is the dashboard reviewed for accuracy, integrity, and biases?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": NaN,
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 70,
+      "category": "Governance",
+      "subcategory": "Procurement ",
+      "question": "Is there a formal supplier code of conduct that addresses ESG expectations?",
+      "reference": "ESG-Governance-20: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Procurement ",
+        "Reference": "ESG-Governance-20: ",
+        "Question": "Is there a formal supplier code of conduct that addresses ESG expectations?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 71,
+      "category": "Governance",
+      "subcategory": "Procurement ",
+      "question": " Are suppliers required to acknowledge and adhere to this code?",
+      "reference": "ESG-Governance-21: ",
+      "mandatory": "Mandatory",
+      "raw_data": {
+        "Category": "Governance",
+        "Sub Category": "Procurement ",
+        "Reference": "ESG-Governance-21: ",
+        "Question": " Are suppliers required to acknowledge and adhere to this code?",
+        "Mandatory or Optional": "Mandatory",
+        "Assessment": "No",
+        "Please Provide details": NaN,
+        "Additional Comments": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35,
+      "category": "Environment ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Environment ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 42,
+      "category": "ESG-Environment-05: ",
+      "subcategory": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Environment-05: ",
+        "Column_ 1": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 45,
+      "category": "ESG-Environment-07: ",
+      "subcategory": "Is there a process in place for waste water treament ?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Environment-07: ",
+        "Column_ 1": "Is there a process in place for waste water treament ?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 47,
+      "category": "ESG-Environment-09: ",
+      "subcategory": "What are the water conservation practices in place?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Environment-09: ",
+        "Column_ 1": "What are the water conservation practices in place?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 49,
+      "category": "ESG-Environment-010: ",
+      "subcategory": "Is there a waste reduction program? \n(a).Does the business unit have its own program or follow the Group's program ?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Environment-010: ",
+        "Column_ 1": "Is there a waste reduction program? \n(a).Does the business unit have its own program or follow the Group's program ?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53,
+      "category": "Social ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Social ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 79,
+      "category": "ESG-Social-20: ",
+      "subcategory": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Social-20: ",
+        "Column_ 1": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 80,
+      "category": "ESG-Social-21: ",
+      "subcategory": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Social-21: ",
+        "Column_ 1": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 81,
+      "category": "ESG-Social-22: ",
+      "subcategory": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Social-22: ",
+        "Column_ 1": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 82,
+      "category": "ESG-Social-23: ",
+      "subcategory": "Are ethical standards followed during the re-segmentation or handover processes?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Social-23: ",
+        "Column_ 1": "Are ethical standards followed during the re-segmentation or handover processes?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86,
+      "category": "Governance",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Governance",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 88,
+      "category": "ESG-Governance-01: ",
+      "subcategory": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-01: ",
+        "Column_ 1": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 99,
+      "category": "ESG-Governance-11: ",
+      "subcategory": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-11: ",
+        "Column_ 1": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 107,
+      "category": "ESG-Governance-17: ",
+      "subcategory": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-17: ",
+        "Column_ 1": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35,
+      "category": "Environment ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Environment ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 47,
+      "category": "ESG-Environment-09: ",
+      "subcategory": "What are the water conservation practices in place?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Environment-09: ",
+        "Column_ 1": "What are the water conservation practices in place?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53,
+      "category": "Social ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Social ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 69,
+      "category": "ESG-Social-12: ",
+      "subcategory": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Social-12: ",
+        "Column_ 1": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86,
+      "category": "Governance",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Governance",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 92,
+      "category": "ESG-Governance-05: ",
+      "subcategory": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n(a)Have these policies been implemented?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-05: ",
+        "Column_ 1": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n(a)Have these policies been implemented?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 103,
+      "category": "ESG-Governance-14: ",
+      "subcategory": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-14: ",
+        "Column_ 1": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 109,
+      "category": "ESG-Governance-18: ",
+      "subcategory": "Who owns and manages the data governance process?",
+      "question": "Not Available ",
+      "reference": "Mandatory",
+      "mandatory": "Unknown",
+      "raw_data": {
+        "e etisalat and": "ESG-Governance-18: ",
+        "Column_ 1": "Who owns and manages the data governance process?",
+        "Column_ 2": "Mandatory",
+        "Column_ 3": "Not Available ",
+        "Column_ 4": NaN,
+        "Column_ 5": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35,
+      "category": "Environment ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Environment ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53,
+      "category": "Social ",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Social ",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86,
+      "category": "Governance",
+      "subcategory": "Unknown",
+      "question": "Yes / No / Not Available ",
+      "reference": "Mandatory or Optional ",
+      "mandatory": "If Yes,No or Not Available provide details",
+      "raw_data": {
+        "e etisalat and": "Governance",
+        "Column_ 1": NaN,
+        "Column_ 2": "Mandatory or Optional ",
+        "Column_ 3": "Yes / No / Not Available ",
+        "Column_ 4": "If Yes,No or Not Available provide details",
+        "Column_ 5": "Additional Comments"
+      }
+    }
+  ],
+  "categories": [
+    "Environment ",
+    "ESG-Social-23: ",
+    "ESG-Environment-05: ",
+    "ESG-Governance-14: ",
+    "ESG-Environment-09: ",
+    "ESG-Governance-11: ",
+    "ESG-Governance-18: ",
+    "ESG-Social-21: ",
+    "ESG-Governance-05: ",
+    "ESG-Environment-010: ",
+    "Social ",
+    "ESG-Governance-17: ",
+    "Governance",
+    "ESG-Social-12: ",
+    "ESG-Social-20: ",
+    "ESG-Governance-01: ",
+    "ESG-Social-22: ",
+    "ESG-Environment-07: "
+  ],
+  "subcategories": [
+    "Community Engagement ",
+    "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+    "Procurement ",
+    "Energy ",
+    "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+    "Ethical AI ",
+    "Are ethical standards followed during the re-segmentation or handover processes?",
+    "Is there a waste reduction program? \n(a).Does the business unit have its own program or follow the Group's program ?",
+    "Reporting",
+    "Is there a process in place for waste water treament ?",
+    "Emissions",
+    "Learning and Development ",
+    "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+    "Data Integrity ",
+    "Consumer Segmentation ",
+    "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n(a)Have these policies been implemented?",
+    "Waste ",
+    "Health and Safety ",
+    "Consumer Profiling",
+    "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+    "What are the water conservation practices in place?",
+    "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+    "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+    "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+    "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+    "Risk Management and Control Environment",
+    "Who owns and manages the data governance process?",
+    "Diversity,Equity & Inclusion ",
+    "Management and Leadership ",
+    "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+    "Consumer Rights",
+    "Water"
+  ],
+  "references": [
+    "ESG-Governance-15b: ",
+    "ESG-Governance-10b: ",
+    "ESG-Environment-02: ",
+    "ESG-Environment-04a: ",
+    "ESG-Social-19: ",
+    "ESG-Social-11: ",
+    "ESG-Social-24: ",
+    "ESG-Environment-03b:",
+    "ESG-Social-17: ",
+    "ESG-Social-08: ",
+    "ESG-Environment-08b: ",
+    "ESG-Governance-10a: ",
+    "ESG-Social-06: ",
+    "ESG-Social-20: ",
+    "ESG-Social-04: ",
+    "ESG-Governance-11: ",
+    "ESG-Social-07: ",
+    "ESG-Social-13: ",
+    "ESG-Governance-16: ",
+    "ESG-Social-23: ",
+    "ESG-Governance-14: ",
+    "ESG-Social-05: ",
+    "ESG-Social-21: ",
+    "ESG-Governance-13: ",
+    "ESG-Environment-06: ",
+    "ESG-Governance-06a: ",
+    "ESG-Governance-17: ",
+    "ESG-Governance-08: ",
+    "ESG-Governance-02: ",
+    "ESG-Environment-010a: ",
+    "ESG-Social-01: ",
+    "ESG-Governance-20: ",
+    "ESG-Environment-03a: ",
+    "ESG-Governance-05b: ",
+    "ESG-Governance-12: ",
+    "ESG-Governance-19: ",
+    "ESG-Environment-09: ",
+    "ESG-Governance-15a: ",
+    "ESG-Environment-07: ",
+    "Mandatory",
+    "ESG-Social-03: ",
+    "ESG-Governance-06b: ",
+    "ESG-Social-16: ",
+    "ESG-Environment-04b: ",
+    "ESG-Governance-03: ",
+    "ESG-Social-18: ",
+    "ESG-Governance-09: ",
+    "ESG-Environment-011a: ",
+    "ESG-Environment-011b: ",
+    "ESG-Environment-010b: ",
+    "ESG-Governance-21: ",
+    "ESG-Environment-01b: ",
+    "ESG-Social-22: ",
+    "ESG-Governance-05a: ",
+    "Mandatory or Optional ",
+    "ESG-Environment-05: ",
+    "ESG-Environment-08a: ",
+    "ESG-Social-02: ",
+    "ESG-Social-09: ",
+    "ESG-Social-14: ",
+    "ESG-Governance-18: ",
+    "ESG-Social-25: ",
+    "ESG-Social-10: ",
+    "ESG-Social-12: ",
+    "ESG-Governance-01: ",
+    "ESG-Environment-012a: ",
+    "ESG-Governance-07: ",
+    "ESG-Social-15: ",
+    "ESG-Environment-012b: ",
+    "ESG-Environment-01a: ",
+    "ESG-Governance-04: "
+  ],
+  "answers": [
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 2,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "Yes",
+        "Column_ 2": NaN,
+        "Column_ 3": "Mandatory"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 3,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "No",
+        "Column_ 2": NaN,
+        "Column_ 3": "Optional "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 4,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "Not Available ",
+        "Column_ 2": NaN,
+        "Column_ 3": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 2,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "Yes",
+        "Column_ 2": NaN,
+        "Column_ 3": "Mandatory"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 3,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "No",
+        "Column_ 2": NaN,
+        "Column_ 3": "Optional "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "Answers",
+      "row_index": 4,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": "Not Available ",
+        "Column_ 2": NaN,
+        "Column_ 3": NaN
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 3,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "Yes",
+        "Column_ 3": NaN,
+        "Column_ 4": "Mandatory"
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 4,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "No",
+        "Column_ 3": NaN,
+        "Column_ 4": "Optional "
+      }
+    },
+    {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 5,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "Not Available ",
+        "Column_ 3": NaN,
+        "Column_ 4": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 2,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "Yes ",
+        "Column_ 3": NaN,
+        "Column_ 4": "Mandatory "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 3,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "No ",
+        "Column_ 3": NaN,
+        "Column_ 4": "Optional "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "Answers ",
+      "row_index": 4,
+      "raw_data": {
+        "Column_ 0": NaN,
+        "Column_ 1": NaN,
+        "Column_ 2": "Not Available ",
+        "Column_ 3": NaN,
+        "Column_ 4": NaN
+      }
+    }
+  ],
+  "project_info": [
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 0,
+      "raw_data": {
+        "e etisalat and": "Instructions",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 1,
+      "raw_data": {
+        "e etisalat and": "The engagement team must complete this checklist to demonstrate that ESG elements were assessed as part of the engagement.\nSelect the appropriate answer for each question (Yes, No, or Not Available) and provide details in the additional comments column.",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 2,
+      "raw_data": {
+        "e etisalat and": "General Information",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 3,
+      "raw_data": {
+        "e etisalat and": "Audit Code",
+        "Column_ 1": " AUD_11362",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 4,
+      "raw_data": {
+        "e etisalat and": "Audit Title",
+        "Column_ 1": "SMB Framework",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 5,
+      "raw_data": {
+        "e etisalat and": "Completed by:",
+        "Column_ 1": "nmasahir@eand.com",
+        "Column_ 2": "Date:"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 6,
+      "raw_data": {
+        "e etisalat and": "Reviewed by:",
+        "Column_ 1": NaN,
+        "Column_ 2": "Date:"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 7,
+      "raw_data": {
+        "e etisalat and": "Objective: ",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 8,
+      "raw_data": {
+        "e etisalat and": "Audit Period: ",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 9,
+      "raw_data": {
+        "e etisalat and": "ESG Spoc-Auditee ",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 11,
+      "raw_data": {
+        "e etisalat and": "Unit",
+        "Column_ 1": "Definition ",
+        "Column_ 2": "Example "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 12,
+      "raw_data": {
+        "e etisalat and": "Energy ",
+        "Column_ 1": "Energy refers to the use, consumption, and sourcing of energy in an organization’s operations.In terms of ESG , energy focuses on ensuring that the business unit is efficiently utilising its energy and prioritizing renewable energy sources where possible.",
+        "Column_ 2": "Implementing energy-efficient technologies like LED lighting, efficient HVAC systems, data on utility bills. "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 13,
+      "raw_data": {
+        "e etisalat and": "Emissions",
+        "Column_ 1": "Emissions in an ESG context refers to the release of greenhouse gases (GHGs) and other pollutants into the atmosphere due to an organization’s operations.",
+        "Column_ 2": "CO₂ and equivalent greenhouse gases"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 14,
+      "raw_data": {
+        "e etisalat and": "Water",
+        "Column_ 1": "Water refers to the consumption, management, and conservation of water resources within an organization’s operations.",
+        "Column_ 2": "The total volume of water consumed by the organization in its operations, water recycling, efficient irrigation, low-flow systems"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 15,
+      "raw_data": {
+        "e etisalat and": "Waste ",
+        "Column_ 1": "Waste refers to the materials and substances that are discarded after they are no longer needed in an organization’s operations.",
+        "Column_ 2": "Office waste , e-waste, hazardous waste "
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 16,
+      "raw_data": {
+        "e etisalat and": "Climate Risk ",
+        "Column_ 1": "Climate Risk refers to the potential financial, operational, and reputational impacts that an organization may face due to the changing climate.",
+        "Column_ 2": "Risk due to extreme weather events, sea-level rise,regulatory changes, market shifts"
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 17,
+      "raw_data": {
+        "e etisalat and": "Social Risk ",
+        "Column_ 1": "Social Risk refers to the potential risks related to the social and human rights aspects of a company’s operations",
+        "Column_ 2": "employee relations, labor practices, health and safety issues, community impact, and customer relations."
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 18,
+      "raw_data": {
+        "e etisalat and": "Carbon Offsetting ",
+        "Column_ 1": "Carbon offsetting is a process by which individuals, companies, or organizations compensate for their carbon emissions by investing in projects that reduce or absorb an equivalent amount of carbon dioxide (CO₂) or other greenhouse gases (GHGs) from the atmosphere",
+        "Column_ 2": "Tree Planting initiatives , Investing in solar and wind energy projects etc, Carbon Sequestration Projects."
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 20,
+      "raw_data": {
+        "e etisalat and": "Reference Documents ",
+        "Column_ 1": NaN,
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 22,
+      "raw_data": {
+        "e etisalat and": "CSRD",
+        "Column_ 1": "Corporate Sustainability Reporting Directive ",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 23,
+      "raw_data": {
+        "e etisalat and": "TCFD ",
+        "Column_ 1": "Task Force on Climate related Financial Disclosures ",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 24,
+      "raw_data": {
+        "e etisalat and": "UNSDG",
+        "Column_ 1": "United Nations Sustainable Development Goals ",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 25,
+      "raw_data": {
+        "e etisalat and": "GRI",
+        "Column_ 1": "Global Reporting Initiative ",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 26,
+      "raw_data": {
+        "e etisalat and": "CDP",
+        "Column_ 1": "Climate Disclosure Project ",
+        "Column_ 2": NaN
+      }
+    },
+    {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "Project Information",
+      "row_index": 27,
+      "raw_data": {
+        "e etisalat and": "SCA",
+        "Column_ 1": "Securities and Commodities Authority ",
+        "Column_ 2": NaN
+      }
+    }
+  ]
+}

@@ -1,0 +1,1553 @@
+[
+  {
+    "input_text": "Is there a policy for reducing energy consumption? ",
+    "category": "Environment ",
+    "subcategory": "Energy ",
+    "reference_standard": "ESG-Environment-01a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [
+      "policy"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 1
+    }
+  },
+  {
+    "input_text": "Does the business unit have its own individual policy or follow the Group's policy?",
+    "category": "Environment ",
+    "subcategory": "Energy ",
+    "reference_standard": "ESG-Environment-01b: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [
+      "policy"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 2
+    }
+  },
+  {
+    "input_text": "Is there any utilization of renewable resources as a source for energy?",
+    "category": "Environment ",
+    "subcategory": "Energy ",
+    "reference_standard": "ESG-Environment-02: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 3
+    }
+  },
+  {
+    "input_text": "How is  energy consumption measured and reported? ",
+    "category": "Environment ",
+    "subcategory": "Energy ",
+    "reference_standard": "ESG-Environment-03a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 4
+    }
+  },
+  {
+    "input_text": "If yes, to whom is it reported?",
+    "category": "Environment ",
+    "subcategory": "Energy ",
+    "reference_standard": "ESG-Environment-03b:",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 5
+    }
+  },
+  {
+    "input_text": "How are carbon emissions monitored and reported? ",
+    "category": "Environment ",
+    "subcategory": "Emissions",
+    "reference_standard": "ESG-Environment-04a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 6
+    }
+  },
+  {
+    "input_text": "If yes, to whom is it reported?",
+    "category": "Environment ",
+    "subcategory": "Emissions",
+    "reference_standard": "ESG-Environment-04b: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 7
+    }
+  },
+  {
+    "input_text": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+    "category": "Environment ",
+    "subcategory": "Emissions",
+    "reference_standard": "ESG-Environment-05: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 8
+    }
+  },
+  {
+    "input_text": "6.Does the business entity have carbon reduction strategies (e.g., carbon offsetting)? ",
+    "category": "Environment ",
+    "subcategory": "Emissions",
+    "reference_standard": "ESG-Environment-06: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 9
+    }
+  },
+  {
+    "input_text": "Is there a process in place for waste water treament ?",
+    "category": "Environment ",
+    "subcategory": "Water",
+    "reference_standard": "ESG-Environment-07: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 10
+    }
+  },
+  {
+    "input_text": "How is water monitored and reported?",
+    "category": "Environment ",
+    "subcategory": "Water",
+    "reference_standard": "ESG-Environment-08a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 11
+    }
+  },
+  {
+    "input_text": "Who is it reported to?",
+    "category": "Environment ",
+    "subcategory": "Water",
+    "reference_standard": "ESG-Environment-08b: ",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 12
+    }
+  },
+  {
+    "input_text": "What are the water conservation practices in place?",
+    "category": "Environment ",
+    "subcategory": "Water",
+    "reference_standard": "ESG-Environment-09: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 13
+    }
+  },
+  {
+    "input_text": "Is there a waste reduction program? ",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-010a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 14
+    }
+  },
+  {
+    "input_text": "Does the business unit have its own program or follow the Group's program ?",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-010b: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 15
+    }
+  },
+  {
+    "input_text": "Is there a process in place to manage Hazardous waste ? \n",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-011a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 16
+    }
+  },
+  {
+    "input_text": "If yes what is the process ?",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-011b: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 17
+    }
+  },
+  {
+    "input_text": "Is recycling part of the business unit's operations?\n",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-012a: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 18
+    }
+  },
+  {
+    "input_text": "How is it monitored and reported ?",
+    "category": "Environment ",
+    "subcategory": "Waste ",
+    "reference_standard": "ESG-Environment-012b: ",
+    "mandatory": true,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 19
+    }
+  },
+  {
+    "input_text": "Does the business unit have policies in place to promote diversity, equity, and inclusion (DEI) in its workforce?",
+    "category": "Social ",
+    "subcategory": "Diversity,Equity & Inclusion ",
+    "reference_standard": "ESG-Social-01: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 21
+    }
+  },
+  {
+    "input_text": "How does the business unit track diversity (e.g., gender, age, nationality) at all levels, especially senior management?",
+    "category": "Social ",
+    "subcategory": "Diversity,Equity & Inclusion ",
+    "reference_standard": "ESG-Social-02: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 22
+    }
+  },
+  {
+    "input_text": "How does the business unit ensure employee health and safety, particularly for field workers who may be exposed to high-risk environments during infrastructure installations and maintenance? ",
+    "category": "Social ",
+    "subcategory": "Health and Safety ",
+    "reference_standard": "ESG-Social-03: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [
+      "risk"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 23
+    }
+  },
+  {
+    "input_text": "Does the business unit have measures to protect workers from heat stress, especially in  UAE’s extreme summer temperatures?",
+    "category": "Social ",
+    "subcategory": "Health and Safety ",
+    "reference_standard": "ESG-Social-04: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 24
+    }
+  },
+  {
+    "input_text": "How does the business unit promote continuous learning and development opportunities for employees? ",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-05: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 25
+    }
+  },
+  {
+    "input_text": "Please provide details about the business unit's training programs and resources designed to enhance employee knowledge and skills?",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-06: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 26
+    }
+  },
+  {
+    "input_text": "Are there specific initiatives or programs in place to support career advancement and professional growth within the business unit?",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-07: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 27
+    }
+  },
+  {
+    "input_text": "How does the business unit ensure accessibility and inclusivity in its L&D initiatives for all employees, including those with disabilities or diverse backgrounds?",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-08: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 28
+    }
+  },
+  {
+    "input_text": "Are there any L&D initiatives to support the overall Group's Sustainability goals and values?",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-09: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 29
+    }
+  },
+  {
+    "input_text": "How do you measure the effectiveness and impact of the business unit's  L&D initiatives?",
+    "category": "Social ",
+    "subcategory": "Learning and Development ",
+    "reference_standard": "ESG-Social-10: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "descriptive",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 30
+    }
+  },
+  {
+    "input_text": "Does the business unit have programs to improve access to their respective services in underserved or remote areas, especially in rural regions of UAE?",
+    "category": "Social ",
+    "subcategory": "Community Engagement ",
+    "reference_standard": "ESG-Social-11: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 31
+    }
+  },
+  {
+    "input_text": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+    "category": "Social ",
+    "subcategory": "Community Engagement ",
+    "reference_standard": "ESG-Social-12: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 32
+    }
+  },
+  {
+    "input_text": "How does the business unit protect customer privacy and data security, especially in light of increasing data breaches and cyber threats?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-13: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [
+      "breach"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 33
+    }
+  },
+  {
+    "input_text": "Does the business unit have a clear mechanism for addressing customer complaints and disputes? ",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-14: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 34
+    }
+  },
+  {
+    "input_text": "Are fraudulent transactions and scams being proactively detected and prevented to protect customers?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-15: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 35
+    }
+  },
+  {
+    "input_text": "How does the platform handle dispute, complaints, and refund policies?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-16: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 36
+    }
+  },
+  {
+    "input_text": "Is customer consent and transparency maintained when collecting financial data?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-17: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 37
+    }
+  },
+  {
+    "input_text": "How are unverified AML users flagged and resolved?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-18: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 38
+    }
+  },
+  {
+    "input_text": "Are defaulters and high-risk transactions being handled with a fair and ethical approach to avoid discrimination?",
+    "category": "Social ",
+    "subcategory": "Consumer Rights",
+    "reference_standard": "ESG-Social-19: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [
+      "risk"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 39
+    }
+  },
+  {
+    "input_text": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+    "category": "Social ",
+    "subcategory": "Consumer Segmentation ",
+    "reference_standard": "ESG-Social-20: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 40
+    }
+  },
+  {
+    "input_text": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+    "category": "Social ",
+    "subcategory": "Consumer Segmentation ",
+    "reference_standard": "ESG-Social-21: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 41
+    }
+  },
+  {
+    "input_text": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+    "category": "Social ",
+    "subcategory": "Consumer Segmentation ",
+    "reference_standard": "ESG-Social-22: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 42
+    }
+  },
+  {
+    "input_text": "Are ethical standards followed during the re-segmentation or handover processes?",
+    "category": "Social ",
+    "subcategory": "Consumer Segmentation ",
+    "reference_standard": "ESG-Social-23: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [
+      "standard"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 43
+    }
+  },
+  {
+    "input_text": "How is data privacy and ethical data handling ensured in profiling processes?",
+    "category": "Social ",
+    "subcategory": "Consumer Profiling",
+    "reference_standard": "ESG-Social-24: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 44
+    }
+  },
+  {
+    "input_text": "Are customer screening processes aligned with anti-corruption and anti-money laundering (AML) standards?",
+    "category": "Social ",
+    "subcategory": "Consumer Profiling",
+    "reference_standard": "ESG-Social-25: ",
+    "mandatory": true,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [
+      "standard"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 45
+    }
+  },
+  {
+    "input_text": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-01: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 47
+    }
+  },
+  {
+    "input_text": "Is there a defined management and reporting structure with clear roles and responsibilities? ",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-02: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 48
+    }
+  },
+  {
+    "input_text": "Is there an established governance body (e.g., board, executive committee) overseeing the business unit's activities and sustainability efforts?",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-03: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 49
+    }
+  },
+  {
+    "input_text": "Does the business unit’s management regularly report to the established governance body? ( e.g., board, steerco, executive committee) ",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-04: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 50
+    }
+  },
+  {
+    "input_text": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-05a: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 51
+    }
+  },
+  {
+    "input_text": "Have these policies been implemented?",
+    "category": "Unknown",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-05b: ",
+    "mandatory": true,
+    "esg_domain": "General",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 52
+    }
+  },
+  {
+    "input_text": "Are the employees in the business unit aware of the Group's whistleblower policy or mechanism for reporting unethical behavior? \n",
+    "category": "Governance",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-06a: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [
+      "policy"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 53
+    }
+  },
+  {
+    "input_text": "Has it been implemented within the business unit? ",
+    "category": "Unknown",
+    "subcategory": "Management and Leadership ",
+    "reference_standard": "ESG-Governance-06b: ",
+    "mandatory": true,
+    "esg_domain": "General",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 54
+    }
+  },
+  {
+    "input_text": "Does the business unit have a comprehensive risk management framework or risk register that includes sustainability and all other pertinent risks (e.g. climate-related risks, social risks)?",
+    "category": "Governance",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-07: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk"
+    ],
+    "compliance_keywords": [
+      "framework"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 55
+    }
+  },
+  {
+    "input_text": "Does the business unit have an internal control framework to ensure compliance with policies, regulations, and risk management practices?",
+    "category": "Governance",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-08: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk",
+      "compliance",
+      "control"
+    ],
+    "compliance_keywords": [
+      "compliance",
+      "regulation",
+      "framework"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 56
+    }
+  },
+  {
+    "input_text": "Are there documented processes for identifying, assessing, and mitigating operational, financial, and compliance risks within the business unit?",
+    "category": "Governance",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-09: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk",
+      "compliance"
+    ],
+    "compliance_keywords": [
+      "compliance"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 57
+    }
+  },
+  {
+    "input_text": "How does the business unit ensure the effectiveness of its internal controls? \n",
+    "category": "Governance",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-10a: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "control"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 58
+    }
+  },
+  {
+    "input_text": "Are there periodic reviews, audits, or self-assessments conducted?",
+    "category": "Unknown",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-10b: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "audit"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 59
+    }
+  },
+  {
+    "input_text": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+    "category": "Governance",
+    "subcategory": "Risk Management and Control Environment",
+    "reference_standard": "ESG-Governance-11: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 60
+    }
+  },
+  {
+    "input_text": "Are ESG metrics integrated into performance dashboards (e.g., customer diversity, inclusion metrics, environmental impact of services)?",
+    "category": "Governance",
+    "subcategory": "Reporting",
+    "reference_standard": "ESG-Governance-12: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 61
+    }
+  },
+  {
+    "input_text": "Are ESG-related complaints or risks tracked and reported?",
+    "category": "Governance",
+    "subcategory": "Reporting",
+    "reference_standard": "ESG-Governance-13: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk"
+    ],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 62
+    }
+  },
+  {
+    "input_text": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+    "category": "Governance",
+    "subcategory": "Reporting",
+    "reference_standard": "ESG-Governance-14: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [
+      "risk",
+      "compliance",
+      "breach"
+    ],
+    "compliance_keywords": [
+      "compliance"
+    ],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 63
+    }
+  },
+  {
+    "input_text": "Does the business unit disclose ESG related metrics, to their governing body? \n",
+    "category": "Governance",
+    "subcategory": "Reporting",
+    "reference_standard": "ESG-Governance-15a: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 64
+    }
+  },
+  {
+    "input_text": "Please provide details on what is reported?",
+    "category": "Unknown",
+    "subcategory": "Reporting",
+    "reference_standard": "ESG-Governance-15b: ",
+    "mandatory": true,
+    "esg_domain": "General",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 65
+    }
+  },
+  {
+    "input_text": "Are invalid accounts, fraud cases, and financial crimes being reported to authorities transparently?",
+    "category": "Governance",
+    "subcategory": "Ethical AI ",
+    "reference_standard": "ESG-Governance-16: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 66
+    }
+  },
+  {
+    "input_text": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+    "category": "Governance",
+    "subcategory": "Ethical AI ",
+    "reference_standard": "ESG-Governance-17: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 67
+    }
+  },
+  {
+    "input_text": "Who owns and manages the data governance process?",
+    "category": "Governance",
+    "subcategory": "Data Integrity ",
+    "reference_standard": "ESG-Governance-18: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "open_ended",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 68
+    }
+  },
+  {
+    "input_text": "How frequently is the dashboard reviewed for accuracy, integrity, and biases?",
+    "category": "Governance",
+    "subcategory": "Data Integrity ",
+    "reference_standard": "ESG-Governance-19: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 69
+    }
+  },
+  {
+    "input_text": "Is there a formal supplier code of conduct that addresses ESG expectations?",
+    "category": "Governance",
+    "subcategory": "Procurement ",
+    "reference_standard": "ESG-Governance-20: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 70
+    }
+  },
+  {
+    "input_text": " Are suppliers required to acknowledge and adhere to this code?",
+    "category": "Governance",
+    "subcategory": "Procurement ",
+    "reference_standard": "ESG-Governance-21: ",
+    "mandatory": true,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.4.xlsx",
+      "source_sheet": "ESG Questionaires",
+      "row_index": 71
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Environment ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Environment-05: ",
+    "subcategory": "5.What are the goals for reducing greenhouse gas (GHG) emissions? ",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 42
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Environment-07: ",
+    "subcategory": "Is there a process in place for waste water treament ?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 45
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Environment-09: ",
+    "subcategory": "What are the water conservation practices in place?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 47
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Environment-010: ",
+    "subcategory": "Is there a waste reduction program? \n(a).Does the business unit have its own program or follow the Group's program ?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 49
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Social ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Social-20: ",
+    "subcategory": "Does the segmentation strategy consider underserved or vulnerable customer groups (e.g., micro-businesses, women-led businesses)?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 79
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Social-21: ",
+    "subcategory": "Are any ESG-based attributes (e.g., green initiatives, diversity) factored into customer profiling or prioritization?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 80
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Social-22: ",
+    "subcategory": "Is there a governance process in place to ensure fair and unbiased segmentation and communication practices?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 81
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Social-23: ",
+    "subcategory": "Are ethical standards followed during the re-segmentation or handover processes?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 82
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Governance",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-01: ",
+    "subcategory": "Is the business unit's leadership and/or board composition diverse in terms of gender, nationality, and experience?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 88
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-11: ",
+    "subcategory": "Does the business unit regularly update it's risk register and report it to their respective governing body (e.g., board , executive committee)?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 99
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-17: ",
+    "subcategory": "Are AI/ML models used for fraud detection free from bias (e.g., are certain demographics disproportionately flagged for unverified AML)?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.3.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 107
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Environment ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Environment-09: ",
+    "subcategory": "What are the water conservation practices in place?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 47
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Social ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Social-12: ",
+    "subcategory": "Does the business unit support or partner with non-profit organizations to promote digital literacy and skills development?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 69
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Governance",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-05: ",
+    "subcategory": "Does the business unit have policies in place to prevent corruption, bribery, and unethical practices? \n(a)Have these policies been implemented?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 92
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-14: ",
+    "subcategory": "Is there timely escalation of any ESG compliance breaches or reputational risks?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 103
+    }
+  },
+  {
+    "input_text": "Not Available ",
+    "category": "ESG-Governance-18: ",
+    "subcategory": "Who owns and manages the data governance process?",
+    "reference_standard": "Mandatory",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-internal Audit-Checklist-Revised Dummy data.2.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 109
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Environment ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Environmental",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 35
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Social ",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Social",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 53
+    }
+  },
+  {
+    "input_text": "Yes / No / Not Available ",
+    "category": "Governance",
+    "subcategory": "Unknown",
+    "reference_standard": "Mandatory or Optional ",
+    "mandatory": false,
+    "esg_domain": "Governance",
+    "risk_indicators": [],
+    "compliance_keywords": [],
+    "expected_response_type": "yes_no",
+    "metadata": {
+      "source_file": "ESG-Internal Audit-Checklist- Revised Dummy Data.1.xlsx",
+      "source_sheet": "ESG Questions",
+      "row_index": 86
+    }
+  }
+]

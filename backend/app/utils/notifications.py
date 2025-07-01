@@ -4,6 +4,7 @@ Notification utilities for automatic user notifications
 
 from sqlmodel import Session
 from app.models import Notification, FileUpload
+from app.utils.audit import log_notification_action
 from datetime import datetime, timezone
 from typing import Optional
 import logging
@@ -47,6 +48,19 @@ def notify_user(
         db.add(notification)
         db.commit()
         db.refresh(notification)
+
+        # Log the notification action for audit trail
+        try:
+            log_notification_action(
+                db=db,
+                user_id=None,  # System action
+                action="send_notification",
+                notification_id=notification.id,
+                details=f"Sent {notification_type} notification to user {user_id}: {title}",
+            )
+        except Exception as audit_error:
+            # Don't fail notification if audit logging fails
+            logger.warning(f"Failed to log notification audit: {audit_error}")
 
         logger.info(f"Notification sent to user {user_id}: {title}")
         return True
