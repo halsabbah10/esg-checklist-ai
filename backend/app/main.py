@@ -2,19 +2,31 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
-from .routers import users, checklists, reviews, submissions, notifications
-from .routers.admin_users import router as admin_users_router
-from .routers.admin_checklists import router as admin_checklists_router
+
+# Import organized routers
+from .routers.api import (
+    users_router,
+    checklists_router,
+    reviews_router,
+    analytics_router,
+    notifications_router
+)
+from .routers.admin import (
+    admin_users_router,
+    admin_checklists_router
+)
+from .routers.uploads import uploads_router
+from .routers.submissions import submissions_router
+
 from .database import engine, get_db_health
 from .models import SQLModel
+from app.config import get_settings
 from dotenv import load_dotenv
-from app.routers.analytics import router as analytics_router
 from app.utils.audit import router as audit_router
 import os
 import time
 import logging
 from datetime import datetime, timezone
-from app.routers.uploads import router as uploads_router
 
 
 # Configure logging
@@ -92,16 +104,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(users.router)
-app.include_router(checklists.router)
-app.include_router(reviews.router)
-app.include_router(submissions.router)
-app.include_router(notifications.router)
+# Include API routers
+app.include_router(users_router)
+app.include_router(checklists_router)
+app.include_router(reviews_router)
 app.include_router(analytics_router)
-app.include_router(audit_router)
-app.include_router(uploads_router)
+app.include_router(notifications_router)
 
-# Admin routers
+# Include feature routers
+app.include_router(submissions_router)
+app.include_router(uploads_router)
+app.include_router(audit_router)
+
+# Include admin routers
 app.include_router(admin_users_router)
 app.include_router(admin_checklists_router)
 

@@ -4,10 +4,15 @@ from app.models import FileUpload, Comment
 from app.database import get_session
 from app.auth import require_role, get_current_user
 from app.utils.notifications import notify_file_status_change, notify_file_commented
-from pydantic import BaseModel, Field
+from app.schemas import (
+    CommentRequest,
+    CommentResponse,
+    StatusRequest,
+    StatusResponse,
+    ReviewStatus,
+)
 from typing import List, Optional
 from datetime import datetime
-from enum import Enum
 
 
 def require_any_role(*roles: str):
@@ -24,36 +29,7 @@ def require_any_role(*roles: str):
     return role_checker
 
 
-# Request/Response models
-class ReviewStatus(str, Enum):
-    PENDING = "pending"
-    APPROVED = "approved"
-    REJECTED = "rejected"
-
-
-class CommentRequest(BaseModel):
-    text: str = Field(
-        ..., min_length=1, max_length=5000, description="Comment text content"
-    )
-
-
-class CommentResponse(BaseModel):
-    comment_id: int
-    user_id: int
-    text: str
-    created_at: datetime
-
-
-class StatusRequest(BaseModel):
-    status: ReviewStatus
-
-
-class StatusResponse(BaseModel):
-    status: ReviewStatus
-    message: Optional[str] = None
-
-
-router = APIRouter(prefix="/reviews", tags=["reviews"])
+router = APIRouter(prefix="/v1/reviews", tags=["reviews"])
 
 
 # Helper function to get file upload or raise 404

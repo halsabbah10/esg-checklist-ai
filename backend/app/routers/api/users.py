@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from ..models import User
-from ..schemas import UserCreate, UserRead, Token, UserLogin
-from ..database import get_session
-from ..auth import hash_password, verify_password, create_access_token, require_role
+from app.models import User
+from app.schemas import UserCreate, UserRead, Token, UserLogin
+from app.database import get_session  
+from app.auth import hash_password, verify_password, create_access_token, require_role
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/v1/users", tags=["users"])
 
 
 @router.post("/register", response_model=UserRead)

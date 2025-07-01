@@ -13,111 +13,18 @@ from datetime import datetime, timezone
 from app.models import User
 from app.database import get_session
 from app.auth import require_role, hash_password, UserRoles
-from pydantic import BaseModel, EmailStr, validator
+from app.schemas import (
+    UserCreateAdmin,
+    UserUpdateAdmin,
+    UserReadAdmin,
+    UserListResponse,
+    PasswordResetAdmin,
+    MessageResponse,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/users", tags=["admin-users"])
-
-
-# Enhanced Pydantic models for admin operations
-class UserCreateAdmin(BaseModel):
-    """Admin user creation model with enhanced validation."""
-
-    username: str
-    email: EmailStr
-    password: str
-    role: str = UserRoles.AUDITOR
-    is_active: bool = True
-
-    @validator("username")
-    def validate_username(cls, v):
-        if len(v) < 3 or len(v) > 50:
-            raise ValueError("Username must be between 3 and 50 characters")
-        if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(
-                "Username can only contain letters, numbers, hyphens, and underscores"
-            )
-        return v.lower()
-
-    @validator("password")
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        return v
-
-    @validator("role")
-    def validate_role(cls, v):
-        allowed_roles = UserRoles.all_roles()
-        if v not in allowed_roles:
-            raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
-        return v
-
-
-class UserUpdateAdmin(BaseModel):
-    """Admin user update model with optional fields."""
-
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    role: Optional[str] = None
-    is_active: Optional[bool] = None
-
-    @validator("username")
-    def validate_username(cls, v):
-        if v is not None:
-            if len(v) < 3 or len(v) > 50:
-                raise ValueError("Username must be between 3 and 50 characters")
-            if not v.replace("_", "").replace("-", "").isalnum():
-                raise ValueError(
-                    "Username can only contain letters, numbers, hyphens, and underscores"
-                )
-            return v.lower()
-        return v
-
-    @validator("role")
-    def validate_role(cls, v):
-        if v is not None:
-            allowed_roles = UserRoles.all_roles()
-            if v not in allowed_roles:
-                raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
-        return v
-
-
-class UserReadAdmin(BaseModel):
-    """Enhanced user read model for admin operations."""
-
-    id: int
-    username: str
-    email: str
-    role: str
-    is_active: bool
-    last_login: Optional[datetime]
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
-class UserListResponse(BaseModel):
-    """Paginated user list response."""
-
-    users: List[UserReadAdmin]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
-
-
-class PasswordResetAdmin(BaseModel):
-    """Admin password reset model."""
-
-    new_password: str
-
-    @validator("new_password")
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
-        return v
+router = APIRouter(prefix="/v1/admin/users", tags=["admin-users"])
 
 
 # CRUD Operations
@@ -178,7 +85,6 @@ async def list_users(
 
         # Calculate pagination
         total = len(all_users)
-        total_pages = (total + per_page - 1) // per_page
 
         # Apply pagination
         offset = (page - 1) * per_page
@@ -189,11 +95,10 @@ async def list_users(
         )
 
         return UserListResponse(
-            users=[UserReadAdmin.from_orm(user) for user in users],
+            users=[UserReadAdmin.model_validate(user) for user in users],
             total=total,
             page=page,
-            per_page=per_page,
-            total_pages=total_pages,
+            page_size=per_page,
         )
 
     except Exception as e:

@@ -5,7 +5,7 @@ from app.database import get_session
 from app.auth import require_role
 from typing import Optional
 
-router = APIRouter(prefix="/notifications", tags=["notifications"])
+router = APIRouter(prefix="/v1/notifications", tags=["notifications"])
 
 
 # Get all notifications for current user

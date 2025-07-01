@@ -12,7 +12,7 @@ from app.database import get_session
 from app.auth import require_role
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/analytics", tags=["analytics"])
+router = APIRouter(prefix="/v1/analytics", tags=["analytics"])
 
 
 # Cache for expensive analytics queries (5 minute TTL)

@@ -13,21 +13,20 @@ from datetime import datetime, timezone
 from app.models import User, Checklist, ChecklistItem
 from app.database import get_session
 from app.auth import require_role, UserRoles
-from pydantic import BaseModel, validator
+from app.schemas import (
+    ChecklistItemCreateAdmin,
+    ChecklistItemUpdateAdmin,
+    ChecklistItemReadAdmin,
+    ChecklistCreateAdmin,
+    ChecklistUpdateAdmin,
+    ChecklistReadAdmin,
+    ChecklistListResponse,
+    MessageResponse,
+)
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/checklists", tags=["admin-checklists"])
-
-
-# Enhanced Pydantic models for admin operations
-class ChecklistItemCreateAdmin(BaseModel):
-    """Admin checklist item creation model with enhanced validation."""
-
-    question_text: str
-    weight: Optional[float] = 1.0
-    category: Optional[str] = None
-    is_required: bool = True
+router = APIRouter(prefix="/v1/admin/checklists", tags=["admin-checklists"])
     order_index: int = 0
 
     @validator("question_text")

@@ -5,7 +5,7 @@ from app.database import get_session
 from app.auth import require_role
 from typing import List
 
-router = APIRouter(prefix="/submissions", tags=["submissions"])
+router = APIRouter(prefix="/v1/submissions", tags=["submissions"])
 
 
 # Submit answers for a checklist (bulk submit)

@@ -1,15 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlmodel import Session, select
-from ..models import Checklist, ChecklistItem, FileUpload
-from ..schemas import ChecklistCreate, ChecklistRead, ChecklistItemRead
-from ..database import get_session
+from app.models import Checklist, ChecklistItem, FileUpload
+from app.schemas import ChecklistCreate, ChecklistRead, ChecklistItemRead
+from app.database import get_session
 import os
 from datetime import datetime
-from ..auth import require_role
+from app.auth import require_role
 from app.utils.ai import ai_score_text_with_gemini
 from app.utils.email import send_ai_score_notification
 from app.utils.notifications import notify_user
-from ..models import AIResult
+from app.models import AIResult
 import pdfplumber
 from docx import Document
 import openpyxl
@@ -22,7 +22,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/checklists", tags=["checklists"])
+router = APIRouter(prefix="/v1/checklists", tags=["checklists"])
 
 
 @router.post("/", response_model=ChecklistRead)
