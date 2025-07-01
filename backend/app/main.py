@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
 from .routers import users, checklists, reviews, submissions, notifications
+from .routers.admin_users import router as admin_users_router
+from .routers.admin_checklists import router as admin_checklists_router
 from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
@@ -98,6 +100,10 @@ app.include_router(notifications.router)
 app.include_router(analytics_router)
 app.include_router(audit_router)
 app.include_router(uploads_router)
+
+# Admin routers
+app.include_router(admin_users_router)
+app.include_router(admin_checklists_router)
 
 
 @app.get("/health")
