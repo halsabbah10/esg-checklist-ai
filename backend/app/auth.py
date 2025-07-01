@@ -77,10 +77,51 @@ def get_current_user(
     return user
 
 
+# Role constants
+class UserRoles:
+    AUDITOR = "auditor"
+    REVIEWER = "reviewer"
+    ADMIN = "admin"
+    SUPER_ADMIN = "super_admin"
+
+    @classmethod
+    def all_roles(cls):
+        return [cls.AUDITOR, cls.REVIEWER, cls.ADMIN, cls.SUPER_ADMIN]
+
+    @classmethod
+    def get_role_hierarchy(cls):
+        """Returns role hierarchy mapping"""
+        return {
+            cls.AUDITOR: [cls.AUDITOR],
+            cls.REVIEWER: [cls.REVIEWER, cls.AUDITOR],
+            cls.ADMIN: [cls.ADMIN, cls.REVIEWER, cls.AUDITOR],
+            cls.SUPER_ADMIN: [cls.SUPER_ADMIN, cls.ADMIN, cls.REVIEWER, cls.AUDITOR],
+        }
+
+
 def require_role(role: str):
+    """
+    Role-based access control with hierarchy support.
+
+    Role hierarchy:
+    - super_admin: Full system access (includes all admin capabilities)
+    - admin: Full control over system (manage users, checklists, settings)
+    - reviewer: Review and manage submissions
+    - auditor: Personal work only
+    """
+
     def role_checker(current_user: User = Depends(get_current_user)):
-        if current_user.role != role:
-            raise HTTPException(status_code=403, detail=f"Requires {role} role.")
+        # Get role hierarchy from UserRoles class
+        role_hierarchy = UserRoles.get_role_hierarchy()
+
+        # Check if user's role has the required permissions
+        user_permissions = role_hierarchy.get(current_user.role, [])
+
+        if role not in user_permissions:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access denied. Requires {role} role or higher.",
+            )
         return current_user
 
     return role_checker

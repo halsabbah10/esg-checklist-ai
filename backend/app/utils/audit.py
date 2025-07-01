@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlmodel import Session, select
 from app.database import get_session
-from app.auth import require_role
+from app.auth import require_role, UserRoles
 from fastapi.responses import StreamingResponse
 from io import StringIO, BytesIO
 import pandas as pd
@@ -189,7 +189,7 @@ def get_audit_logs(
     resource_type: Optional[str] = None,
     limit: int = Query(100, ge=1, le=1000),
     db: Session = Depends(get_session),
-    current_user=Depends(require_role("admin")),
+    current_user=Depends(require_role(UserRoles.ADMIN)),
 ):
     """
     Get audit logs with optional filtering.
@@ -245,7 +245,7 @@ def export_audit_logs(
     format: str = "csv",  # "csv" or "excel"
     limit: int = Query(1000, ge=1, le=10000),
     db: Session = Depends(get_session),
-    current_user=Depends(require_role("admin")),
+    current_user=Depends(require_role(UserRoles.ADMIN)),
 ):
     """
     Export audit logs to CSV or Excel format.
