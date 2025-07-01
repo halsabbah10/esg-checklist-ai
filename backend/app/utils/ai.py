@@ -1,6 +1,6 @@
 import time
 import logging
-from typing import Tuple, Optional, Any
+from typing import Tuple
 from dotenv import load_dotenv
 
 # Import the new AI abstraction
