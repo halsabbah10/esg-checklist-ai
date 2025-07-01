@@ -7,6 +7,7 @@ from datetime import datetime
 
 class ChecklistItemCreate(BaseModel):
     """Checklist item creation schema."""
+
     question_text: str
     weight: Optional[float] = None
     category: Optional[str] = None
@@ -15,6 +16,7 @@ class ChecklistItemCreate(BaseModel):
 
 class ChecklistItemRead(BaseModel):
     """Checklist item response schema."""
+
     id: int
     question_text: str
     weight: Optional[float]
@@ -25,6 +27,7 @@ class ChecklistItemRead(BaseModel):
 
 class ChecklistItemUpdate(BaseModel):
     """Checklist item update schema."""
+
     question_text: Optional[str] = None
     weight: Optional[float] = None
     category: Optional[str] = None
@@ -33,6 +36,7 @@ class ChecklistItemUpdate(BaseModel):
 
 class ChecklistCreate(BaseModel):
     """Checklist creation schema."""
+
     title: str
     description: Optional[str] = None
     items: List[ChecklistItemCreate] = []
@@ -41,6 +45,7 @@ class ChecklistCreate(BaseModel):
 
 class ChecklistRead(BaseModel):
     """Checklist response schema."""
+
     id: int
     title: str
     description: Optional[str]
@@ -52,6 +57,7 @@ class ChecklistRead(BaseModel):
 
 class ChecklistUpdate(BaseModel):
     """Checklist update schema."""
+
     title: Optional[str] = None
     description: Optional[str] = None
     is_template: Optional[bool] = None
@@ -60,6 +66,7 @@ class ChecklistUpdate(BaseModel):
 # Admin-specific schemas with additional fields
 class ChecklistItemCreateAdmin(BaseModel):
     """Admin checklist item creation schema with additional fields."""
+
     question_text: str
     weight: Optional[float] = None
     category: Optional[str] = None
@@ -70,6 +77,7 @@ class ChecklistItemCreateAdmin(BaseModel):
 
 class ChecklistItemUpdateAdmin(BaseModel):
     """Admin checklist item update schema with additional fields."""
+
     question_text: Optional[str] = None
     weight: Optional[float] = None
     category: Optional[str] = None
@@ -81,6 +89,7 @@ class ChecklistItemUpdateAdmin(BaseModel):
 
 class ChecklistItemReadAdmin(BaseModel):
     """Admin checklist item response schema with additional fields."""
+
     id: int
     question_text: str
     weight: Optional[float]
@@ -95,6 +104,7 @@ class ChecklistItemReadAdmin(BaseModel):
 
 class ChecklistCreateAdmin(BaseModel):
     """Admin checklist creation schema with additional fields."""
+
     title: str
     description: Optional[str] = None
     items: List[ChecklistItemCreateAdmin] = []
@@ -105,6 +115,7 @@ class ChecklistCreateAdmin(BaseModel):
 
 class ChecklistUpdateAdmin(BaseModel):
     """Admin checklist update schema with additional fields."""
+
     title: Optional[str] = None
     description: Optional[str] = None
     is_template: Optional[bool] = None
@@ -115,6 +126,7 @@ class ChecklistUpdateAdmin(BaseModel):
 
 class ChecklistReadAdmin(BaseModel):
     """Admin checklist response schema with additional fields."""
+
     id: int
     title: str
     description: Optional[str]
@@ -130,6 +142,7 @@ class ChecklistReadAdmin(BaseModel):
 
 class ChecklistListResponse(BaseModel):
     """Response schema for checklist list with pagination."""
+
     checklists: List[ChecklistReadAdmin]
     total: int
     page: int

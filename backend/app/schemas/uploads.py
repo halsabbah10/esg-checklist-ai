@@ -8,6 +8,7 @@ from enum import Enum
 
 class FileType(str, Enum):
     """File type enumeration."""
+
     PDF = "pdf"
     EXCEL = "excel"
     CSV = "csv"
@@ -18,6 +19,7 @@ class FileType(str, Enum):
 
 class UploadStatus(str, Enum):
     """Upload status enumeration."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -26,6 +28,7 @@ class UploadStatus(str, Enum):
 
 class FileUploadRequest(BaseModel):
     """File upload request schema."""
+
     filename: str
     file_type: FileType
     submission_id: Optional[int] = None
@@ -34,6 +37,7 @@ class FileUploadRequest(BaseModel):
 
 class FileUploadResponse(BaseModel):
     """File upload response schema."""
+
     id: int
     filename: str
     file_type: FileType
@@ -47,6 +51,7 @@ class FileUploadResponse(BaseModel):
 
 class FileRead(BaseModel):
     """File information response schema."""
+
     id: int
     filename: str
     file_type: FileType
@@ -60,6 +65,7 @@ class FileRead(BaseModel):
 
 class FileListResponse(BaseModel):
     """Response schema for file list with pagination."""
+
     files: List[FileRead]
     total: int
     page: int
@@ -68,6 +74,7 @@ class FileListResponse(BaseModel):
 
 class FileProcessingResult(BaseModel):
     """File processing result schema."""
+
     file_id: int
     status: UploadStatus
     extracted_data: Optional[dict] = None

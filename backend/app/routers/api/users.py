@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from app.models import User
-from app.schemas import UserCreate, UserRead, Token, UserLogin
-from app.database import get_session  
+from app.schemas import UserCreate, UserRead, Token
+from app.database import get_session
 from app.auth import hash_password, verify_password, create_access_token, require_role
 from datetime import timedelta
 from fastapi.security import OAuth2PasswordRequestForm

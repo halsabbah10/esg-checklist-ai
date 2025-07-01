@@ -8,6 +8,7 @@ from enum import Enum
 
 class ReviewStatus(str, Enum):
     """Review status enumeration."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -16,12 +17,14 @@ class ReviewStatus(str, Enum):
 
 class CommentRequest(BaseModel):
     """Comment creation request schema."""
+
     text: str
     submission_id: int
 
 
 class CommentResponse(BaseModel):
     """Comment response schema."""
+
     id: int
     text: str
     submission_id: int
@@ -31,11 +34,13 @@ class CommentResponse(BaseModel):
 
 class StatusRequest(BaseModel):
     """Status update request schema."""
+
     status: ReviewStatus
 
 
 class StatusResponse(BaseModel):
     """Status update response schema."""
+
     submission_id: int
     status: ReviewStatus
     updated_at: datetime
@@ -43,6 +48,7 @@ class StatusResponse(BaseModel):
 
 class ReviewCreate(BaseModel):
     """Review creation schema."""
+
     submission_id: int
     status: ReviewStatus = ReviewStatus.PENDING
     comments: Optional[str] = None
@@ -50,6 +56,7 @@ class ReviewCreate(BaseModel):
 
 class ReviewRead(BaseModel):
     """Review response schema."""
+
     id: int
     submission_id: int
     reviewer_id: int
@@ -61,12 +68,14 @@ class ReviewRead(BaseModel):
 
 class ReviewUpdate(BaseModel):
     """Review update schema."""
+
     status: Optional[ReviewStatus] = None
     comments: Optional[str] = None
 
 
 class ReviewListResponse(BaseModel):
     """Response schema for review list with pagination."""
+
     reviews: List[ReviewRead]
     total: int
     page: int

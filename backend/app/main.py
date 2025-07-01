@@ -9,18 +9,14 @@ from .routers.api import (
     checklists_router,
     reviews_router,
     analytics_router,
-    notifications_router
+    notifications_router,
 )
-from .routers.admin import (
-    admin_users_router,
-    admin_checklists_router
-)
+from .routers.admin import admin_users_router, admin_checklists_router
 from .routers.uploads import uploads_router
 from .routers.submissions import submissions_router
 
 from .database import engine, get_db_health
 from .models import SQLModel
-from app.config import get_settings
 from dotenv import load_dotenv
 from app.utils.audit import router as audit_router
 import os

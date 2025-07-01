@@ -10,6 +10,7 @@ from enum import Enum
 
 class AnalyticsTimeframe(str, Enum):
     """Analytics timeframe enumeration."""
+
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
@@ -19,6 +20,7 @@ class AnalyticsTimeframe(str, Enum):
 
 class SubmissionAnalytics(BaseModel):
     """Submission analytics schema."""
+
     total_submissions: int
     completed_submissions: int
     pending_submissions: int
@@ -31,6 +33,7 @@ class SubmissionAnalytics(BaseModel):
 
 class UserAnalytics(BaseModel):
     """User analytics schema."""
+
     total_users: int
     active_users: int
     new_users_period: int
@@ -42,6 +45,7 @@ class UserAnalytics(BaseModel):
 
 class ChecklistAnalytics(BaseModel):
     """Checklist analytics schema."""
+
     checklist_id: int
     checklist_title: str
     total_submissions: int
@@ -52,6 +56,7 @@ class ChecklistAnalytics(BaseModel):
 
 class DashboardSummary(BaseModel):
     """Dashboard summary schema."""
+
     total_users: int
     total_checklists: int
     total_submissions: int
@@ -62,6 +67,7 @@ class DashboardSummary(BaseModel):
 
 class ReportRequest(BaseModel):
     """Report generation request schema."""
+
     report_type: str
     timeframe: str
     start_date: Optional[date] = None
@@ -71,6 +77,7 @@ class ReportRequest(BaseModel):
 
 class ReportResponse(BaseModel):
     """Report generation response schema."""
+
     report_id: str
     report_type: str
     status: str

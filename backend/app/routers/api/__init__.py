@@ -8,8 +8,8 @@ from .notifications import router as notifications_router
 
 __all__ = [
     "users_router",
-    "checklists_router", 
+    "checklists_router",
     "reviews_router",
     "analytics_router",
-    "notifications_router"
+    "notifications_router",
 ]

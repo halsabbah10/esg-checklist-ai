@@ -4,15 +4,13 @@ from app.models import FileUpload, Comment
 from app.database import get_session
 from app.auth import require_role, get_current_user
 from app.utils.notifications import notify_file_status_change, notify_file_commented
-from app.schemas import (
+from app.schemas.reviews import (
     CommentRequest,
     CommentResponse,
     StatusRequest,
-    StatusResponse,
-    ReviewStatus,
 )
-from typing import List, Optional
-from datetime import datetime
+from app.schemas.common import StatusResponse
+from typing import List
 
 
 def require_any_role(*roles: str):
@@ -88,9 +86,10 @@ def add_comment(
             logger.error(f"Failed to send comment notification: {e}")
 
     return CommentResponse(
-        comment_id=comment.id or 0,  # Should never be None after commit/refresh
-        user_id=comment.user_id,
+        id=comment.id or 0,  # Should never be None after commit/refresh
         text=comment.text,
+        submission_id=comment_request.submission_id,
+        user_id=comment.user_id,
         created_at=comment.created_at,
     )
 
@@ -139,7 +138,7 @@ def set_status(
             logger.error(f"Failed to send status change notification: {e}")
 
     return StatusResponse(
-        status=ReviewStatus(upload.status),
+        success=True,
         message=f"Status successfully set to {status_request.status.value}",
     )
 
@@ -163,7 +162,8 @@ def get_comments(
 
     return [
         CommentResponse(
-            comment_id=c.id or 0,
+            id=c.id or 0,
+            submission_id=c.file_upload_id,
             user_id=c.user_id,
             text=c.text,
             created_at=c.created_at,
@@ -187,4 +187,7 @@ def get_status(
     """
     upload = get_file_upload_or_404(db, file_upload_id)
 
-    return StatusResponse(status=ReviewStatus(upload.status))
+    return StatusResponse(
+        success=True,
+        message=f"Current status: {upload.status}"
+    )

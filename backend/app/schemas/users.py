@@ -7,12 +7,14 @@ from datetime import datetime
 
 class UserLogin(BaseModel):
     """User login request schema."""
+
     email: EmailStr
     password: str
 
 
 class UserCreate(BaseModel):
     """User creation request schema."""
+
     username: str
     email: EmailStr
     password: str
@@ -21,6 +23,7 @@ class UserCreate(BaseModel):
 
 class UserRead(BaseModel):
     """User response schema."""
+
     id: int
     username: str
     email: EmailStr
@@ -31,6 +34,7 @@ class UserRead(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update request schema."""
+
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = None
@@ -39,6 +43,7 @@ class UserUpdate(BaseModel):
 
 class UserCreateAdmin(BaseModel):
     """Admin user creation schema with additional fields."""
+
     username: str
     email: EmailStr
     password: str
@@ -50,6 +55,7 @@ class UserCreateAdmin(BaseModel):
 
 class UserUpdateAdmin(BaseModel):
     """Admin user update schema with additional fields."""
+
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = None
@@ -60,6 +66,7 @@ class UserUpdateAdmin(BaseModel):
 
 class UserReadAdmin(BaseModel):
     """Admin user response schema with additional fields."""
+
     id: int
     username: str
     email: EmailStr
@@ -73,6 +80,7 @@ class UserReadAdmin(BaseModel):
 
 class UserListResponse(BaseModel):
     """Response schema for user list with pagination."""
+
     users: List[UserReadAdmin]
     total: int
     page: int
@@ -81,4 +89,5 @@ class UserListResponse(BaseModel):
 
 class PasswordResetAdmin(BaseModel):
     """Admin password reset schema."""
+
     new_password: str
