@@ -23,6 +23,7 @@ uploads/
 
 # Logs
 *.log
+logs/
 
 # Data files
 *.csv
@@ -36,3 +37,54 @@ uploads/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Temporary and test files
+test_*.py
+*_test.py
+TEST_*.md
+*_TEST.md
+*_REPORT.md
+*_SUMMARY.md
+
+# Documentation drafts
+*_DRAFT.md
+*_TEMP.md
+*_TMP.md
+
+# Sample and example files (except .env.example)
+sample_*
+*_sample.*
+demo_*
+*_demo.*
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
