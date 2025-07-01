@@ -66,7 +66,10 @@ async def list_users(
 
         # Apply filters to queries
         if filters:
-            combined_filter = and_(*filters) if len(filters) > 1 else filters[0]
+            if len(filters) > 1:
+                combined_filter = and_(*filters)
+            else:
+                combined_filter = filters[0]  # type: ignore
             query = query.where(combined_filter)
             count_query = count_query.where(combined_filter)
 
@@ -414,7 +417,7 @@ async def get_user_stats(
         # Count by role
         roles_query = select(User.role, User.id).where(User.is_active)
         roles_data = db.exec(roles_query).all()
-        role_counts = {}
+        role_counts: dict[str, int] = {}
         for role, _ in roles_data:
             role_counts[role] = role_counts.get(role, 0) + 1
 

@@ -187,7 +187,4 @@ def get_status(
     """
     upload = get_file_upload_or_404(db, file_upload_id)
 
-    return StatusResponse(
-        success=True,
-        message=f"Current status: {upload.status}"
-    )
+    return StatusResponse(success=True, message=f"Current status: {upload.status}")

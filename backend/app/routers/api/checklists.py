@@ -284,11 +284,11 @@ def export_checklist_results(
     # Export as CSV
     if format == "csv":
         df.to_csv(export_filename, index=False)
-        buf = StringIO()
-        df.to_csv(buf, index=False)
-        buf.seek(0)
+        csv_buf = StringIO()
+        df.to_csv(csv_buf, index=False)
+        csv_buf.seek(0)
         return StreamingResponse(
-            buf,
+            csv_buf,
             media_type="text/csv",
             headers={
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.csv"
@@ -298,11 +298,11 @@ def export_checklist_results(
     # Export as Excel
     elif format == "excel":
         df.to_excel(export_filename, index=False)
-        buf = BytesIO()
-        df.to_excel(buf, index=False)
-        buf.seek(0)
+        excel_buf = BytesIO()
+        df.to_excel(excel_buf, index=False)
+        excel_buf.seek(0)
         return StreamingResponse(
-            buf,
+            excel_buf,
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.xlsx"
@@ -322,11 +322,11 @@ def export_checklist_results(
             for idx, value in enumerate(row):
                 row_cells[idx].text = str(value)
         doc.save(export_filename)
-        buf = BytesIO()
-        doc.save(buf)
-        buf.seek(0)
+        word_buf = BytesIO()
+        doc.save(word_buf)
+        word_buf.seek(0)
         return StreamingResponse(
-            buf,
+            word_buf,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             headers={
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.docx"
@@ -354,10 +354,10 @@ def export_checklist_results(
         # Serve file
         with open(export_filename, "rb") as f:
             pdf_bytes = f.read()
-        buf = BytesIO(pdf_bytes)
-        buf.seek(0)
+        pdf_buf = BytesIO(pdf_bytes)
+        pdf_buf.seek(0)
         return StreamingResponse(
-            buf,
+            pdf_buf,
             media_type="application/pdf",
             headers={
                 "Content-Disposition": f"attachment; filename=checklist_{checklist_id}_results.pdf"

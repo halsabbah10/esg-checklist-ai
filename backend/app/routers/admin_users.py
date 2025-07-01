@@ -6,7 +6,7 @@ security, logging, and error handling.
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlmodel import Session, select, and_
-from typing import List, Optional
+from typing import Optional
 import logging
 from datetime import datetime, timezone
 
@@ -19,7 +19,6 @@ from app.schemas import (
     UserReadAdmin,
     UserListResponse,
     PasswordResetAdmin,
-    MessageResponse,
 )
 
 logger = logging.getLogger(__name__)

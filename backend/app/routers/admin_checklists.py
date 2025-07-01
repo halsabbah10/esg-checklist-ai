@@ -21,158 +21,11 @@ from app.schemas import (
     ChecklistUpdateAdmin,
     ChecklistReadAdmin,
     ChecklistListResponse,
-    MessageResponse,
 )
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/checklists", tags=["admin-checklists"])
-    order_index: int = 0
-
-    @validator("question_text")
-    def validate_question_text(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Question text cannot be empty")
-        if len(v) > 1000:
-            raise ValueError("Question text cannot exceed 1000 characters")
-        return v.strip()
-
-    @validator("weight")
-    def validate_weight(cls, v):
-        if v is not None and (v < 0 or v > 10):
-            raise ValueError("Weight must be between 0 and 10")
-        return v
-
-    @validator("category")
-    def validate_category(cls, v):
-        if v is not None and len(v) > 100:
-            raise ValueError("Category cannot exceed 100 characters")
-        return v
-
-
-class ChecklistItemUpdateAdmin(BaseModel):
-    """Admin checklist item update model with optional fields."""
-
-    question_text: Optional[str] = None
-    weight: Optional[float] = None
-    category: Optional[str] = None
-    is_required: Optional[bool] = None
-    order_index: Optional[int] = None
-
-    @validator("question_text")
-    def validate_question_text(cls, v):
-        if v is not None:
-            if not v or not v.strip():
-                raise ValueError("Question text cannot be empty")
-            if len(v) > 1000:
-                raise ValueError("Question text cannot exceed 1000 characters")
-            return v.strip()
-        return v
-
-    @validator("weight")
-    def validate_weight(cls, v):
-        if v is not None and (v < 0 or v > 10):
-            raise ValueError("Weight must be between 0 and 10")
-        return v
-
-    @validator("category")
-    def validate_category(cls, v):
-        if v is not None and len(v) > 100:
-            raise ValueError("Category cannot exceed 100 characters")
-        return v
-
-
-class ChecklistItemReadAdmin(BaseModel):
-    """Enhanced checklist item read model for admin operations."""
-
-    id: int
-    checklist_id: int
-    question_text: str
-    weight: Optional[float]
-    category: Optional[str]
-    is_required: bool
-    order_index: int
-    created_at: datetime
-    updated_at: Optional[datetime]
-
-    class Config:
-        from_attributes = True
-
-
-class ChecklistCreateAdmin(BaseModel):
-    """Admin checklist creation model with enhanced validation."""
-
-    title: str
-    description: Optional[str] = None
-    is_active: bool = True
-    version: int = 1
-    items: Optional[List[ChecklistItemCreateAdmin]] = []
-
-    @validator("title")
-    def validate_title(cls, v):
-        if not v or not v.strip():
-            raise ValueError("Title cannot be empty")
-        if len(v) > 255:
-            raise ValueError("Title cannot exceed 255 characters")
-        return v.strip()
-
-    @validator("description")
-    def validate_description(cls, v):
-        if v is not None and len(v) > 5000:
-            raise ValueError("Description cannot exceed 5000 characters")
-        return v
-
-
-class ChecklistUpdateAdmin(BaseModel):
-    """Admin checklist update model with optional fields."""
-
-    title: Optional[str] = None
-    description: Optional[str] = None
-    is_active: Optional[bool] = None
-    version: Optional[int] = None
-
-    @validator("title")
-    def validate_title(cls, v):
-        if v is not None:
-            if not v or not v.strip():
-                raise ValueError("Title cannot be empty")
-            if len(v) > 255:
-                raise ValueError("Title cannot exceed 255 characters")
-            return v.strip()
-        return v
-
-    @validator("description")
-    def validate_description(cls, v):
-        if v is not None and len(v) > 5000:
-            raise ValueError("Description cannot exceed 5000 characters")
-        return v
-
-
-class ChecklistReadAdmin(BaseModel):
-    """Enhanced checklist read model for admin operations."""
-
-    id: int
-    title: str
-    description: Optional[str]
-    created_by: int
-    is_active: bool
-    version: int
-    created_at: datetime
-    updated_at: Optional[datetime]
-    items_count: Optional[int] = 0
-
-    class Config:
-        from_attributes = True
-
-
-class ChecklistListResponse(BaseModel):
-    """Paginated checklist list response."""
-
-    checklists: List[ChecklistReadAdmin]
-    total: int
-    page: int
-    per_page: int
-    total_pages: int
+router = APIRouter(prefix="/v1/admin/checklists", tags=["admin-checklists"])
 
 
 # Checklist CRUD Operations
@@ -226,7 +79,6 @@ async def list_checklists(
 
         # Calculate pagination
         total = len(all_checklists)
-        total_pages = (total + per_page - 1) // per_page
 
         # Apply pagination
         offset = (page - 1) * per_page
@@ -269,8 +121,7 @@ async def list_checklists(
             checklists=enhanced_checklists,
             total=total,
             page=page,
-            per_page=per_page,
-            total_pages=total_pages,
+            page_size=per_page,
         )
 
     except Exception as e:
@@ -364,8 +215,8 @@ async def create_checklist(
             title=checklist_data.title,
             description=checklist_data.description,
             created_by=current_user.id or 0,  # Handle None case
-            is_active=checklist_data.is_active,
-            version=checklist_data.version,
+            is_active=True,  # Default to active
+            version=1,  # Default version as integer
             created_at=datetime.now(timezone.utc),
         )
 
@@ -382,8 +233,10 @@ async def create_checklist(
                     question_text=item_data.question_text,
                     weight=item_data.weight,
                     category=item_data.category,
-                    is_required=item_data.is_required,
-                    order_index=item_data.order_index,
+                    is_required=item_data.is_required
+                    if item_data.is_required is not None
+                    else True,
+                    order_index=0,  # Default order index since schema doesn't have it
                     created_at=datetime.now(timezone.utc),
                     created_by_user_id=current_user.id,
                 )
@@ -634,8 +487,10 @@ async def create_checklist_item(
             question_text=item_data.question_text,
             weight=item_data.weight,
             category=item_data.category,
-            is_required=item_data.is_required,
-            order_index=item_data.order_index,
+            is_required=item_data.is_required
+            if item_data.is_required is not None
+            else True,
+            order_index=0,  # Default order index since schema doesn't have it
             created_at=datetime.now(timezone.utc),
             created_by_user_id=current_user.id,
         )

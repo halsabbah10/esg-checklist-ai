@@ -1,14 +1,17 @@
 import time
 import logging
-from typing import Tuple
+from typing import Tuple, Optional, Any
 from dotenv import load_dotenv
 
 # Import the new AI abstraction
 try:
     from app.ai.scorer import AIScorer
+
+    AIScorer_available = True
 except ImportError:
     # Fallback for development/testing
     AIScorer = None
+    AIScorer_available = False
 
 # Load environment variables
 load_dotenv()
@@ -110,7 +113,7 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
             text = text[:50000] + "...[truncated for AI processing]"
 
         # Use the new AI abstraction
-        if AIScorer:
+        if AIScorer_available and AIScorer:
             try:
                 scorer = AIScorer()
                 start_time = time.time()
@@ -213,7 +216,7 @@ def get_ai_service_status() -> dict:
     }
 
     # Add AI provider information if available
-    if AIScorer:
+    if AIScorer_available and AIScorer:
         try:
             scorer = AIScorer()
             provider_info = scorer.get_provider_info()

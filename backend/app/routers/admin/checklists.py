@@ -33,14 +33,15 @@ async def list_checklists(
     try:
         # Get all checklists and filter in Python for simplicity
         all_checklists = db.exec(select(Checklist)).all()
-        
+
         # Apply search filter in Python
         if search:
             search_lower = search.lower()
             all_checklists = [
-                c for c in all_checklists
-                if search_lower in c.title.lower() or 
-                   (c.description and search_lower in c.description.lower())
+                c
+                for c in all_checklists
+                if search_lower in c.title.lower()
+                or (c.description and search_lower in c.description.lower())
             ]
 
         # Calculate pagination
@@ -51,10 +52,14 @@ async def list_checklists(
         end_idx = start_idx + per_page
         checklists = all_checklists[start_idx:end_idx]
 
-        logger.info(f"Admin {current_user.email} listed checklists: page={page}, total={total}")
+        logger.info(
+            f"Admin {current_user.email} listed checklists: page={page}, total={total}"
+        )
 
         return ChecklistListResponse(
-            checklists=[ChecklistReadAdmin.model_validate(checklist) for checklist in checklists],
+            checklists=[
+                ChecklistReadAdmin.model_validate(checklist) for checklist in checklists
+            ],
             total=total,
             page=page,
             page_size=per_page,
@@ -76,13 +81,15 @@ async def create_checklist(
 ):
     """Create a new checklist with items."""
     try:
-        # Create the checklist  
+        # Create the checklist
         new_checklist = Checklist(
             title=checklist_data.title,
             description=checklist_data.description,
-            created_by=current_user.id if current_user.id else 1,  # Fallback to admin user
+            created_by=current_user.id
+            if current_user.id
+            else 1,  # Fallback to admin user
         )
-        
+
         db.add(new_checklist)
         db.commit()
         db.refresh(new_checklist)
@@ -95,15 +102,17 @@ async def create_checklist(
                     question_text=item_data.question_text,
                     weight=item_data.weight,
                     category=item_data.category,
-                    is_required=item_data.is_required if item_data.is_required is not None else True,
+                    is_required=item_data.is_required
+                    if item_data.is_required is not None
+                    else True,
                 )
                 db.add(new_item)
-            
+
             db.commit()
 
         # Fetch the complete checklist with items
         db.refresh(new_checklist)
-        
+
         logger.info(f"Admin {current_user.email} created checklist: {new_checklist.id}")
 
         return ChecklistReadAdmin.model_validate(new_checklist)
@@ -206,7 +215,7 @@ async def delete_checklist(
         items = db.exec(
             select(ChecklistItem).where(ChecklistItem.checklist_id == checklist_id)
         ).all()
-        
+
         for item in items:
             db.delete(item)
 

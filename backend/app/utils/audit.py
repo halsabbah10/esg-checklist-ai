@@ -294,20 +294,20 @@ def export_audit_logs(
     df = pd.DataFrame(data)
 
     if format.lower() == "csv":
-        buf = StringIO()
-        df.to_csv(buf, index=False)
-        buf.seek(0)
+        csv_buf = StringIO()
+        df.to_csv(csv_buf, index=False)
+        csv_buf.seek(0)
         return StreamingResponse(
-            iter([buf.getvalue()]),
+            iter([csv_buf.getvalue()]),
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=audit_logs.csv"},
         )
     elif format.lower() == "excel":
-        buf = BytesIO()
-        df.to_excel(buf, index=False, engine="openpyxl")
-        buf.seek(0)
+        excel_buf = BytesIO()
+        df.to_excel(excel_buf, index=False, engine="openpyxl")
+        excel_buf.seek(0)
         return StreamingResponse(
-            iter([buf.getvalue()]),
+            iter([excel_buf.getvalue()]),
             media_type="application/vnd.openxmlformats-officedocument."
             "spreadsheetml.sheet",
             headers={"Content-Disposition": "attachment; filename=audit_logs.xlsx"},
