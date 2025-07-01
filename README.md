@@ -19,7 +19,7 @@ AI-enhanced system to validate ESG checklist answers, automate reporting, and as
 ## Contributors
 
 - Husam AlSabbah
-- Zakarria
+- Zakkaria
 
 Private repo for internal use within e& Risk and Assurance Department.
 " > README.md
