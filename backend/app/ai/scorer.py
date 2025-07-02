@@ -71,31 +71,60 @@ class AIScorer:
             raise
 
     def _score_gemini(self, text: str) -> Tuple[float, str]:
-        """Score text using Google's Gemini AI model."""
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        """Score text using Google's Gemini 2.0 Flash Experimental model - Latest and most sophisticated model for ESG analysis."""
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
 
-        # Enhanced prompt for ESG scoring
+        # Enhanced prompt for comprehensive ESG scoring using Gemini 2.0
         esg_prompt = f"""
-        Analyze the following ESG (Environmental, Social, Governance) document and provide a comprehensive assessment.
-        
-        Document text: {text}
-        
-        Please provide:
-        1. An overall ESG compliance score between 0.0 and 1.0 (where 1.0 is excellent compliance)
-        2. Detailed feedback on strengths and areas for improvement
-        3. Specific recommendations for better ESG practices
-        
-        Format your response with the score clearly indicated as "Score: X.XX" followed by your detailed analysis.
+        You are an expert ESG (Environmental, Social, and Governance) analyst with deep knowledge of international sustainability frameworks including GRI, SASB, TCFD, and UN SDGs.
+
+        Analyze the following document for ESG compliance and sustainability performance:
+
+        Document: {text}
+
+        Please provide a comprehensive ESG assessment including:
+
+        1. **Overall ESG Score** (0.0-1.0): A quantitative assessment where:
+           - 0.9-1.0: Excellent ESG leadership with best-in-class practices
+           - 0.7-0.89: Strong ESG performance with minor areas for improvement
+           - 0.5-0.69: Moderate ESG compliance with notable gaps
+           - 0.3-0.49: Below-average ESG performance requiring significant improvement
+           - 0.0-0.29: Poor ESG compliance with major deficiencies
+
+        2. **Category Analysis**:
+           - Environmental (E): Climate action, resource efficiency, pollution prevention, biodiversity
+           - Social (S): Human rights, labor practices, community impact, diversity & inclusion
+           - Governance (G): Board composition, ethics, transparency, risk management
+
+        3. **Key Findings**:
+           - Strengths and best practices identified
+           - Critical gaps and improvement areas
+           - Risk factors and compliance concerns
+
+        4. **Strategic Recommendations**:
+           - Specific, actionable improvement suggestions
+           - Industry benchmarking insights
+           - Regulatory compliance guidance
+
+        Format your response with the numerical score clearly marked as "Score: X.XX" at the beginning, followed by your detailed professional analysis.
         """
 
         payload = {
             "contents": [{"parts": [{"text": esg_prompt}]}],
             "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 1024,
-                "topP": 0.9,
-                "topK": 1,
+                "temperature": 0.1,  # Low temperature for consistent, analytical responses
+                "maxOutputTokens": 2048,  # Increased for comprehensive analysis
+                "topP": 0.8,  # Balanced creativity and precision
+                "topK": 40,  # Optimal for analytical tasks
+                "candidateCount": 1,
+                "stopSequences": [],
             },
+            "safetySettings": [
+                {
+                    "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+                    "threshold": "BLOCK_ONLY_HIGH",
+                }
+            ],
         }
         headers = {"Content-Type": "application/json"}
 
@@ -368,7 +397,7 @@ class AIScorer:
     def _get_provider_description(self) -> str:
         """Get a description of the current provider."""
         descriptions = {
-            "gemini": "Google Gemini Pro - Advanced AI model for comprehensive ESG analysis",
+            "gemini": "Google Gemini 2.0 Flash Experimental - Latest cutting-edge AI model optimized for comprehensive ESG analysis and sustainability assessment",
             "openai": "OpenAI GPT-3.5-turbo - Reliable AI model for ESG document scoring",
             "eand": "e& Internal AI - Custom AI model optimized for regional ESG standards",
         }

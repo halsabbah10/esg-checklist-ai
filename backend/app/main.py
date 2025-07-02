@@ -1,7 +1,9 @@
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
+
+# Import auth router
+from .routers.auth import router as auth_router
 
 # Import organized routers
 from .routers.api import (
@@ -19,6 +21,12 @@ from .database import engine, get_db_health
 from .models import SQLModel
 from dotenv import load_dotenv
 from app.utils.audit import router as audit_router
+
+# Import security components
+from app.security.rate_limiting import RateLimitMiddleware
+from app.security.headers import SecurityHeadersMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+
 import os
 import time
 import logging
@@ -78,9 +86,41 @@ app = FastAPI(
 # Add request logging middleware
 app.middleware("http")(log_requests)
 
-# Security middleware
+# Add security middleware stack
+environment = os.getenv("ENVIRONMENT", "development")
+
+# 1. Rate limiting (first to prevent abuse)
+app.add_middleware(
+    RateLimitMiddleware, default_requests_per_minute=60, enable_redis=True
+)
+
+# 2. Security headers
+app.add_middleware(SecurityHeadersMiddleware, environment=environment)
+
+# 3. Enhanced CORS with security
+cors_origins = (
+    ["http://localhost:3000", "http://127.0.0.1:3000"]
+    if environment == "development"
+    else []
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=cors_origins,
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+    ],
+    expose_headers=["X-RateLimit-Limit", "X-RateLimit-Remaining", "X-RateLimit-Reset"],
+)
+
+# 4. Basic host validation (fallback)
 allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",")
-# Add testserver for FastAPI TestClient compatibility
 if "testserver" not in allowed_hosts:
     allowed_hosts.append("testserver")
 
@@ -89,16 +129,8 @@ app.add_middleware(
     allowed_hosts=allowed_hosts,
 )
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
-    ).split(","),
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
-)
+# Include auth router
+app.include_router(auth_router)
 
 # Include API routers
 app.include_router(users_router)

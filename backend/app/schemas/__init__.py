@@ -28,6 +28,7 @@ from .users import (
     UserReadAdmin,
     UserListResponse,
     PasswordResetAdmin,
+    PasswordChange,
 )
 
 # Checklist schemas
@@ -106,6 +107,7 @@ __all__ = [
     "UserReadAdmin",
     "UserListResponse",
     "PasswordResetAdmin",
+    "PasswordChange",
     # Checklists
     "ChecklistItemCreate",
     "ChecklistItemRead",

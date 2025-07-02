@@ -1,16 +1,17 @@
 import time
 import logging
-from typing import Tuple
+from typing import Tuple, Optional, Type, Any, Dict
 from dotenv import load_dotenv
 
 # Import the new AI abstraction
 try:
     from app.ai.scorer import AIScorer
 
+    AIScorer_class: Optional[Type[Any]] = AIScorer
     AIScorer_available = True
 except ImportError:
     # Fallback for development/testing
-    AIScorer = None
+    AIScorer_class = None
     AIScorer_available = False
 
 # Load environment variables
@@ -113,9 +114,9 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
             text = text[:50000] + "...[truncated for AI processing]"
 
         # Use the new AI abstraction
-        if AIScorer_available and AIScorer:
+        if AIScorer_available and AIScorer_class:
             try:
-                scorer = AIScorer()
+                scorer = AIScorer_class()
                 start_time = time.time()
                 score, feedback = circuit_breaker.call(scorer.score, text)
                 processing_time = time.time() - start_time
@@ -216,9 +217,9 @@ def get_ai_service_status() -> dict:
     }
 
     # Add AI provider information if available
-    if AIScorer_available and AIScorer:
+    if AIScorer_available and AIScorer_class:
         try:
-            scorer = AIScorer()
+            scorer = AIScorer_class()
             provider_info = scorer.get_provider_info()
             status.update(
                 {
@@ -251,7 +252,7 @@ def get_ai_service_status() -> dict:
 
 
 # Enhanced ESG scoring based on real Internal Audit Checklist data
-REAL_ESG_CATEGORIES = {
+REAL_ESG_CATEGORIES: Dict[str, Any] = {
     "Environmental": {
         "subcategories": ["Energy", "Emissions", "Water", "Waste"],
         "keywords": [
@@ -311,11 +312,13 @@ Analyze documents for Environmental, Social, and Governance compliance based on 
 Focus on specific evidence, policy implementation, and regulatory compliance indicators."""
 
 
-def calculate_enhanced_esg_score(document_analysis: dict, ai_response: str) -> dict:
+def calculate_enhanced_esg_score(
+    document_analysis: dict, ai_response: str
+) -> Dict[str, Any]:
     """Calculate ESG score using enhanced rubric based on real data."""
 
     # Initialize scoring structure
-    scores = {
+    scores: Dict[str, Dict[str, Any]] = {
         "Environmental": {"score": 0, "evidence": [], "risks": []},
         "Social": {"score": 0, "evidence": [], "risks": []},
         "Governance": {"score": 0, "evidence": [], "risks": []},
