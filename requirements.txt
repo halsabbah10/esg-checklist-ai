@@ -14,7 +14,7 @@ python-jose[cryptography]==3.3.0
 python-multipart==0.0.7
 
 # --- Data Handling and Parsing ---
-pandas==2.3.0
+pandas>=2.0.0
 openpyxl==3.1.5
 python-docx==1.2.0
 pypdfium2==4.30.1
@@ -56,11 +56,11 @@ mypy==1.10.0
 pre-commit==3.7.1
 
 # --- Other dependencies for parsing ---
-pdfminer.six==20250506
+pdfminer.six==20231228
 python-dateutil==2.9.0.post0
 
 # --- Data Science/Analytics ---
-numpy==2.3.0
+numpy>=1.26.0,<2.0.0
 scikit-learn==1.7.0
 scipy==1.15.3
 matplotlib==3.8.2  # For chart generation
