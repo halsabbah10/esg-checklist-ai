@@ -8,47 +8,55 @@ from sqlmodel import SQLModel
 from .routers import users, checklists, reviews, submissions, notifications
 from .routers.admin_users import router as admin_users_router
 from .routers.admin_checklists import router as admin_checklists_router
-from .database import engine, get_db_health
-from dotenv import load_dotenv
+from .database import engine, get_db_health, init_database
+from .config import (
+    get_settings, 
+    validate_required_settings, 
+    get_log_config, 
+    get_cors_settings, 
+    get_api_prefix,
+    create_directories,
+    is_production
+)
 from app.routers.analytics import router as analytics_router
 from app.utils.audit import router as audit_router
 from app.routers.export import router as export_router
-import os
+from app.routers.uploads import router as uploads_router
 import time
 import logging
 from datetime import datetime, timezone
-from app.routers.uploads import router as uploads_router
+import logging.config
 
+# Get centralized settings
+settings = get_settings()
 
-# Configure comprehensive logging with structured format
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler("logs/app.log", mode="a") if os.path.exists("logs") or os.makedirs("logs", exist_ok=True) else logging.StreamHandler()
-    ]
-)
+# Validate configuration
+validate_required_settings()
+
+# Create necessary directories
+create_directories()
+
+# Configure logging with centralized configuration
+logging.config.dictConfig(get_log_config())
 logger = logging.getLogger(__name__)
-
-load_dotenv()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create all tables (runs once on app startup)
-    logger.info("Starting up ESG Checklist AI application...")
+    """Application lifespan with centralized configuration"""
+    # Startup
+    logger.info(f"Starting {settings.app_name} v{settings.app_version}...")
     try:
-        SQLModel.metadata.create_all(engine)
-        logger.info("Database tables created successfully")
+        init_database()
+        logger.info("Application startup completed successfully")
     except Exception as e:
-        logger.error(f"Failed to create database tables: {e}")
+        logger.error(f"Failed to start application: {e}")
         raise
 
     yield
 
-    # Cleanup on shutdown
-    logger.info("Shutting down ESG Checklist AI application...")
+    # Shutdown
+    logger.info(f"Shutting down {settings.app_name}...")
 
 
 # Request logging middleware
@@ -66,53 +74,50 @@ async def log_requests(request: Request, call_next):
     return response
 
 
+# Get API prefix for versioning
+api_prefix = get_api_prefix()
+
 app = FastAPI(
-    title="ESG Checklist AI",
+    title=settings.app_name,
     description="AI-enhanced system to validate ESG checklist answers and automate reporting",
-    version="1.0.0",
+    version=settings.app_version,
     lifespan=lifespan,
-    docs_url="/docs" if os.getenv("ENVIRONMENT") != "production" else None,
-    redoc_url="/redoc" if os.getenv("ENVIRONMENT") != "production" else None,
+    docs_url=f"{api_prefix}/docs" if settings.docs_enabled and not is_production() else None,
+    redoc_url=f"{api_prefix}/redoc" if settings.docs_enabled and not is_production() else None,
+    openapi_url=f"{api_prefix}/openapi.json" if settings.docs_enabled else None,
 )
 
 # Add request logging middleware
 app.middleware("http")(log_requests)
 
-# Security middleware
-allowed_hosts = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",")
-# Add testserver for FastAPI TestClient compatibility
-if "testserver" not in allowed_hosts:
-    allowed_hosts.append("testserver")
-
+# Security middleware with centralized configuration
+allowed_hosts_list = [x.strip() for x in settings.allowed_hosts.split(",")]
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=allowed_hosts,
+    allowed_hosts=allowed_hosts_list,
 )
 
-# CORS middleware
+# CORS middleware with centralized configuration
+cors_settings = get_cors_settings()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv(
-        "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080"
-    ).split(","),
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["*"],
+    **cors_settings,
 )
 
-app.include_router(users.router)
-app.include_router(checklists.router)
-app.include_router(reviews.router)
-app.include_router(submissions.router)
-app.include_router(notifications.router)
-app.include_router(analytics_router)
-app.include_router(audit_router)
-app.include_router(export_router)
-app.include_router(uploads_router)
+# Include routers with API versioning
+app.include_router(users.router, prefix=api_prefix)
+app.include_router(checklists.router, prefix=api_prefix)
+app.include_router(reviews.router, prefix=api_prefix)
+app.include_router(submissions.router, prefix=api_prefix)
+app.include_router(notifications.router, prefix=api_prefix)
+app.include_router(analytics_router, prefix=api_prefix)
+app.include_router(audit_router, prefix=api_prefix)
+app.include_router(export_router, prefix=api_prefix)
+app.include_router(uploads_router, prefix=api_prefix)
 
-# Admin routers
-app.include_router(admin_users_router)
-app.include_router(admin_checklists_router)
+# Admin routers with API versioning
+app.include_router(admin_users_router, prefix=api_prefix)
+app.include_router(admin_checklists_router, prefix=api_prefix)
 
 
 # Global exception handlers
@@ -188,22 +193,22 @@ async def health_check():
     """
     Comprehensive health check endpoint with detailed system status
     """
+    import os
     try:
         # Check database health
         db_health = get_db_health()
         
         # Check AI service availability
         ai_health = "healthy"
-        try:
-            from app.config import settings
+        if settings.enable_ai_features:
             if not settings.gemini_api_key and not settings.openai_api_key:
                 ai_health = "warning - no AI keys configured"
-        except Exception:
-            ai_health = "warning - AI configuration check failed"
+        else:
+            ai_health = "disabled"
         
         # Check file system
-        upload_path_exists = os.path.exists("uploads")
-        logs_path_exists = os.path.exists("logs")
+        upload_path_exists = os.path.exists(settings.upload_path)
+        logs_path_exists = os.path.exists("logs") if settings.log_file else True
         
         # System metrics
         try:
@@ -219,8 +224,9 @@ async def health_check():
         health_status = {
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "version": "1.0.0",
-            "environment": os.getenv("ENVIRONMENT", "development"),
+            "version": settings.app_version,
+            "environment": settings.environment,
+            "api_version": settings.api_version,
             "checks": {
                 "database": "healthy" if db_health else "unhealthy",
                 "api": "healthy",
@@ -265,8 +271,11 @@ async def get_metrics():
 async def root():
     """Root endpoint with API information"""
     return {
-        "message": "ESG Checklist AI API",
-        "version": "1.0.0",
-        "docs": "/docs",
+        "message": f"{settings.app_name} API",
+        "version": settings.app_version,
+        "api_version": settings.api_version,
+        "environment": settings.environment,
+        "docs": f"{api_prefix}/docs" if settings.docs_enabled and not is_production() else None,
         "health": "/health",
+        "api_prefix": api_prefix,
     }

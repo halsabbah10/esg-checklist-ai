@@ -1,7 +1,7 @@
 import time
 import logging
-from typing import Tuple
-from dotenv import load_dotenv
+from typing import Tuple, Optional, Dict, Any
+from ..config import get_settings, get_ai_config
 
 # Import the new AI abstraction
 try:
@@ -10,18 +10,21 @@ except ImportError:
     # Fallback for development/testing
     AIScorer = None
 
-# Load environment variables
-load_dotenv()
+# Get centralized configuration
+settings = get_settings()
+ai_config = get_ai_config()
 
 # Configure logging
 logger = logging.getLogger(__name__)
 
 
-# Circuit breaker state
+# Circuit breaker state with centralized configuration
 class CircuitBreaker:
-    def __init__(self, failure_threshold=5, recovery_timeout=60):
-        self.failure_threshold = failure_threshold
-        self.recovery_timeout = recovery_timeout
+    def __init__(self, 
+                 failure_threshold: int = None, 
+                 recovery_timeout: int = None):
+        self.failure_threshold = failure_threshold or ai_config["circuit_breaker_threshold"]
+        self.recovery_timeout = recovery_timeout or ai_config["circuit_breaker_timeout"]
         self.failure_count = 0
         self.last_failure_time = None
         self.state = "CLOSED"  # CLOSED, OPEN, HALF_OPEN

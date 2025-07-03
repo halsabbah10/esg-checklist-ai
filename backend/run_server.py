@@ -10,7 +10,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 if __name__ == "__main__":
     import uvicorn
-    from app.main import app
     
     print("🚀 Starting ESG Checklist AI server...")
     print("📋 Swagger UI will be available at: http://localhost:8000/docs")
@@ -19,7 +18,7 @@ if __name__ == "__main__":
     print("\nPress Ctrl+C to stop the server")
     
     uvicorn.run(
-        app,
+        "app.main:app",
         host="127.0.0.1",
         port=8000,
         reload=True,
