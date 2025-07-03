@@ -2,9 +2,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from contextlib import asynccontextmanager
+from sqlmodel import SQLModel
 from .routers import users, checklists, reviews, submissions, notifications
 from .database import engine, get_db_health
-from .models import SQLModel
 from dotenv import load_dotenv
 from app.routers.analytics import router as analytics_router
 from app.utils.audit import router as audit_router

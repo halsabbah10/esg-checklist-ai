@@ -1,0 +1,24 @@
+{
+    "include": [
+        "backend",
+        "src",
+        "notebooks"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        ".venv"
+    ],
+    "venv": ".venv",
+    "venvPath": ".",
+    "pythonVersion": "3.13",
+    "pythonPlatform": "Darwin",
+    "extraPaths": [
+        "./backend"
+    ],
+    "reportMissingImports": "information",
+    "reportMissingTypeStubs": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownArgumentType": false,
+    "reportUnknownVariableType": false
+}
