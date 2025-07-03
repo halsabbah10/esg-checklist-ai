@@ -1,5 +1,5 @@
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Text, Index
 from datetime import datetime, timezone
 import uuid
@@ -110,6 +110,7 @@ class Comment(SQLModel, table=True):
     text: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     # file_upload: Optional["FileUpload"] = Relationship(back_populates="comments")
+    file_upload: Optional["FileUpload"] = Relationship(back_populates="comments")
 
 
 class FileUpload(BaseModel, table=True):
@@ -138,7 +139,7 @@ class FileUpload(BaseModel, table=True):
     # ai_results: List["AIResult"] = Relationship(back_populates="file_upload")
 
     status: str = Field(default="pending")  # "pending", "approved", "rejected"
-    # comments: List["Comment"] = Relationship(back_populates="file_upload")
+    comments: List["Comment"] = Relationship(back_populates="file_upload")
 
 
 class AIResult(BaseModel, table=True):
@@ -202,3 +203,19 @@ class SystemConfig(SQLModel, table=True):
     is_sensitive: bool = Field(default=False)  # For passwords, API keys, etc.
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: Optional[datetime] = Field(default=None)
+
+
+class SubmissionAnswer(SQLModel, table=True):
+    __tablename__ = "submissionanswer"  # type: ignore
+    __table_args__ = (
+        Index("idx_submissionanswer_checklist", "checklist_id"),
+        Index("idx_submissionanswer_question", "question_id"),
+        Index("idx_submissionanswer_user", "user_id"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    checklist_id: int = Field(foreign_key="checklist.id")
+    question_id: int = Field(foreign_key="checklistitem.id")
+    user_id: int = Field(foreign_key="user.id")
+    answer_text: str = Field(sa_type=Text)
+    submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
