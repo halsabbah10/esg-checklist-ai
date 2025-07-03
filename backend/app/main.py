@@ -12,6 +12,8 @@ import os
 import time
 import logging
 from datetime import datetime, timezone
+from app.routers.uploads import router as uploads_router
+
 
 # Configure logging
 logging.basicConfig(
@@ -95,6 +97,7 @@ app.include_router(submissions.router)
 app.include_router(notifications.router)
 app.include_router(analytics_router)
 app.include_router(audit_router)
+app.include_router(uploads_router)
 
 
 @app.get("/health")
