@@ -13,12 +13,19 @@
     "venvPath": ".",
     "pythonVersion": "3.13",
     "pythonPlatform": "Darwin",
+    "typeCheckingMode": "basic",
     "extraPaths": [
-        "./backend"
+        "./backend",
+        "./src",
+        "./notebooks"
     ],
+    "autoSearchPaths": true,
+    "useLibraryCodeForTypes": true,
     "reportMissingImports": "information",
-    "reportMissingTypeStubs": false,
+    "reportMissingTypeStubs": "none",
     "reportUnknownMemberType": false,
     "reportUnknownArgumentType": false,
-    "reportUnknownVariableType": false
+    "reportUnknownVariableType": false,
+    "reportUnusedImport": "information",
+    "reportUnusedVariable": "information"
 }
