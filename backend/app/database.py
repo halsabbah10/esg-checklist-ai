@@ -4,7 +4,8 @@ import os
 from dotenv import load_dotenv
 import logging
 
-load_dotenv()  # loads variables from .env
+# Load environment variables from the correct .env file
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../.env'))
 
 # Database configuration
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -53,7 +54,10 @@ def get_session():
         raise
     except Exception as e:
         logging.error(f"Database session error: {e}")
-        raise HTTPException(status_code=500, detail="Database connection error")
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 def get_db_health():
