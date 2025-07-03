@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from sqlmodel import Session, select
 from ..models import Checklist, ChecklistItem, FileUpload
 from ..schemas import ChecklistCreate, ChecklistRead, ChecklistItemRead
@@ -19,6 +19,7 @@ import pandas as pd
 from io import StringIO, BytesIO
 from fpdf import FPDF
 import logging
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,91 @@ def list_checklists(
     current_user=Depends(require_role("auditor")),  # All roles can view
 ):
     return db.exec(select(Checklist)).all()
+
+
+@router.get("/search")
+def search_checklists(
+    q: str = Query(..., description="Search query for checklist title or description"),
+    category: Optional[str] = Query(None, description="Filter by category"),
+    limit: int = Query(20, ge=1, le=100, description="Maximum number of results"),
+    db: Session = Depends(get_session),
+    current_user=Depends(require_role("auditor")),
+):
+    """
+    Search checklists by title, description, or category.
+    Returns matching checklists with relevance scoring.
+    """
+    try:
+        # Start with all checklists
+        query = select(Checklist).where(Checklist.is_active == True)
+        
+        # Execute query to get all checklists
+        checklists = db.exec(query).all()
+        
+        # Apply search filter in Python
+        search_lower = q.lower()
+        matching_checklists = []
+        
+        for checklist in checklists:
+            relevance_score = 0
+            
+            # Title matching (higher weight)
+            if search_lower in checklist.title.lower():
+                relevance_score += 10
+                
+            # Description matching (medium weight)  
+            if checklist.description and search_lower in checklist.description.lower():
+                relevance_score += 5
+                
+            # Category filter
+            if category and hasattr(checklist, 'category') and checklist.category != category:
+                continue
+                
+            if relevance_score > 0:
+                matching_checklists.append({
+                    "id": checklist.id,
+                    "title": checklist.title,
+                    "description": checklist.description,
+                    "created_by": checklist.created_by,
+                    "created_at": checklist.created_at,
+                    "is_active": checklist.is_active,
+                    "relevance_score": relevance_score
+                })
+        
+        # Sort by relevance score (descending)
+        matching_checklists.sort(key=lambda x: x["relevance_score"], reverse=True)
+        
+        # Apply limit
+        matching_checklists = matching_checklists[:limit]
+        
+        return {
+            "results": matching_checklists,
+            "total_count": len(matching_checklists),
+            "search_query": q,
+            "category_filter": category
+        }
+        
+    except Exception as e:
+        logger.error(f"Search error: {e}")
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Search failed: {str(e)}"
+        )
+
+
+@router.get("/{checklist_id}", response_model=ChecklistRead)
+def get_checklist(
+    checklist_id: int,
+    db: Session = Depends(get_session),
+    current_user=Depends(require_role("auditor")),
+):
+    checklist = db.get(Checklist, checklist_id)
+    if not checklist:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Checklist with ID {checklist_id} not found",
+        )
+    return checklist
 
 
 @router.get("/{checklist_id}/items", response_model=list[ChecklistItemRead])

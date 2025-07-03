@@ -1,31 +1,22 @@
 {
     "include": [
-        "backend",
-        "src",
-        "notebooks"
+        "backend"
     ],
     "exclude": [
         "**/node_modules",
         "**/__pycache__",
         ".venv"
     ],
-    "venv": ".venv",
     "venvPath": ".",
+    "venv": ".venv",
     "pythonVersion": "3.13",
     "pythonPlatform": "Darwin",
-    "typeCheckingMode": "basic",
     "extraPaths": [
         "./backend",
-        "./src",
-        "./notebooks"
+        "./backend/app"
     ],
-    "autoSearchPaths": true,
+    "typeCheckingMode": "basic",
     "useLibraryCodeForTypes": true,
-    "reportMissingImports": "information",
-    "reportMissingTypeStubs": "none",
-    "reportUnknownMemberType": false,
-    "reportUnknownArgumentType": false,
-    "reportUnknownVariableType": false,
-    "reportUnusedImport": "information",
-    "reportUnusedVariable": "information"
+    "reportMissingImports": "warning",
+    "reportMissingTypeStubs": false
 }

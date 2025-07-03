@@ -15,7 +15,7 @@ The **ESG Checklist AI** is a comprehensive enterprise solution designed to auto
 ### 🚀 **Key Features**
 
 - **🤖 AI-Powered Analysis**: Advanced document analysis using Google Gemini and OpenAI
-- **📊 Real-Time Analytics**: Comprehensive dashboards and reporting capabilities
+- **📊 Real-Time Analytics**: Comprehensive dashboards and reporting capabilities  
 - **👥 Multi-User Management**: Role-based access control (Admin, Auditor, Reviewer)
 - **📁 File Processing**: Support for PDF, Excel, Word, and text documents
 - **🔍 Advanced Search**: Intelligent search and filtering across all content
@@ -27,7 +27,6 @@ The **ESG Checklist AI** is a comprehensive enterprise solution designed to auto
 ## 🏗️ **System Architecture**
 
 ### **Technology Stack**
-
 - **Backend**: FastAPI (Python 3.11+)
 - **Database**: SQLite (dev) / PostgreSQL (production)
 - **ORM**: SQLModel with Alembic migrations
@@ -38,7 +37,6 @@ The **ESG Checklist AI** is a comprehensive enterprise solution designed to auto
 - **Deployment**: Docker, Docker Compose, nginx
 
 ### **Project Structure**
-
 ```
 esg-checklist-ai/
 ├── backend/                    # FastAPI backend application
@@ -63,7 +61,6 @@ esg-checklist-ai/
 ## 🚀 **Quick Start Guide**
 
 ### **Prerequisites**
-
 - Python 3.11+
 - Virtual environment support
 - Git
@@ -95,7 +92,6 @@ nano .env  # or your preferred editor
 ```
 
 **Essential Configuration:**
-
 ```env
 SECRET_KEY=your-secure-secret-key-here
 GEMINI_API_KEY=your-gemini-api-key
@@ -170,16 +166,16 @@ The system provides comprehensive API documentation with interactive testing cap
 
 ### **Core Endpoints**
 
-| Endpoint Category | Base Path                 | Description                        |
-| ----------------- | ------------------------- | ---------------------------------- |
-| Authentication    | `/users`                  | User management and authentication |
-| Checklists        | `/checklists`             | Checklist CRUD operations          |
-| File Upload       | `/checklists/{id}/upload` | Document upload and AI analysis    |
-| Analytics         | `/analytics`              | Performance metrics and insights   |
-| Search            | `/checklists/search`      | Advanced search functionality      |
-| Export            | `/export`                 | Data export in multiple formats    |
-| Admin             | `/admin`                  | Administrative functions           |
-| Audit             | `/audit`                  | System audit logs                  |
+| Endpoint Category | Base Path | Description |
+|------------------|-----------|-------------|
+| Authentication | `/users` | User management and authentication |
+| Checklists | `/checklists` | Checklist CRUD operations |
+| File Upload | `/checklists/{id}/upload` | Document upload and AI analysis |
+| Analytics | `/analytics` | Performance metrics and insights |
+| Search | `/checklists/search` | Advanced search functionality |
+| Export | `/export` | Data export in multiple formats |
+| Admin | `/admin` | Administrative functions |
+| Audit | `/audit` | System audit logs |
 
 ### **Key API Features**
 
@@ -231,7 +227,6 @@ curl -X GET "http://localhost:8000/export/ai-results?format=csv" \
 ## 📊 **Analytics & Reporting**
 
 ### **Available Analytics**
-
 - **Overall System Metrics**: User activity, file uploads, AI analysis results
 - **Checklist Performance**: Completion rates, average scores, trending
 - **User Analytics**: Individual performance, role-based insights
@@ -239,7 +234,6 @@ curl -X GET "http://localhost:8000/export/ai-results?format=csv" \
 - **Compliance Dashboards**: Real-time compliance status monitoring
 
 ### **Export Capabilities**
-
 - **Format Support**: CSV, Excel, PDF, JSON
 - **Filtered Exports**: Date ranges, user groups, score thresholds
 - **Scheduled Reports**: Automated report generation
@@ -248,21 +242,18 @@ curl -X GET "http://localhost:8000/export/ai-results?format=csv" \
 ## 🔐 **Security Features**
 
 ### **Authentication & Authorization**
-
 - **JWT Tokens**: Secure, stateless authentication
 - **Role-Based Access**: Granular permission control
 - **Password Security**: Bcrypt hashing with salt
 - **Session Management**: Configurable token expiration
 
 ### **Data Protection**
-
 - **Input Validation**: Comprehensive request validation
 - **SQL Injection Prevention**: Parameterized queries
 - **File Upload Security**: Type validation and size limits
 - **CORS Configuration**: Cross-origin request protection
 
 ### **Audit & Compliance**
-
 - **Complete Audit Trails**: All system actions logged
 - **User Activity Tracking**: Login, upload, and analysis logs
 - **Data Retention Policies**: Configurable retention periods
@@ -271,21 +262,18 @@ curl -X GET "http://localhost:8000/export/ai-results?format=csv" \
 ## 🚀 **Advanced Features**
 
 ### **AI Integration**
-
 - **Multiple AI Providers**: Google Gemini, OpenAI support
 - **Circuit Breaker Pattern**: Fault-tolerant AI service calls
 - **Retry Logic**: Automatic retry with exponential backoff
 - **Performance Monitoring**: AI response time tracking
 
 ### **File Processing**
-
 - **Multi-format Support**: PDF, Excel, Word, CSV, Text
 - **Intelligent Text Extraction**: OCR and structured data parsing
 - **Large File Handling**: Chunked processing for large documents
 - **Metadata Extraction**: Document properties and statistics
 
 ### **Performance Optimization**
-
 - **Async Processing**: Non-blocking I/O operations
 - **Caching Layer**: Redis-based response caching
 - **Database Indexing**: Optimized query performance
@@ -341,14 +329,14 @@ pytest tests/test_api.py
 
 ### **Environment Variables**
 
-| Variable           | Description                | Default                         | Required |
-| ------------------ | -------------------------- | ------------------------------- | -------- |
-| `SECRET_KEY`       | JWT signing secret         | -                               | ✅       |
-| `GEMINI_API_KEY`   | Google Gemini API key      | -                               | ✅       |
-| `DATABASE_URL`     | Database connection string | `sqlite:///./test.db`           | ❌       |
-| `ALLOWED_ORIGINS`  | CORS allowed origins       | `localhost:3000,localhost:8080` | ❌       |
-| `MAX_FILE_SIZE_MB` | Maximum upload file size   | `50`                            | ❌       |
-| `LOG_LEVEL`        | Logging level              | `INFO`                          | ❌       |
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `SECRET_KEY` | JWT signing secret | - | ✅ |
+| `GEMINI_API_KEY` | Google Gemini API key | - | ✅ |
+| `DATABASE_URL` | Database connection string | `sqlite:///./test.db` | ❌ |
+| `ALLOWED_ORIGINS` | CORS allowed origins | `localhost:3000,localhost:8080` | ❌ |
+| `MAX_FILE_SIZE_MB` | Maximum upload file size | `50` | ❌ |
+| `LOG_LEVEL` | Logging level | `INFO` | ❌ |
 
 ### **Database Configuration**
 
@@ -370,7 +358,6 @@ The system supports multiple database backends:
 6. **Open Pull Request**
 
 ### **Code Standards**
-
 - **Python Style**: Black formatting, PEP 8 compliance
 - **Type Hints**: Full type annotation coverage
 - **Documentation**: Comprehensive docstrings
@@ -381,7 +368,6 @@ The system supports multiple database backends:
 ### **Common Issues**
 
 **1. Server Won't Start**
-
 ```bash
 # Check Python version
 python --version  # Should be 3.11+
@@ -394,7 +380,6 @@ python -c "from app.database import engine; print('DB OK')"
 ```
 
 **2. AI Analysis Failing**
-
 ```bash
 # Verify API keys
 echo $GEMINI_API_KEY
@@ -404,7 +389,6 @@ python -c "from app.utils.ai import test_connection; test_connection()"
 ```
 
 **3. File Upload Issues**
-
 ```bash
 # Check upload directory permissions
 ls -la uploads/
@@ -416,20 +400,17 @@ grep MAX_FILE_SIZE .env
 ## 📞 **Support & Contact**
 
 ### **Documentation**
-
 - **API Docs**: http://localhost:8000/docs
 - **User Guide**: `/docs/user-guide.md`
 - **Admin Guide**: `/docs/admin-guide.md`
 - **Deployment Guide**: `/docs/deployment-guide.md`
 
 ### **Project Team**
-
 - **Lead Developer**: Husam AlSabbah
 - **AI Specialist**: Zakkaria
 - **Organization**: e& Risk and Assurance Department
 
 ### **Getting Help**
-
 - **Issues**: Create GitHub issue with detailed description
 - **Questions**: Contact development team
 - **Security**: Report vulnerabilities privately
@@ -449,4 +430,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ by the e& Risk and Assurance Team**
 
-_Last Updated: July 2025_
+*Last Updated: July 2025*
