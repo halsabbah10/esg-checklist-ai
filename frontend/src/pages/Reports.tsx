@@ -1,34 +1,29 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
-  Container,
-  Typography,
   Box,
+  Typography,
   Card,
   CardContent,
   Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Paper,
-  Chip,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Alert,
   CircularProgress,
+  Stack,
+  Chip,
 } from '@mui/material';
 import {
   Download,
-  PictureAsPdf,
-  GridView,
-  Description,
+  TrendingUp,
+  TrendingDown,
+  Assessment,
+  CheckCircle,
+  Warning,
+  Error,
+  Visibility,
 } from '@mui/icons-material';
-import { analyticsAPI } from '../services/api';
 
 interface Report {
   id: string;
@@ -40,9 +35,49 @@ interface Report {
   size: string;
 }
 
+interface KPIData {
+  label: string;
+  value: string | number;
+  change?: number;
+  trend?: 'up' | 'down' | 'neutral';
+  icon?: React.ReactNode;
+}
+
 export const Reports: React.FC = () => {
   const [reportType, setReportType] = useState('all');
   const [timeRange, setTimeRange] = useState('30');
+
+  // Mock KPI data
+  const kpiData: KPIData[] = [
+    {
+      label: 'Total Items',
+      value: 1247,
+      change: 12,
+      trend: 'up',
+      icon: <Assessment sx={{ fontSize: 20 }} />,
+    },
+    {
+      label: 'Completed %',
+      value: '87.3%',
+      change: 5.2,
+      trend: 'up',
+      icon: <CheckCircle sx={{ fontSize: 20 }} />,
+    },
+    {
+      label: 'Overdue Items',
+      value: 23,
+      change: -8,
+      trend: 'down',
+      icon: <Warning sx={{ fontSize: 20 }} />,
+    },
+    {
+      label: 'Critical Issues',
+      value: 5,
+      change: 0,
+      trend: 'neutral',
+      icon: <Error sx={{ fontSize: 20 }} />,
+    },
+  ];
 
   // Mock reports data - replace with real API calls
   const mockReports: Report[] = [
@@ -57,292 +92,313 @@ export const Reports: React.FC = () => {
     },
     {
       id: '2',
-      name: 'Monthly Performance Report - June 2025',
+      name: 'Performance Metrics Report',
       type: 'performance',
       format: 'excel',
-      generated_at: '2025-07-01T09:15:00Z',
+      generated_at: '2025-07-03T15:45:00Z',
       status: 'ready',
       size: '1.8 MB',
     },
     {
       id: '3',
-      name: 'Annual ESG Assessment 2024',
+      name: 'Weekly Summary Report',
       type: 'summary',
-      format: 'pdf',
-      generated_at: '2025-06-28T14:20:00Z',
-      status: 'ready',
-      size: '5.2 MB',
-    },
-    {
-      id: '4',
-      name: 'Weekly Checklist Analysis',
-      type: 'performance',
       format: 'csv',
-      generated_at: '2025-07-03T16:45:00Z',
+      generated_at: '2025-07-04T08:00:00Z',
       status: 'generating',
-      size: '',
+      size: '-',
     },
   ];
-
-  // Fetch analytics data for report generation
-  const {
-    data: analyticsData,
-    isLoading: loadingAnalytics,
-  } = useQuery({
-    queryKey: ['analytics', 'overall'],
-    queryFn: () => analyticsAPI.getSummary(),
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'ready':
-        return 'success';
-      case 'generating':
-        return 'warning';
-      case 'failed':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getFormatIcon = (format: string) => {
-    switch (format) {
-      case 'pdf':
-        return <PictureAsPdf />;
-      case 'excel':
-        return <GridView />;
-      case 'csv':
-        return <Description />;
-      default:
-        return <Description />;
-    }
-  };
-
-  const handleGenerateReport = (type: string) => {
-    console.log(`Generating ${type} report...`);
-    // Implement report generation logic
-  };
-
-  const handleDownload = (reportId: string) => {
-    console.log(`Downloading report ${reportId}...`);
-    // Implement download logic
-  };
 
   const filteredReports = mockReports.filter(report => 
     reportType === 'all' || report.type === reportType
   );
 
-  if (loadingAnalytics) {
+  const KPICard: React.FC<{ data: KPIData }> = ({ data }) => {
+    const getTrendIcon = () => {
+      if (data.trend === 'up') return <TrendingUp sx={{ fontSize: 16, color: 'success.main' }} />;
+      if (data.trend === 'down') return <TrendingDown sx={{ fontSize: 16, color: 'error.main' }} />;
+      return null;
+    };
+
+    const getTrendColor = () => {
+      if (data.trend === 'up') return 'success.main';
+      if (data.trend === 'down') return 'error.main';
+      return 'text.secondary';
+    };
+
     return (
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-          <CircularProgress />
-        </Box>
-      </Container>
+      <Card 
+        sx={{ 
+          bgcolor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: '0.25rem',
+          p: 2,
+          '&:hover': {
+            boxShadow: '0 4px 8px rgba(0,0,0,0.05)',
+          }
+        }}
+      >
+        <CardContent sx={{ p: 0 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                textTransform: 'uppercase',
+                color: 'text.secondary',
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: 0.5,
+              }}
+            >
+              {data.label}
+            </Typography>
+            {data.icon && (
+              <Box sx={{ color: 'text.secondary' }}>
+                {data.icon}
+              </Box>
+            )}
+          </Box>
+          
+          <Typography 
+            variant="h3" 
+            sx={{ 
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1,
+            }}
+          >
+            {data.value}
+          </Typography>
+          
+          {data.change !== undefined && (
+            <Box display="flex" alignItems="center" gap={0.5}>
+              {getTrendIcon()}
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  color: getTrendColor(),
+                  fontWeight: 500,
+                }}
+              >
+                {data.change > 0 ? '+' : ''}{data.change}
+                {data.trend !== 'neutral' ? '%' : ''}
+              </Typography>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     );
-  }
+  };
+
+  const getStatusChip = (status: string) => {
+    const statusConfig = {
+      ready: { color: 'success', label: 'Ready' },
+      generating: { color: 'warning', label: 'Generating' },
+      failed: { color: 'error', label: 'Failed' },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.ready;
+    
+    return (
+      <Chip
+        label={config.label}
+        size="small"
+        color={config.color as any}
+        sx={{ minWidth: 80 }}
+      />
+    );
+  };
+
+  const getTypeChip = (type: string) => (
+    <Chip
+      label={type.charAt(0).toUpperCase() + type.slice(1)}
+      size="small"
+      variant="outlined"
+      sx={{
+        bgcolor: 'background.paper',
+        color: 'primary.main',
+        borderColor: 'primary.main',
+      }}
+    />
+  );
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
       {/* Header */}
-      <Typography variant="h4" component="h1" gutterBottom>
-        ESG Reports
-      </Typography>
-      
-      <Typography variant="body1" color="text.secondary" paragraph>
-        Generate and download comprehensive ESG compliance and performance reports.
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
+          ESG Reports & Analytics
+        </Typography>
+        <Button
+          variant="contained"
+          startIcon={<Download />}
+          sx={{
+            bgcolor: 'primary.main',
+            '&:hover': { bgcolor: 'primary.dark' },
+            borderRadius: '0.25rem',
+          }}
+        >
+          Export Dashboard
+        </Button>
+      </Box>
 
-      {/* Quick Stats */}
+      {/* KPI Summary Cards */}
       <Box 
         display="grid" 
         gridTemplateColumns={{
           xs: '1fr',
-          sm: '1fr 1fr',
+          sm: 'repeat(2, 1fr)',
           md: 'repeat(4, 1fr)',
         }}
         gap={3} 
-        sx={{ mb: 4 }}
+        mb={4}
       >
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Total Reports
-            </Typography>
-            <Typography variant="h4">
-              {mockReports.length}
-            </Typography>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Ready to Download
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {mockReports.filter(r => r.status === 'ready').length}
-            </Typography>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Overall Score
-            </Typography>
-            <Typography variant="h4" color="primary">
-              {analyticsData?.data ? Math.round(analyticsData.data.average_ai_score * 100) : 77}%
-            </Typography>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Last Generated
-            </Typography>
-            <Typography variant="h6">
-              Today
-            </Typography>
-          </CardContent>
-        </Card>
+        {kpiData.map((kpi) => (
+          <KPICard key={kpi.label} data={kpi} />
+        ))}
       </Box>
 
-      {/* Generate New Report */}
-      <Card sx={{ mb: 4 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Generate New Report
+      {/* Filters */}
+      <Box 
+        display="flex" 
+        gap={2} 
+        mb={3}
+        p={2}
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: '0.25rem',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Report Type</InputLabel>
+          <Select
+            value={reportType}
+            label="Report Type"
+            onChange={(e) => setReportType(e.target.value)}
+            sx={{ borderRadius: '0.25rem' }}
+          >
+            <MenuItem value="all">All Types</MenuItem>
+            <MenuItem value="compliance">Compliance</MenuItem>
+            <MenuItem value="performance">Performance</MenuItem>
+            <MenuItem value="summary">Summary</MenuItem>
+          </Select>
+        </FormControl>
+
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Time Range</InputLabel>
+          <Select
+            value={timeRange}
+            label="Time Range"
+            onChange={(e) => setTimeRange(e.target.value)}
+            sx={{ borderRadius: '0.25rem' }}
+          >
+            <MenuItem value="7">Last 7 days</MenuItem>
+            <MenuItem value="30">Last 30 days</MenuItem>
+            <MenuItem value="90">Last 90 days</MenuItem>
+            <MenuItem value="365">Last year</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      {/* Reports List */}
+      <Paper sx={{ borderRadius: '0.25rem', border: '1px solid', borderColor: 'divider' }}>
+        <Box p={3}>
+          <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
+            Available Reports
           </Typography>
           
-          <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
-            <FormControl size="small" sx={{ minWidth: 150 }}>
-              <InputLabel>Report Type</InputLabel>
-              <Select
-                value={reportType}
-                label="Report Type"
-                onChange={(e) => setReportType(e.target.value)}
+          <Stack spacing={2}>
+            {filteredReports.map((report) => (
+              <Card 
+                key={report.id}
+                sx={{ 
+                  bgcolor: 'background.paper',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '0.25rem',
+                  '&:hover': {
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                  }
+                }}
               >
-                <MenuItem value="compliance">Compliance Report</MenuItem>
-                <MenuItem value="performance">Performance Report</MenuItem>
-                <MenuItem value="summary">Executive Summary</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Time Range</InputLabel>
-              <Select
-                value={timeRange}
-                label="Time Range"
-                onChange={(e) => setTimeRange(e.target.value)}
-              >
-                <MenuItem value="7">Last 7 days</MenuItem>
-                <MenuItem value="30">Last 30 days</MenuItem>
-                <MenuItem value="90">Last 3 months</MenuItem>
-                <MenuItem value="365">Last year</MenuItem>
-              </Select>
-            </FormControl>
-            
-            <Button
-              variant="contained"
-              onClick={() => handleGenerateReport(reportType)}
-              disabled={reportType === 'all'}
-            >
-              Generate Report
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Reports Table */}
-      <Card>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6">
-              Generated Reports
-            </Typography>
-            
-            <FormControl size="small" sx={{ minWidth: 120 }}>
-              <InputLabel>Filter</InputLabel>
-              <Select
-                value={reportType}
-                label="Filter"
-                onChange={(e) => setReportType(e.target.value)}
-              >
-                <MenuItem value="all">All Reports</MenuItem>
-                <MenuItem value="compliance">Compliance</MenuItem>
-                <MenuItem value="performance">Performance</MenuItem>
-                <MenuItem value="summary">Summary</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Report Name</TableCell>
-                  <TableCell>Type</TableCell>
-                  <TableCell>Format</TableCell>
-                  <TableCell>Generated</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Size</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredReports.map((report) => (
-                  <TableRow key={report.id}>
-                    <TableCell>
-                      <Box display="flex" alignItems="center" gap={1}>
-                        {getFormatIcon(report.format)}
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                    <Box flex={1}>
+                      <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
                         {report.name}
+                      </Typography>
+                      
+                      <Box display="flex" gap={1} mb={2}>
+                        {getTypeChip(report.type)}
+                        {getStatusChip(report.status)}
                       </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={report.type}
-                        variant="outlined"
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{report.format.toUpperCase()}</TableCell>
-                    <TableCell>
-                      {new Date(report.generated_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={report.status}
-                        color={getStatusColor(report.status) as any}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell>{report.size || 'Generating...'}</TableCell>
-                    <TableCell>
-                      <Button
-                        size="small"
-                        startIcon={<Download />}
-                        onClick={() => handleDownload(report.id)}
-                        disabled={report.status !== 'ready'}
-                      >
-                        Download
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      
+                      <Typography variant="body2" color="text.secondary">
+                        Generated: {formatDate(report.generated_at)} • Size: {report.size}
+                      </Typography>
+                    </Box>
+                    
+                    <Box display="flex" gap={1}>
+                      {report.status === 'ready' && (
+                        <>
+                          <Button
+                            size="small"
+                            startIcon={<Visibility />}
+                            variant="outlined"
+                            sx={{ borderRadius: '0.25rem' }}
+                          >
+                            View
+                          </Button>
+                          <Button
+                            size="small"
+                            startIcon={<Download />}
+                            variant="contained"
+                            sx={{ borderRadius: '0.25rem' }}
+                          >
+                            Download
+                          </Button>
+                        </>
+                      )}
+                      {report.status === 'generating' && (
+                        <Box display="flex" alignItems="center" gap={1}>
+                          <CircularProgress size={16} />
+                          <Typography variant="caption" color="text.secondary">
+                            Generating...
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
 
           {filteredReports.length === 0 && (
-            <Alert severity="info" sx={{ mt: 2 }}>
-              No reports found. Generate your first report using the controls above.
-            </Alert>
+            <Box py={4} textAlign="center">
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                No reports found
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Try adjusting your filters or generate a new report
+              </Typography>
+            </Box>
           )}
-        </CardContent>
-      </Card>
-    </Container>
+        </Box>
+      </Paper>
+    </Box>
   );
 };

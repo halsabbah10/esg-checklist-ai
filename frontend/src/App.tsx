@@ -58,11 +58,16 @@ const queryClient = new QueryClient({
 
 function AppContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
   };
 
   return (
@@ -82,15 +87,19 @@ function AppContent() {
                 <Sidebar
                   isOpen={isMobile ? sidebarOpen : true}
                   onClose={() => setSidebarOpen(false)}
-                />
-                <Box
+                  isCollapsed={!isMobile && sidebarCollapsed}
+                  onToggleCollapse={handleSidebarCollapse}
+                />                <Box
                   component="main"
                   sx={{
                     flexGrow: 1,
                     bgcolor: 'background.default',
                     minHeight: '100vh',
                     width: '100%',
-                    ml: { xs: 0, md: isMobile ? 0 : 0 }, // Remove margin since drawer is positioned absolute when permanent
+                    ml: { 
+                      xs: 0, 
+                      md: isMobile ? 0 : (sidebarCollapsed ? '64px' : '240px')
+                    },
                     transition: 'margin 0.3s ease',
                   }}
                 >

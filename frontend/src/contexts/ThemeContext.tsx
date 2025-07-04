@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
-import { lightTheme, darkTheme } from '../theme';
+import { theme, darkTheme } from '../theme';
 
 interface ThemeContextType {
   isDarkMode: boolean;
@@ -41,11 +41,11 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
   }, [isDarkMode]);
 
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const currentTheme = isDarkMode ? darkTheme : theme;
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-      <MuiThemeProvider theme={theme}>
+      <MuiThemeProvider theme={currentTheme}>
         <CssBaseline />
         {children}
       </MuiThemeProvider>
