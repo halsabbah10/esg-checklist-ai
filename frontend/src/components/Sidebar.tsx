@@ -128,6 +128,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         '& .MuiDrawer-paper': {
           width: drawerWidth,
           boxSizing: 'border-box',
+          borderRight: '1px solid',
+          borderColor: 'divider',
         },
       }}
       ModalProps={{

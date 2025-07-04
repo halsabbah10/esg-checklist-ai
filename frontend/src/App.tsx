@@ -1,7 +1,7 @@
 import { useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Box, Toolbar, useMediaQuery, useTheme, CircularProgress } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, useTheme, CircularProgress, Typography } from '@mui/material';
 
 // Contexts
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -29,9 +29,14 @@ const LoadingSpinner = () => (
     display="flex"
     justifyContent="center"
     alignItems="center"
-    height="400px"
+    height="60vh"
+    flexDirection="column"
+    gap={2}
   >
-    <CircularProgress />
+    <CircularProgress size={48} />
+    <Typography variant="body2" color="text.secondary">
+      Loading...
+    </Typography>
   </Box>
 );
 
@@ -72,7 +77,7 @@ function AppContent() {
           path="/*"
           element={
             <ProtectedRoute>
-              <Box sx={{ display: 'flex' }}>
+              <Box sx={{ display: 'flex', minHeight: '100vh' }}>
                 <Navbar onMenuClick={handleSidebarToggle} />
                 <Sidebar
                   isOpen={isMobile ? sidebarOpen : true}
@@ -84,11 +89,14 @@ function AppContent() {
                     flexGrow: 1,
                     bgcolor: 'background.default',
                     minHeight: '100vh',
-                    width: isMobile ? '100%' : 'calc(100% - 240px)',
+                    width: '100%',
+                    ml: { xs: 0, md: isMobile ? 0 : 0 }, // Remove margin since drawer is positioned absolute when permanent
+                    transition: 'margin 0.3s ease',
                   }}
                 >
                   <Toolbar />
-                  <Suspense fallback={<LoadingSpinner />}>
+                  <Box sx={{ p: { xs: 2, sm: 3 } }}>
+                    <Suspense fallback={<LoadingSpinner />}>
                     <Routes>
                       <Route path="/" element={<Navigate to="/dashboard" replace />} />
                       <Route path="/dashboard" element={<Dashboard />} />
@@ -102,6 +110,7 @@ function AppContent() {
                       <Route path="*" element={<Navigate to="/dashboard" replace />} />
                     </Routes>
                   </Suspense>
+                  </Box>
                 </Box>
               </Box>
             </ProtectedRoute>

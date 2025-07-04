@@ -92,18 +92,29 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
               vertical: 'top',
               horizontal: 'right',
             }}
+            PaperProps={{
+              sx: {
+                mt: 1,
+                minWidth: 200,
+              },
+            }}
           >
-            <MenuItem disabled>
-              <Typography variant="body2">
+            <MenuItem disabled sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+              <Typography variant="body2" fontWeight="medium">
+                {user?.name || 'User'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
                 {user?.email}
               </Typography>
             </MenuItem>
             <MenuItem disabled>
               <Typography variant="body2" color="text.secondary">
-                Role: {user?.role}
+                Role: {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Unknown'}
               </Typography>
             </MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+              Logout
+            </MenuItem>
           </Menu>
         </Box>
       </Toolbar>

@@ -182,8 +182,13 @@ export const Dashboard: React.FC = () => {
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Typography 
+        variant="h4" 
+        gutterBottom 
+        fontWeight="bold"
+        sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
+      >
         Dashboard
       </Typography>
 
@@ -192,25 +197,36 @@ export const Dashboard: React.FC = () => {
         display="grid"
         gridTemplateColumns={{
           xs: '1fr',
-          sm: '1fr 1fr',
-          md: '1fr 1fr 1fr 1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(4, 1fr)',
         }}
-        gap={3}
-        sx={{ mb: 4 }}
+        gap={{ xs: 2, sm: 3 }}
+        sx={{ mb: { xs: 3, sm: 4 } }}
       >
         {statCards.map((card) => (
-          <Card key={card.title}>
-            <CardContent>
+          <Card 
+            key={card.title}
+            sx={{
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                transition: 'all 0.3s ease',
+              },
+            }}
+          >
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
               <Box display="flex" alignItems="center" justifyContent="space-between">
                 <Box>
-                  <Typography color="text.secondary" gutterBottom>
+                  <Typography color="text.secondary" gutterBottom variant="body2">
                     {card.title}
                   </Typography>
-                  <Typography variant="h4">
+                  <Typography variant="h4" fontWeight="bold">
                     {card.value}
                   </Typography>
                 </Box>
-                <Box color={card.color}>
+                <Box color={card.color} sx={{ fontSize: { xs: 28, sm: 32 } }}>
                   {card.icon}
                 </Box>
               </Box>
@@ -220,12 +236,17 @@ export const Dashboard: React.FC = () => {
       </Box>
 
       {/* Monthly Upload Volume Chart */}
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <Card
+        sx={{
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+      >
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" gutterBottom fontWeight="medium">
             Monthly Upload Volume
           </Typography>
-          <Box height={400}>
+          <Box height={{ xs: 300, sm: 400 }}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={stats?.monthlyUploads || []}
@@ -241,7 +262,7 @@ export const Dashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="uploads" fill="#0057B8" />
+                <Bar dataKey="uploads" fill="#0057B8" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </Box>

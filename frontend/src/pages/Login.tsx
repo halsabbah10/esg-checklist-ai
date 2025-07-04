@@ -64,38 +64,78 @@ export const Login: React.FC = () => {
   }
 
   return (
-    <Container
-      component="main"
-      maxWidth="sm"
+    <Box
       sx={{
-        height: '100vh',
+        minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        padding: 2,
       }}
     >
-      <Paper
-        elevation={3}
+      <Container
+        component="main"
+        maxWidth="sm"
         sx={{
-          padding: 4,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
-          width: '100%',
+          justifyContent: 'center',
         }}
       >
-        <Typography component="h1" variant="h4" gutterBottom>
-          ESG Checklist AI
-        </Typography>
-        <Typography component="h2" variant="h5" gutterBottom>
-          Sign In
-        </Typography>
+        <Paper
+          elevation={6}
+          sx={{
+            padding: { xs: 3, sm: 4 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            width: '100%',
+            maxWidth: 400,
+            borderRadius: 2,
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              mb: 2,
+            }}
+          >
+            <Typography
+              component="h1"
+              variant="h4"
+              fontWeight="bold"
+              color="primary"
+              gutterBottom
+            >
+              ESG Checklist AI
+            </Typography>
+            <Typography
+              component="h2"
+              variant="h5"
+              color="text.secondary"
+              gutterBottom
+            >
+              Welcome Back
+            </Typography>
+          </Box>
 
-        <Alert severity="info" sx={{ width: '100%', mb: 2 }}>
-          <strong>Demo Credentials:</strong><br />
-          Admin: test@admin.com / admin123<br />
-          User: test@example.com / password123
-        </Alert>
+          <Alert 
+            severity="info" 
+            sx={{ 
+              width: '100%', 
+              mb: 3,
+              '& .MuiAlert-message': {
+                fontSize: '0.875rem',
+              }
+            }}
+          >
+            <strong>Demo Credentials:</strong><br />
+            Admin: test@admin.com / admin123<br />
+            User: test@example.com / password123
+          </Alert>
 
         {error && (
           <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
@@ -158,5 +198,6 @@ export const Login: React.FC = () => {
         </Box>
       </Paper>
     </Container>
+    </Box>
   );
 };

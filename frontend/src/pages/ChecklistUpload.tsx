@@ -229,49 +229,68 @@ export const ChecklistUpload: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
       {/* Header */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Box display="flex" alignItems="center" mb={2}>
+      <Paper 
+        sx={{ 
+          p: { xs: 2, sm: 3 }, 
+          mb: 3,
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+      >
+        <Box display="flex" alignItems="center" mb={2} flexWrap="wrap" gap={1}>
           <Button
             startIcon={<ArrowBack />}
             onClick={() => navigate('/checklists')}
-            sx={{ mr: 2 }}
+            sx={{ mr: { xs: 0, sm: 2 }, mb: { xs: 1, sm: 0 } }}
           >
             Back to Checklists
           </Button>
-          <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
+          <Typography 
+            variant="h4" 
+            component="h1" 
+            sx={{ 
+              flexGrow: 1,
+              fontSize: { xs: '1.5rem', sm: '2.125rem' },
+              fontWeight: 'bold',
+            }}
+          >
             AI Document Analysis
           </Typography>
         </Box>
         
-        <Typography variant="h6" gutterBottom>
+        <Typography variant="h6" gutterBottom color="text.primary">
           {checklist.data.title}
         </Typography>
         
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
           Upload your ESG-related documents for AI-powered compliance analysis. Our system will analyze your documents against the checklist requirements and provide detailed insights.
         </Typography>
       </Paper>
 
       {/* File Upload */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
+      <Card sx={{ mb: 3, borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <Typography variant="h6" gutterBottom fontWeight="medium">
             Upload Document
           </Typography>
           
           <Box
             sx={{
               border: '2px dashed',
-              borderColor: 'grey.300',
+              borderColor: file ? 'primary.main' : 'grey.300',
               borderRadius: 2,
-              p: 4,
+              p: { xs: 3, sm: 4 },
               textAlign: 'center',
               cursor: 'pointer',
+              transition: 'all 0.3s ease',
+              backgroundColor: file ? 'action.hover' : 'transparent',
               '&:hover': {
                 borderColor: 'primary.main',
                 backgroundColor: 'action.hover',
+                transform: 'translateY(-2px)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
               },
             }}
             onClick={() => document.getElementById('file-input')?.click()}
@@ -284,11 +303,18 @@ export const ChecklistUpload: React.FC = () => {
               style={{ display: 'none' }}
             />
             
-            <CloudUpload sx={{ fontSize: 48, color: 'grey.400', mb: 2 }} />
+            <CloudUpload 
+              sx={{ 
+                fontSize: { xs: 40, sm: 48 }, 
+                color: file ? 'primary.main' : 'grey.400', 
+                mb: 2,
+                transition: 'color 0.3s ease',
+              }} 
+            />
             
             {file ? (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="primary">
                   {file.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" gutterBottom>
@@ -298,18 +324,27 @@ export const ChecklistUpload: React.FC = () => {
                   variant="contained"
                   onClick={handleUpload}
                   disabled={uploading}
-                  sx={{ mt: 2 }}
+                  sx={{ 
+                    mt: 2,
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1rem',
+                    fontWeight: 'medium',
+                  }}
                 >
                   {uploading ? 'Analyzing...' : 'Upload & Analyze'}
                 </Button>
               </Box>
             ) : (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant="h6" gutterBottom color="text.primary">
                   Click to select a file
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                   Supported formats: PDF, Word, Excel, Text files
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Maximum file size: 10MB
                 </Typography>
               </Box>
             )}
@@ -363,17 +398,39 @@ export const ChecklistUpload: React.FC = () => {
 
       {/* Action Buttons */}
       {uploadResult?.status === 'completed' && (
-        <Paper sx={{ p: 3, mt: 3 }}>
-          <Box display="flex" gap={2}>
+        <Paper 
+          sx={{ 
+            p: { xs: 2, sm: 3 }, 
+            mt: 3,
+            borderRadius: 2,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          }}
+        >
+          <Box 
+            display="flex" 
+            gap={2}
+            flexDirection={{ xs: 'column', sm: 'row' }}
+            justifyContent={{ xs: 'stretch', sm: 'flex-start' }}
+          >
             <Button
               variant="contained"
               onClick={() => navigate(`/checklists/${id}/results`)}
+              sx={{ 
+                py: 1.5,
+                fontWeight: 'medium',
+                flexGrow: { xs: 1, sm: 0 },
+              }}
             >
               View Detailed Results
             </Button>
             <Button
               variant="outlined"
               onClick={() => navigate(`/checklists/${id}/submit`)}
+              sx={{ 
+                py: 1.5,
+                fontWeight: 'medium',
+                flexGrow: { xs: 1, sm: 0 },
+              }}
             >
               Manual Checklist
             </Button>
@@ -382,6 +439,11 @@ export const ChecklistUpload: React.FC = () => {
               onClick={() => {
                 setFile(null);
                 setUploadResult(null);
+              }}
+              sx={{ 
+                py: 1.5,
+                fontWeight: 'medium',
+                flexGrow: { xs: 1, sm: 0 },
               }}
             >
               Upload Another File
