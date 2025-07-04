@@ -16,6 +16,8 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { NotificationDropdown } from './Notifications';
+import { GlobalSearch } from './GlobalSearch';
 
 interface NavbarProps {
   onMenuClick: () => void;
@@ -79,7 +81,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         </Box>
 
         {/* Desktop Navigation */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4, alignItems: 'center', flex: 1 }}>
           {navItems.map((item) => (
             <Button
               key={item.path}
@@ -102,10 +104,18 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
               {item.label}
             </Button>
           ))}
+          
+          {/* Global Search */}
+          <Box sx={{ ml: 'auto', mr: 2 }}>
+            <GlobalSearch />
+          </Box>
         </Box>
 
         {/* Profile Menu */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Notifications */}
+          <NotificationDropdown />
+          
           <IconButton
             onClick={handleMenuOpen}
             sx={{ p: 0 }}

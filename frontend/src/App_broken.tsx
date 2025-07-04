@@ -118,17 +118,20 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 function Home() {
   const { isAuthenticated, isLoading } = useAuth();
   
+  console.log('🏠 Home render:', { isAuthenticated, isLoading });
+  
   if (isLoading) {
+    console.log('⏳ Home: Loading, showing spinner');
     return <LoadingSpinner />;
   }
   
-  // Always redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
+    console.log('✅ Home: Authenticated, redirecting to dashboard');
+    return <Navigate to="/dashboard" replace />;
+  } else {
+    console.log('🚫 Home: Not authenticated, redirecting to login');
     return <Navigate to="/login" replace />;
   }
-  
-  // If authenticated, redirect to dashboard
-  return <Navigate to="/dashboard" replace />;
 }
 
 function AppContent() {
@@ -161,16 +164,13 @@ function AppContent() {
             <Route path="/" element={<Home />} />
             
             {/* Login route - accessible without authentication */}
-            <Route 
-              path="/login" 
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Login />
-                </Suspense>
-              } 
-            />
+            <Route path="/login" element={
+              <Suspense fallback={<LoadingSpinner />}>
+                <Login />
+              </Suspense>
+            } />
             
-            {/* All protected routes */}
+            {/* Dashboard route - requires authentication */}
             <Route
               path="/dashboard"
               element={
@@ -321,7 +321,6 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
-            {/* Catch-all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

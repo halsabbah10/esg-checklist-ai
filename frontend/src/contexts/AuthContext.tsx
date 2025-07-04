@@ -37,22 +37,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const isAuthenticated = !!user;
+  // Strict authentication check - both user and valid token must exist
+  const isAuthenticated = !!user && !!localStorage.getItem('authToken');
 
   // Check for existing auth on component mount
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        try {
-          const response = await authAPI.getCurrentUser();
-          setUser(response.data);
-        } catch (error) {
-          // Token is invalid, clear it
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('userRole');
-        }
-      }
+      // For initial setup: Force clear auth state to ensure clean start
+      // This ensures user must always log in fresh
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userRole');
+      setUser(null);
       setIsLoading(false);
     };
 
@@ -78,6 +73,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.setItem('userRole', userData.role);
       setUser(userData);
     } catch (error: any) {
+      console.error('Login error details:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      
       const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Login failed. Please try again.';
       setError(errorMessage);
       throw new Error(errorMessage);

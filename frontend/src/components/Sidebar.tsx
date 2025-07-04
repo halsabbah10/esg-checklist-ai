@@ -22,6 +22,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Settings,
+  People,
+  Security,
+  RateReview,
+  Analytics,
+  SettingsApplications,
+  CloudUpload,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -52,25 +58,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
       text: 'Dashboard',
       icon: <Dashboard />,
       path: '/dashboard',
-      roles: ['admin', 'reviewer', 'user'],
+      roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
     },
     {
       text: 'Checklists',
       icon: <ChecklistRtl />,
       path: '/checklists',
-      roles: ['admin', 'reviewer', 'user'],
+      roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
+    },
+    {
+      text: 'Reviews',
+      icon: <RateReview />,
+      path: '/reviews',
+      roles: ['admin', 'super_admin', 'reviewer'],
+    },
+    {
+      text: 'Analytics',
+      icon: <Analytics />,
+      path: '/analytics',
+      roles: ['admin', 'super_admin', 'reviewer'],
+    },
+    {
+      text: 'Advanced Analytics',
+      icon: <Assessment />,
+      path: '/analytics/advanced',
+      roles: ['admin', 'super_admin'],
     },
     {
       text: 'Reports',
       icon: <Assessment />,
       path: '/reports',
-      roles: ['admin', 'reviewer'],
+      roles: ['admin', 'super_admin', 'reviewer'],
+    },
+    {
+      text: 'User Management',
+      icon: <People />,
+      path: '/admin/users',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      text: 'Checklist Management',
+      icon: <ChecklistRtl />,
+      path: '/admin/checklists',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      text: 'System Admin',
+      icon: <Security />,
+      path: '/admin/system',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      text: 'System Config',
+      icon: <SettingsApplications />,
+      path: '/admin/config',
+      roles: ['admin', 'super_admin'],
+    },
+    {
+      text: 'Advanced Upload',
+      icon: <CloudUpload />,
+      path: '/uploads/advanced',
+      roles: ['admin', 'super_admin', 'auditor'],
     },
     {
       text: 'Settings',
       icon: <Settings />,
       path: '/settings',
-      roles: ['admin', 'reviewer', 'user'],
+      roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
     },
   ];
 
