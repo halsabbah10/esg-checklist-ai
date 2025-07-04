@@ -23,6 +23,7 @@ RUN apk add --no-cache \
     libffi-dev
 
 # Copy and install requirements
+WORKDIR /tmp
 COPY requirements.txt .
 RUN pip install --user -r requirements.txt
 
@@ -42,18 +43,16 @@ RUN apk add --no-cache \
     curl \
     mariadb-connector-c
 
-# Create non-root user for security
-RUN adduser -D -s /bin/sh app
+# Create non-root user for security and setup directories
+RUN adduser -D -s /bin/sh app && \
+    mkdir -p uploads exports logs && \
+    chown -R app:app /app
 
 # Copy installed packages from builder stage
 COPY --from=builder /root/.local /home/app/.local
 
 # Copy application code
 COPY --chown=app:app backend/ /app/
-
-# Create necessary directories with proper ownership
-RUN mkdir -p uploads exports logs && \
-    chown -R app:app /app
 
 USER app
 

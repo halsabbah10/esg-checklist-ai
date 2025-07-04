@@ -44,7 +44,7 @@ jobs:
           bandit -r backend/ -f txt || echo "Bandit text output completed"
 
       - name: Upload Bandit results to GitHub Security
-        if: false  # Temporarily disabled until SARIF format is properly generated
+        if: false # Temporarily disabled until SARIF format is properly generated
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: bandit-report.sarif
@@ -172,13 +172,24 @@ jobs:
           dockerfile: Dockerfile
           format: sarif
           output-file: hadolint.sarif
+        continue-on-error: true
 
       - name: Upload Hadolint results
-        if: github.event_name == 'push' || github.event_name == 'schedule'
+        if: always() && github.event_name == 'push' && github.ref == 'refs/heads/main' && hashFiles('hadolint.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: hadolint.sarif
         continue-on-error: true
+
+      - name: Archive Hadolint reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dockerfile-reports
+          path: |
+            hadolint.sarif
+          retention-days: 30
+          if-no-files-found: ignore
 
   pre-commit:
     name: Pre-commit Hooks
@@ -206,7 +217,7 @@ jobs:
 
   notify-security-issues:
     name: Security Issue Notification
-    needs: [security-checks, dependency-check]
+    needs: [security-checks, dependency-check, dockerfile-security, pre-commit]
     runs-on: ubuntu-latest
     if: failure() && (github.event_name == 'push' || github.event_name == 'schedule')
 
