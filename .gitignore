@@ -88,4 +88,24 @@ coverage.xml
 .mypy_cache/
 .dmypy.json
 dmypy.json
-node_modules
+
+# Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# Package manager lock files (keep package-lock.json for consistency)
+# yarn.lock
+
+# Frontend environment variables
+frontend/.env
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
