@@ -34,9 +34,7 @@ class ReviewStatus(str, Enum):
 
 
 class CommentRequest(BaseModel):
-    text: str = Field(
-        ..., min_length=1, max_length=5000, description="Comment text content"
-    )
+    text: str = Field(..., min_length=1, max_length=5000, description="Comment text content")
 
 
 class CommentResponse(BaseModel):
@@ -76,9 +74,7 @@ def add_comment(
     file_upload_id: int,
     comment_request: CommentRequest,
     db: Session = Depends(get_session),
-    current_user=Depends(
-        require_any_role("admin", "reviewer")
-    ),  # Allow admin or reviewer
+    current_user=Depends(require_any_role("admin", "reviewer")),  # Allow admin or reviewer
 ):
     """
     Add a comment/review to a file upload.
@@ -103,9 +99,7 @@ def add_comment(
     if upload.user_id != current_user.id:
         try:
             commenter_name = getattr(current_user, "username", "Reviewer")
-            notify_file_commented(
-                db=db, file_upload=upload, commenter_name=commenter_name
-            )
+            notify_file_commented(db=db, file_upload=upload, commenter_name=commenter_name)
         except Exception as e:
             # Log error but don't fail the comment creation
             import logging
@@ -183,9 +177,7 @@ def get_comments(
     - **file_upload_id**: ID of the file upload to get comments for
     - **Returns**: List of comments with metadata
     """
-    comments = db.exec(
-        select(Comment).where(Comment.file_upload_id == file_upload_id)
-    ).all()
+    comments = db.exec(select(Comment).where(Comment.file_upload_id == file_upload_id)).all()
 
     return [
         CommentResponse(

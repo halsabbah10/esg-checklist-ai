@@ -35,6 +35,7 @@ def get_session():
     except Exception as e:
         logger.exception(f"Database session error: {e}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
@@ -55,7 +56,6 @@ def init_database():
     try:
         # Import models to ensure they are registered with SQLModel
         from sqlmodel import SQLModel
-
 
         logger.info("Creating database tables...")
         SQLModel.metadata.create_all(engine)

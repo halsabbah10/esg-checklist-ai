@@ -149,9 +149,7 @@ ESG Checklist AI System
         text_body = text_template.render(**context)
         html_body = html_template.render(**context)
 
-        subject = (
-            f"ESG Analysis Complete - {filename} (Score: {round(score * 100, 1)}%)"
-        )
+        subject = f"ESG Analysis Complete - {filename} (Score: {round(score * 100, 1)}%)"
 
         return self.send_email([user_email], subject, text_body, html_body)
 

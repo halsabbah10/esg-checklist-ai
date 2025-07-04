@@ -15,9 +15,7 @@ router = APIRouter(prefix="/search", tags=["Advanced Search"])
 def search_uploads(
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
     checklist_id: Optional[int] = Query(None, description="Filter by checklist ID"),
-    status: Optional[str] = Query(
-        None, description="Filter by status (pending/approved/rejected)"
-    ),
+    status: Optional[str] = Query(None, description="Filter by status (pending/approved/rejected)"),
     filename: Optional[str] = Query(
         None, description="Filter by part of filename (case-insensitive)"
     ),
@@ -107,9 +105,7 @@ def search_uploads(
 def search_submissions(
     checklist_id: Optional[int] = Query(None, description="Filter by checklist ID"),
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
-    status: Optional[str] = Query(
-        None, description="Filter by status (pending/approved/rejected)"
-    ),
+    status: Optional[str] = Query(None, description="Filter by status (pending/approved/rejected)"),
     submitted_from: Optional[datetime] = Query(
         None, description="Filter by submitted_at >= this datetime"
     ),
@@ -212,9 +208,7 @@ def search_ai_results(
     max_score: Optional[float] = Query(
         None, ge=0.0, le=1.0, description="Filter by score <= this value"
     ),
-    ai_model_version: Optional[str] = Query(
-        None, description="Filter by AI model version"
-    ),
+    ai_model_version: Optional[str] = Query(None, description="Filter by AI model version"),
     created_from: Optional[datetime] = Query(
         None, description="Filter by created_at >= this datetime"
     ),
@@ -289,9 +283,7 @@ def search_ai_results(
     # Apply case-insensitive AI model version filter in Python if needed
     if ai_model_version is not None:
         all_records = [
-            r
-            for r in all_records
-            if ai_model_version.lower() in r.ai_model_version.lower()
+            r for r in all_records if ai_model_version.lower() in r.ai_model_version.lower()
         ]
 
     # Apply processing time filters in Python if needed
@@ -299,15 +291,13 @@ def search_ai_results(
         all_records = [
             r
             for r in all_records
-            if r.processing_time_ms is not None
-            and r.processing_time_ms >= min_processing_time
+            if r.processing_time_ms is not None and r.processing_time_ms >= min_processing_time
         ]
     if max_processing_time is not None:
         all_records = [
             r
             for r in all_records
-            if r.processing_time_ms is not None
-            and r.processing_time_ms <= max_processing_time
+            if r.processing_time_ms is not None and r.processing_time_ms <= max_processing_time
         ]
 
     total = len(all_records)
@@ -340,15 +330,9 @@ def search_ai_results(
 
 @router.get("/users")
 def search_users(
-    username: Optional[str] = Query(
-        None, description="Filter by username (case-insensitive)"
-    ),
-    email: Optional[str] = Query(
-        None, description="Filter by email (case-insensitive)"
-    ),
-    role: Optional[str] = Query(
-        None, description="Filter by role (admin/auditor/reviewer)"
-    ),
+    username: Optional[str] = Query(None, description="Filter by username (case-insensitive)"),
+    email: Optional[str] = Query(None, description="Filter by email (case-insensitive)"),
+    role: Optional[str] = Query(None, description="Filter by role (admin/auditor/reviewer)"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     created_from: Optional[datetime] = Query(
         None, description="Filter by created_at >= this datetime"
@@ -423,15 +407,11 @@ def search_users(
     # Apply last_login filters in Python if needed
     if last_login_from is not None:
         all_records = [
-            u
-            for u in all_records
-            if u.last_login is not None and u.last_login >= last_login_from
+            u for u in all_records if u.last_login is not None and u.last_login >= last_login_from
         ]
     if last_login_to is not None:
         all_records = [
-            u
-            for u in all_records
-            if u.last_login is not None and u.last_login <= last_login_to
+            u for u in all_records if u.last_login is not None and u.last_login <= last_login_to
         ]
 
     total = len(all_records)
@@ -462,9 +442,7 @@ def search_users(
 @router.get("/notifications")
 def search_notifications(
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
-    title: Optional[str] = Query(
-        None, description="Filter by title (case-insensitive)"
-    ),
+    title: Optional[str] = Query(None, description="Filter by title (case-insensitive)"),
     message: Optional[str] = Query(
         None, description="Filter by message content (case-insensitive)"
     ),
@@ -616,9 +594,7 @@ def search_submission_answers(
 
     # Apply case-insensitive answer text filter in Python
     if answer_text is not None:
-        all_records = [
-            a for a in all_records if answer_text.lower() in a.answer_text.lower()
-        ]
+        all_records = [a for a in all_records if answer_text.lower() in a.answer_text.lower()]
 
     total = len(all_records)
 
@@ -646,9 +622,7 @@ def search_submission_answers(
 
 @router.get("/checklists")
 def search_checklists(
-    title: Optional[str] = Query(
-        None, description="Filter by title (case-insensitive)"
-    ),
+    title: Optional[str] = Query(None, description="Filter by title (case-insensitive)"),
     description: Optional[str] = Query(
         None, description="Filter by description (case-insensitive)"
     ),
@@ -723,23 +697,17 @@ def search_checklists(
         all_records = [c for c in all_records if title.lower() in c.title.lower()]
     if description is not None:
         all_records = [
-            c
-            for c in all_records
-            if c.description and description.lower() in c.description.lower()
+            c for c in all_records if c.description and description.lower() in c.description.lower()
         ]
 
     # Apply updated_at filters in Python if needed
     if updated_from is not None:
         all_records = [
-            c
-            for c in all_records
-            if c.updated_at is not None and c.updated_at >= updated_from
+            c for c in all_records if c.updated_at is not None and c.updated_at >= updated_from
         ]
     if updated_to is not None:
         all_records = [
-            c
-            for c in all_records
-            if c.updated_at is not None and c.updated_at <= updated_to
+            c for c in all_records if c.updated_at is not None and c.updated_at <= updated_to
         ]
 
     total = len(all_records)
@@ -775,9 +743,7 @@ def search_checklist_items(
     question_text: Optional[str] = Query(
         None, description="Filter by question text (case-insensitive)"
     ),
-    category: Optional[str] = Query(
-        None, description="Filter by category (case-insensitive)"
-    ),
+    category: Optional[str] = Query(None, description="Filter by category (case-insensitive)"),
     weight: Optional[float] = Query(None, ge=0.0, description="Filter by weight value"),
     is_required: Optional[bool] = Query(None, description="Filter by required status"),
     order_index: Optional[int] = Query(None, ge=0, description="Filter by order index"),
@@ -819,9 +785,7 @@ def search_checklist_items(
     # Apply case-insensitive string filters in Python
     if question_text is not None:
         all_records = [
-            item
-            for item in all_records
-            if question_text.lower() in item.question_text.lower()
+            item for item in all_records if question_text.lower() in item.question_text.lower()
         ]
     if category is not None:
         all_records = [
@@ -862,9 +826,7 @@ def search_checklist_items(
 def search_comments(
     file_upload_id: Optional[int] = Query(None, description="Filter by file upload ID"),
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
-    text: Optional[str] = Query(
-        None, description="Filter by comment text (case-insensitive)"
-    ),
+    text: Optional[str] = Query(None, description="Filter by comment text (case-insensitive)"),
     created_from: Optional[datetime] = Query(
         None, description="Filter by created_at >= this datetime"
     ),
@@ -898,9 +860,7 @@ def search_comments(
 
     # Apply case-insensitive text filter in Python
     if text is not None:
-        all_records = [
-            comment for comment in all_records if text.lower() in comment.text.lower()
-        ]
+        all_records = [comment for comment in all_records if text.lower() in comment.text.lower()]
 
     total = len(all_records)
 
@@ -928,9 +888,7 @@ def search_comments(
 @router.get("/audit-logs")
 def search_audit_logs(
     user_id: Optional[int] = Query(None, description="Filter by user ID"),
-    action: Optional[str] = Query(
-        None, description="Filter by action (case-insensitive)"
-    ),
+    action: Optional[str] = Query(None, description="Filter by action (case-insensitive)"),
     resource_type: Optional[str] = Query(
         None, description="Filter by resource type (case-insensitive)"
     ),
@@ -974,9 +932,7 @@ def search_audit_logs(
 
     # Apply case-insensitive string filters in Python
     if action is not None:
-        all_records = [
-            log for log in all_records if action.lower() in log.action.lower()
-        ]
+        all_records = [log for log in all_records if action.lower() in log.action.lower()]
     if resource_type is not None:
         all_records = [
             log
@@ -985,9 +941,7 @@ def search_audit_logs(
         ]
     if details is not None:
         all_records = [
-            log
-            for log in all_records
-            if log.details and details.lower() in log.details.lower()
+            log for log in all_records if log.details and details.lower() in log.details.lower()
         ]
 
     total = len(all_records)
@@ -1020,15 +974,11 @@ def search_audit_logs(
 @router.get("/system-config")
 def search_system_config(
     key: Optional[str] = Query(None, description="Filter by key (case-insensitive)"),
-    value: Optional[str] = Query(
-        None, description="Filter by value (case-insensitive)"
-    ),
+    value: Optional[str] = Query(None, description="Filter by value (case-insensitive)"),
     description: Optional[str] = Query(
         None, description="Filter by description (case-insensitive)"
     ),
-    is_sensitive: Optional[bool] = Query(
-        None, description="Filter by sensitive status"
-    ),
+    is_sensitive: Optional[bool] = Query(None, description="Filter by sensitive status"),
     created_from: Optional[datetime] = Query(
         None, description="Filter by created_at >= this datetime"
     ),
@@ -1072,13 +1022,9 @@ def search_system_config(
 
     # Apply case-insensitive string filters in Python
     if key is not None:
-        all_records = [
-            config for config in all_records if key.lower() in config.key.lower()
-        ]
+        all_records = [config for config in all_records if key.lower() in config.key.lower()]
     if value is not None:
-        all_records = [
-            config for config in all_records if value.lower() in config.value.lower()
-        ]
+        all_records = [config for config in all_records if value.lower() in config.value.lower()]
     if description is not None:
         all_records = [
             config
@@ -1114,9 +1060,9 @@ def search_system_config(
             {
                 "id": config.id,
                 "key": config.key,
-                "value": config.value
-                if not config.is_sensitive
-                else "***HIDDEN***",  # Hide sensitive values
+                "value": (
+                    config.value if not config.is_sensitive else "***HIDDEN***"
+                ),  # Hide sensitive values
                 "description": config.description,
                 "is_sensitive": config.is_sensitive,
                 "created_at": config.created_at,

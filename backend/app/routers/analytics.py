@@ -34,9 +34,7 @@ def get_cache_key(endpoint: str, **kwargs) -> str:
 
 # 1. Overall stats
 @router.get("/overall")
-def dashboard_overall(
-    current_user=Depends(require_role("admin")), db=Depends(get_session)
-):
+def dashboard_overall(current_user=Depends(require_role("admin")), db=Depends(get_session)):
     # Count queries
     total_uploads = db.exec(select(func.count()).select_from(FileUpload)).one()
     total_users = db.exec(select(func.count()).select_from(User)).one()
@@ -56,9 +54,7 @@ def dashboard_overall(
 
 # 2. Average AI Score Per Checklist
 @router.get("/score-by-checklist")
-def score_by_checklist(
-    current_user=Depends(require_role("admin")), db=Depends(get_session)
-):
+def score_by_checklist(current_user=Depends(require_role("admin")), db=Depends(get_session)):
     # Using SQLModel select with WHERE clause joins for compatibility
     results = db.exec(
         select(Checklist.title, func.avg(AIResult.score))
@@ -87,8 +83,7 @@ def score_by_user(current_user=Depends(require_role("admin")), db=Depends(get_se
     ).all()
 
     return [
-        {"user": row[0], "average_score": round(row[1], 2) if row[1] else None}
-        for row in results
+        {"user": row[0], "average_score": round(row[1], 2) if row[1] else None} for row in results
     ]
 
 
@@ -115,9 +110,7 @@ def score_trend(
 
 # 5. AI Score Distribution (Histogram)
 @router.get("/score-distribution")
-def score_distribution(
-    current_user=Depends(require_role("admin")), db=Depends(get_session)
-):
+def score_distribution(current_user=Depends(require_role("admin")), db=Depends(get_session)):
     # Get all scores
     scores = db.exec(select(AIResult.score)).all()
 
@@ -127,9 +120,7 @@ def score_distribution(
     # Convert to DataFrame and create histogram
     df = pd.DataFrame(scores, columns=["score"])
     bins = [0, 0.2, 0.4, 0.6, 0.8, 1.0]
-    hist = (
-        pd.cut(df["score"], bins=bins, include_lowest=True).value_counts().sort_index()
-    )
+    hist = pd.cut(df["score"], bins=bins, include_lowest=True).value_counts().sort_index()
 
     return {str(interval): int(count) for interval, count in hist.items()}
 
@@ -151,6 +142,5 @@ def leaderboard(
     ).all()
 
     return [
-        {"user": row[0], "average_score": round(row[1], 2) if row[1] else None}
-        for row in results
+        {"user": row[0], "average_score": round(row[1], 2) if row[1] else None} for row in results
     ]

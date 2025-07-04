@@ -36,9 +36,7 @@ def register(user: UserCreate, db: Session = Depends(get_session)):
 
 
 @router.post("/login", response_model=Token)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)
-):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     # Try to find user by email first, then by username
     user = db.exec(select(User).where(User.email == form_data.username)).first()
     if not user:

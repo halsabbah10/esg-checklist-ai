@@ -130,9 +130,7 @@ class FileUpload(BaseModel, table=True):
     file_size: Optional[int] = Field(default=None)
     file_type: Optional[str] = Field(default=None, max_length=50)
     uploaded_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    processing_status: str = Field(
-        default="pending", max_length=20
-    )  # pending, processed, failed
+    processing_status: str = Field(default="pending", max_length=20)  # pending, processed, failed
 
     # Relationships
     # user: Optional[User] = Relationship(back_populates="file_uploads")
@@ -179,12 +177,8 @@ class AuditLog(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: Optional[int] = Field(foreign_key="user.id")
-    action: str = Field(
-        max_length=100
-    )  # e.g., "file_upload", "checklist_create", "login"
-    resource_type: Optional[str] = Field(
-        max_length=50
-    )  # e.g., "checklist", "file", "user"
+    action: str = Field(max_length=100)  # e.g., "file_upload", "checklist_create", "login"
+    resource_type: Optional[str] = Field(max_length=50)  # e.g., "checklist", "file", "user"
     resource_id: Optional[str] = Field(max_length=100)
     details: Optional[str] = Field(sa_type=Text)  # JSON string with additional details
     ip_address: Optional[str] = Field(max_length=45)  # IPv6 compatible
@@ -235,11 +229,7 @@ class Notification(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     title: str = Field(max_length=255)
     message: str = Field(sa_type=Text)
-    link: Optional[str] = Field(
-        default=None, max_length=500
-    )  # e.g., link to file or submission
+    link: Optional[str] = Field(default=None, max_length=500)  # e.g., link to file or submission
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     read: bool = Field(default=False)
-    type: str = Field(
-        default="info", max_length=20
-    )  # e.g., info, warning, error, success
+    type: str = Field(default="info", max_length=20)  # e.g., info, warning, error, success

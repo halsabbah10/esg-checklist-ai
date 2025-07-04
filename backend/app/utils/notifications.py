@@ -138,7 +138,9 @@ def notify_file_commented(
         bool: True if notification was sent successfully
     """
     title = "New Comment on Your File 💬"
-    message = f"Your file '{file_upload.filename}' has received a new comment from {commenter_name}."
+    message = (
+        f"Your file '{file_upload.filename}' has received a new comment from {commenter_name}."
+    )
     link = f"/uploads/{file_upload.id}"
 
     return notify_user(

@@ -132,9 +132,11 @@ def export_ai_results(
                     "username": user.username,
                     "user_email": user.email,
                     "ai_score": ai_result.score,
-                    "feedback": ai_result.feedback[:500] + "..."
-                    if len(ai_result.feedback) > 500
-                    else ai_result.feedback,
+                    "feedback": (
+                        ai_result.feedback[:500] + "..."
+                        if len(ai_result.feedback) > 500
+                        else ai_result.feedback
+                    ),
                     "processing_time_ms": ai_result.processing_time_ms,
                     "ai_model_version": ai_result.ai_model_version,
                     "created_at": ai_result.created_at,
@@ -220,14 +222,16 @@ def export_users(
                     {
                         "total_uploads": len(file_count),
                         "total_ai_analyses": len(ai_results),
-                        "avg_ai_score": sum(r.score for r in ai_results) / len(ai_results)  # type: ignore[dict-item]
-                        if ai_results
-                        else 0.0,
-                        "last_activity": max(
-                            [f.uploaded_at for f in file_count] + [user.created_at]
-                        )
-                        if file_count
-                        else user.created_at,
+                        "avg_ai_score": (
+                            sum(r.score for r in ai_results) / len(ai_results)  # type: ignore[dict-item]
+                            if ai_results
+                            else 0.0
+                        ),
+                        "last_activity": (
+                            max([f.uploaded_at for f in file_count] + [user.created_at])
+                            if file_count
+                            else user.created_at
+                        ),
                     }
                 )
 
@@ -312,9 +316,11 @@ def export_submissions(
                     "username": user.username,
                     "user_email": user.email,
                     "user_role": user.role,
-                    "answer_text": submission.answer_text[:1000] + "..."
-                    if len(submission.answer_text) > 1000
-                    else submission.answer_text,
+                    "answer_text": (
+                        submission.answer_text[:1000] + "..."
+                        if len(submission.answer_text) > 1000
+                        else submission.answer_text
+                    ),
                     "submitted_at": submission.submitted_at,
                 }
             )

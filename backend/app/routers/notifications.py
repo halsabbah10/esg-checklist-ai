@@ -16,9 +16,7 @@ def get_my_notifications(
     db: Session = Depends(get_session),
     current_user=Depends(require_role("auditor")),
 ):
-    notes = db.exec(
-        select(Notification).where(Notification.user_id == current_user.id)
-    ).all()
+    notes = db.exec(select(Notification).where(Notification.user_id == current_user.id)).all()
 
     # Sort by created_at in Python (newest first)
     sorted_notes = sorted(notes, key=lambda x: x.created_at, reverse=True)

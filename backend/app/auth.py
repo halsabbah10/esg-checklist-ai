@@ -49,9 +49,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     )
     to_encode.update({"exp": expire})
     return jwt.encode(
-        to_encode,
-        security_config["secret_key"],
-        algorithm=security_config["algorithm"]
+        to_encode, security_config["secret_key"], algorithm=security_config["algorithm"]
     )
 
 
@@ -66,9 +64,7 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(
-            token,
-            security_config["secret_key"],
-            algorithms=[security_config["algorithm"]]
+            token, security_config["secret_key"], algorithms=[security_config["algorithm"]]
         )
         email = payload.get("sub")
         if email is None:
