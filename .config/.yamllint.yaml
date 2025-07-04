@@ -1,0 +1,51 @@
+# YAML Lint Configuration for ESG Checklist AI
+extends: default
+
+rules:
+  # Line length configuration
+  line-length:
+    max: 120
+    level: warning
+
+  # Indentation configuration
+  indentation:
+    spaces: 2
+    indent-sequences: true
+
+  # Allow truthy values like 'yes', 'no', 'on', 'off'
+  truthy:
+    allowed-values: ["true", "false", "yes", "no", "on", "off"]
+    check-keys: false
+
+  # Comments configuration
+  comments:
+    min-spaces-from-content: 1
+
+  # Empty lines configuration
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 1
+
+  # Brackets configuration
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+  # Braces configuration
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+
+# File patterns to ignore
+ignore: |
+  .github/
+  node_modules/
+  .venv/
+  venv/
+  env/
+  backend/alembic/versions/
+  htmlcov/
+  .coverage
+  .pytest_cache/
+  __pycache__/

@@ -1,13 +1,15 @@
-from app.models import AuditLog
 from datetime import datetime, timezone
+from io import BytesIO, StringIO
 from typing import Optional
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlmodel import Session, select
-from app.database import get_session
-from app.auth import require_role, UserRoles
-from fastapi.responses import StreamingResponse
-from io import StringIO, BytesIO
+
 import pandas as pd
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
+from sqlmodel import Session, select
+
+from app.auth import UserRoles, require_role
+from app.database import get_session
+from app.models import AuditLog
 
 router = APIRouter(prefix="/audit", tags=["audit"])
 
@@ -302,17 +304,13 @@ def export_audit_logs(
             media_type="text/csv",
             headers={"Content-Disposition": "attachment; filename=audit_logs.csv"},
         )
-    elif format.lower() == "excel":
-        buf = BytesIO()
-        df.to_excel(buf, index=False, engine="openpyxl")
-        buf.seek(0)
+    if format.lower() == "excel":
+        excel_buf = BytesIO()
+        df.to_excel(excel_buf, index=False, engine="openpyxl")
+        excel_buf.seek(0)
         return StreamingResponse(
-            iter([buf.getvalue()]),
-            media_type="application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet",
+            iter([excel_buf.getvalue()]),
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": "attachment; filename=audit_logs.xlsx"},
         )
-    else:
-        raise HTTPException(
-            status_code=400, detail="Unsupported format (use csv or excel)"
-        )
+    raise HTTPException(status_code=400, detail="Unsupported format (use csv or excel)")

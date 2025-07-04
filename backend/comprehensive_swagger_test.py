@@ -8,6 +8,9 @@ import os
 import time
 import requests
 import json
+
+# Configure default timeout for all requests
+DEFAULT_TIMEOUT = 30
 import subprocess
 import threading
 from pathlib import Path
@@ -25,6 +28,12 @@ class SwaggerTestSuite:
         self.server_process = None
         self.test_user_token = None
         self.admin_token = None
+        self.test_checklist_id = None
+    
+    def safe_request(self, method, url, **kwargs):
+        """Make HTTP request with default timeout for security"""
+        kwargs.setdefault('timeout', DEFAULT_TIMEOUT)
+        return getattr(requests, method)(url, **kwargs)
         self.test_checklist_id = None
         self.test_file_id = None
         self.samples_dir = Path("../samples")
@@ -111,7 +120,7 @@ class SwaggerTestSuite:
         print("=" * 50)
         
         try:
-            response = requests.get(f"{self.base_url}/health")
+            response = requests.get(f"{self.base_url}/health", timeout=10)
             
             print(f"✅ Status Code: {response.status_code}")
             
@@ -145,7 +154,7 @@ class SwaggerTestSuite:
         success_count = 0
         for endpoint, name in endpoints:
             try:
-                response = requests.get(f"{self.base_url}{endpoint}")
+                response = requests.get(f"{self.base_url}{endpoint}", timeout=10)
                 if response.status_code == 200:
                     print(f"✅ {name}: Available at {endpoint}")
                     success_count += 1

@@ -1,17 +1,19 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-from ..models import User
-from ..schemas import UserCreate, UserRead, Token
-from ..database import get_session
-from ..auth import (
-    hash_password,
-    verify_password,
-    create_access_token,
-    require_role,
-    get_current_user,
-)
 from datetime import timedelta
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlmodel import Session, select
+
+from ..auth import (
+    create_access_token,
+    get_current_user,
+    hash_password,
+    require_role,
+    verify_password,
+)
+from ..database import get_session
+from ..models import User
+from ..schemas import Token, UserCreate, UserRead
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -66,5 +68,4 @@ def get_current_user_info(current_user: User = Depends(get_current_user)):
 @router.get("/", response_model=list[UserRead])
 def list_users(db: Session = Depends(get_session)):
     """List all users (for debugging)"""
-    users = db.exec(select(User)).all()
-    return users
+    return db.exec(select(User)).all()

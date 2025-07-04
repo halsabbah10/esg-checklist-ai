@@ -1,15 +1,16 @@
+import hashlib
+import logging
+from datetime import datetime, timedelta, timezone
+from functools import lru_cache
+
+import pandas as pd
 from fastapi import APIRouter, Depends
 from sqlalchemy import func
 from sqlmodel import select
-from datetime import datetime, timedelta, timezone
-import pandas as pd
-import logging
-from functools import lru_cache
-import hashlib
 
-from app.models import FileUpload, AIResult, Checklist, User
-from app.database import get_session
 from app.auth import require_role
+from app.database import get_session
+from app.models import AIResult, Checklist, FileUpload, User
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -26,8 +27,9 @@ def get_cache_key(endpoint: str, **kwargs) -> str:
     """Generate cache key for analytics queries"""
     # Include timestamp rounded to 5 minutes for cache invalidation
     timestamp = int(datetime.now(timezone.utc).timestamp() // 300) * 300
-    key_data = f"{endpoint}_{timestamp}_{str(sorted(kwargs.items()))}"
-    return hashlib.md5(key_data.encode()).hexdigest()
+    key_data = f"{endpoint}_{timestamp}_{sorted(kwargs.items())!s}"
+    # Use SHA-256 instead of MD5 for better security, but mark as non-security usage
+    return hashlib.sha256(key_data.encode()).hexdigest()[:16]  # Truncate for cache key efficiency
 
 
 # 1. Overall stats

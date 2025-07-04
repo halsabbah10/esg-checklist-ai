@@ -4,16 +4,17 @@ Implements comprehensive user administration with proper validation,
 security, logging, and error handling.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlmodel import Session, select, and_
-from typing import List, Optional
 import logging
 from datetime import datetime, timezone
+from typing import List, Optional
 
-from app.models import User
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, EmailStr, field_validator
+from sqlmodel import Session, and_, select
+
+from app.auth import UserRoles, hash_password, require_role
 from app.database import get_session
-from app.auth import require_role, hash_password, UserRoles
-from pydantic import BaseModel, EmailStr, validator
+from app.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -30,27 +31,28 @@ class UserCreateAdmin(BaseModel):
     role: str = UserRoles.AUDITOR
     is_active: bool = True
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         if len(v) < 3 or len(v) > 50:
             raise ValueError("Username must be between 3 and 50 characters")
         if not v.replace("_", "").replace("-", "").isalnum():
-            raise ValueError(
-                "Username can only contain letters, numbers, hyphens, and underscores"
-            )
+            raise ValueError("Username can only contain letters, numbers, hyphens, and underscores")
         return v.lower()
 
-    @validator("password")
+    @field_validator("password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
         return v
 
-    @validator("role")
+    @field_validator("role")
+    @classmethod
     def validate_role(cls, v):
         allowed_roles = UserRoles.all_roles()
         if v not in allowed_roles:
-            raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
+            raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
         return v
 
 
@@ -62,7 +64,8 @@ class UserUpdateAdmin(BaseModel):
     role: Optional[str] = None
     is_active: Optional[bool] = None
 
-    @validator("username")
+    @field_validator("username")
+    @classmethod
     def validate_username(cls, v):
         if v is not None:
             if len(v) < 3 or len(v) > 50:
@@ -74,12 +77,13 @@ class UserUpdateAdmin(BaseModel):
             return v.lower()
         return v
 
-    @validator("role")
+    @field_validator("role")
+    @classmethod
     def validate_role(cls, v):
         if v is not None:
             allowed_roles = UserRoles.all_roles()
             if v not in allowed_roles:
-                raise ValueError(f'Role must be one of: {", ".join(allowed_roles)}')
+                raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
         return v
 
 
@@ -113,7 +117,8 @@ class PasswordResetAdmin(BaseModel):
 
     new_password: str
 
-    @validator("new_password")
+    @field_validator("new_password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 8:
             raise ValueError("Password must be at least 8 characters long")
@@ -161,8 +166,8 @@ async def list_users(
         # Apply filters to queries
         if filters:
             combined_filter = and_(*filters) if len(filters) > 1 else filters[0]
-            query = query.where(combined_filter)
-            count_query = count_query.where(combined_filter)
+            query = query.where(combined_filter)  # type: ignore[arg-type]
+            count_query = count_query.where(combined_filter)  # type: ignore[arg-type]
 
         # Get all users for counting and filtering
         all_users = db.exec(query).all()
@@ -184,9 +189,7 @@ async def list_users(
         offset = (page - 1) * per_page
         users = all_users[offset : offset + per_page]
 
-        logger.info(
-            f"Admin {current_user.email} listed users: page={page}, total={total}"
-        )
+        logger.info(f"Admin {current_user.email} listed users: page={page}, total={total}")
 
         return UserListResponse(
             users=[UserReadAdmin.from_orm(user) for user in users],
@@ -197,7 +200,7 @@ async def list_users(
         )
 
     except Exception as e:
-        logger.error(f"Failed to list users: {str(e)}")
+        logger.exception(f"Failed to list users: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve users",
@@ -229,7 +232,7 @@ async def get_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to get user {user_id}: {str(e)}")
+        logger.exception(f"Failed to get user {user_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user",
@@ -249,9 +252,7 @@ async def create_user(
     """
     try:
         # Check if username already exists
-        existing_username = db.exec(
-            select(User).where(User.username == user_data.username)
-        ).first()
+        existing_username = db.exec(select(User).where(User.username == user_data.username)).first()
         if existing_username:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -259,9 +260,7 @@ async def create_user(
             )
 
         # Check if email already exists
-        existing_email = db.exec(
-            select(User).where(User.email == user_data.email)
-        ).first()
+        existing_email = db.exec(select(User).where(User.email == user_data.email)).first()
         if existing_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -289,7 +288,7 @@ async def create_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to create user: {str(e)}")
+        logger.exception(f"Failed to create user: {e!s}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -327,9 +326,7 @@ async def update_user(
         # Check for username uniqueness if updating
         if user_data.username and user_data.username != user.username:
             existing_username = db.exec(
-                select(User).where(
-                    and_(User.username == user_data.username, User.id != user_id)
-                )
+                select(User).where(and_(User.username == user_data.username, User.id != user_id))
             ).first()
             if existing_username:
                 raise HTTPException(
@@ -340,9 +337,7 @@ async def update_user(
         # Check for email uniqueness if updating
         if user_data.email and user_data.email != user.email:
             existing_email = db.exec(
-                select(User).where(
-                    and_(User.email == user_data.email, User.id != user_id)
-                )
+                select(User).where(and_(User.email == user_data.email, User.id != user_id))
             ).first()
             if existing_email:
                 raise HTTPException(
@@ -365,7 +360,7 @@ async def update_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to update user {user_id}: {str(e)}")
+        logger.exception(f"Failed to update user {user_id}: {e!s}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -409,7 +404,7 @@ async def delete_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to delete user {user_id}: {str(e)}")
+        logger.exception(f"Failed to delete user {user_id}: {e!s}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -448,7 +443,7 @@ async def reset_user_password(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to reset password for user {user_id}: {str(e)}")
+        logger.exception(f"Failed to reset password for user {user_id}: {e!s}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -485,7 +480,7 @@ async def activate_user(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Failed to activate user {user_id}: {str(e)}")
+        logger.exception(f"Failed to activate user {user_id}: {e!s}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -510,7 +505,7 @@ async def get_user_stats(
         # Count by role
         roles_query = select(User.role, User.id).where(User.is_active)
         roles_data = db.exec(roles_query).all()
-        role_counts = {}
+        role_counts: dict[str, int] = {}
         for role, _ in roles_data:
             role_counts[role] = role_counts.get(role, 0) + 1
 
@@ -524,7 +519,7 @@ async def get_user_stats(
         }
 
     except Exception as e:
-        logger.error(f"Failed to get user stats: {str(e)}")
+        logger.exception(f"Failed to get user stats: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user statistics",

@@ -1,7 +1,9 @@
-from sqlmodel import create_engine, Session, text
-from fastapi import HTTPException
 import logging
-from .config import get_settings, get_database_config
+
+from fastapi import HTTPException
+from sqlmodel import Session, create_engine, text
+
+from .config import get_database_config, get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -31,10 +33,10 @@ def get_session():
         # Re-raise FastAPI HTTPExceptions (like authentication errors)
         raise
     except Exception as e:
-        logger.error(f"Database session error: {e}")
+        logger.exception(f"Database session error: {e}")
         import traceback
         traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
 
 def get_db_health():
@@ -44,7 +46,7 @@ def get_db_health():
             session.execute(text("SELECT 1"))
             return True
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.exception(f"Database health check failed: {e}")
         return False
 
 
@@ -53,12 +55,12 @@ def init_database():
     try:
         # Import models to ensure they are registered with SQLModel
         from sqlmodel import SQLModel
-        from . import models  # Import models module
-        
+
+
         logger.info("Creating database tables...")
         SQLModel.metadata.create_all(engine)
         logger.info("Database tables created successfully")
         return True
     except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
+        logger.exception(f"Failed to initialize database: {e}")
         raise

@@ -1,15 +1,17 @@
-from passlib.context import CryptContext
-from jose import jwt, JWTError
+import logging
+import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import warnings
-import logging
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from sqlmodel import Session, select
+
+from .config import get_api_prefix, get_security_config, get_settings
 from .database import get_session
 from .models import User
-from .config import get_settings, get_security_config, get_api_prefix
-from sqlmodel import Session, select
 
 # Suppress BCrypt version warning (known compatibility issue with passlib)
 warnings.filterwarnings("ignore", message=".*bcrypt.*", category=UserWarning)
@@ -47,8 +49,8 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     )
     to_encode.update({"exp": expire})
     return jwt.encode(
-        to_encode, 
-        security_config["secret_key"], 
+        to_encode,
+        security_config["secret_key"],
         algorithm=security_config["algorithm"]
     )
 
@@ -64,8 +66,8 @@ def get_current_user(
     )
     try:
         payload = jwt.decode(
-            token, 
-            security_config["secret_key"], 
+            token,
+            security_config["secret_key"],
             algorithms=[security_config["algorithm"]]
         )
         email = payload.get("sub")

@@ -70,6 +70,14 @@ isort==5.13.2
 mypy==1.10.0
 pre-commit==3.7.1
 
+# --- Security Tools ---
+bandit[toml]==1.7.7
+ruff==0.4.4
+safety==3.2.0
+pip-audit==2.7.3
+detect-secrets==1.5.0
+werkzeug==3.0.3  # For secure_filename utility
+
 # --- Other dependencies for parsing ---
 pdfminer.six==20231228
 python-dateutil==2.9.0.post0

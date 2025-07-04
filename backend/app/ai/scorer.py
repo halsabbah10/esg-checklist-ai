@@ -1,7 +1,10 @@
-import os
-import requests
 import logging
+import re
 from typing import Tuple
+
+import requests
+
+from ..config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -9,19 +12,19 @@ logger = logging.getLogger(__name__)
 class AIScorer:
     """
     Production-grade AI model abstraction for ESG scoring.
-    Supports multiple AI providers with seamless switching via environment variables.
+    Supports multiple AI providers with seamless switching via centralized configuration.
     """
 
     def __init__(self):
-        self.provider = os.getenv("AI_SCORER", "gemini").lower()
-        self.gemini_api_key = os.getenv("GEMINI_API_KEY")
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
-        self.eand_api_url = os.getenv(
-            "EAND_API_URL"
-        )  # To be used for future integration
-        self.eand_api_key = os.getenv(
-            "EAND_API_KEY"
-        )  # To be used for future integration
+        # Get centralized settings
+        self.settings = get_settings()
+
+        self.provider = self.settings.AI_SCORER.lower()
+        self.gemini_api_key = self.settings.GEMINI_API_KEY
+        self.gemini_model = self.settings.gemini_model
+        self.openai_api_key = self.settings.OPENAI_API_KEY
+        self.eand_api_url = self.settings.EAND_API_URL
+        self.eand_api_key = self.settings.EAND_API_KEY
 
         # Validate required API keys based on provider
         self._validate_provider_config()
@@ -29,14 +32,10 @@ class AIScorer:
     def _validate_provider_config(self):
         """Validate that required API keys are available for the selected provider."""
         if self.provider == "gemini" and not self.gemini_api_key:
-            raise ValueError(
-                "GEMINI_API_KEY is required when AI_SCORER is set to 'gemini'"
-            )
-        elif self.provider == "openai" and not self.openai_api_key:
-            raise ValueError(
-                "OPENAI_API_KEY is required when AI_SCORER is set to 'openai'"
-            )
-        elif self.provider == "eand" and not self.eand_api_key:
+            raise ValueError("GEMINI_API_KEY is required when AI_SCORER is set to 'gemini'")
+        if self.provider == "openai" and not self.openai_api_key:
+            raise ValueError("OPENAI_API_KEY is required when AI_SCORER is set to 'openai'")
+        if self.provider == "eand" and not self.eand_api_key:
             raise ValueError("EAND_API_KEY is required when AI_SCORER is set to 'eand'")
 
     def score(self, text: str) -> Tuple[float, str]:
@@ -58,34 +57,33 @@ class AIScorer:
         try:
             if self.provider == "gemini":
                 return self._score_gemini(text)
-            elif self.provider == "openai":
+            if self.provider == "openai":
                 return self._score_openai(text)
-            elif self.provider == "eand":
+            if self.provider == "eand":
                 return self._score_eand(text)
-            else:
-                raise Exception(
-                    f"Unknown AI provider specified in AI_SCORER: {self.provider}"
-                )
+            raise Exception(f"Unknown AI provider specified in AI_SCORER: {self.provider}")
         except Exception as e:
-            logger.error(f"AI scoring failed with provider {self.provider}: {str(e)}")
+            logger.exception(f"AI scoring failed with provider {self.provider}: {e!s}")
             raise
 
     def _score_gemini(self, text: str) -> Tuple[float, str]:
         """Score text using Google's Gemini AI model."""
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
 
         # Enhanced prompt for ESG scoring
         esg_prompt = f"""
-        Analyze the following ESG (Environmental, Social, Governance) document and provide a comprehensive assessment.
-        
+        Analyze the following ESG (Environmental, Social, Governance) document and
+        provide a comprehensive assessment.
+
         Document text: {text}
-        
+
         Please provide:
         1. An overall ESG compliance score between 0.0 and 1.0 (where 1.0 is excellent compliance)
         2. Detailed feedback on strengths and areas for improvement
         3. Specific recommendations for better ESG practices
-        
-        Format your response with the score clearly indicated as "Score: X.XX" followed by your detailed analysis.
+
+        Format your response with the score clearly indicated as "Score: X.XX"
+        followed by your detailed analysis.
         """
 
         payload = {
@@ -127,11 +125,9 @@ class AIScorer:
         except requests.exceptions.Timeout:
             raise Exception("Gemini API request timed out")
         except requests.exceptions.RequestException as e:
-            raise Exception(f"Gemini API network error: {str(e)}")
+            raise Exception(f"Gemini API network error: {e!s}")
         except KeyError as e:
-            raise Exception(
-                f"Invalid response structure from Gemini: missing key {str(e)}"
-            )
+            raise Exception(f"Invalid response structure from Gemini: missing key {e!s}")
 
     def _score_openai(self, text: str) -> Tuple[float, str]:
         """Score text using OpenAI's GPT model."""
@@ -143,15 +139,16 @@ class AIScorer:
 
         # Enhanced prompt for ESG scoring
         esg_prompt = f"""
-        As an ESG (Environmental, Social, Governance) expert, analyze the following document and provide a comprehensive assessment.
-        
+        As an ESG (Environmental, Social, Governance) expert, analyze the following
+        document and provide a comprehensive assessment.
+
         Document: {text}
-        
+
         Provide:
         1. Overall ESG compliance score (0.0 to 1.0, where 1.0 is excellent)
         2. Detailed analysis of environmental, social, and governance aspects
         3. Specific recommendations for improvement
-        
+
         Start your response with "Score: X.XX" followed by your detailed analysis.
         """
 
@@ -185,11 +182,9 @@ class AIScorer:
         except requests.exceptions.Timeout:
             raise Exception("OpenAI API request timed out")
         except requests.exceptions.RequestException as e:
-            raise Exception(f"OpenAI API network error: {str(e)}")
+            raise Exception(f"OpenAI API network error: {e!s}")
         except KeyError as e:
-            raise Exception(
-                f"Invalid response structure from OpenAI: missing key {str(e)}"
-            )
+            raise Exception(f"Invalid response structure from OpenAI: missing key {e!s}")
 
     def _score_eand(self, text: str) -> Tuple[float, str]:
         """
@@ -230,30 +225,35 @@ class AIScorer:
         #     raise Exception(f"e& API error: {str(e)}")
 
         # Temporary implementation returning static high-quality response
-        logger.warning(
-            "Using placeholder e& AI scoring - replace with actual API integration"
-        )
+        logger.warning("Using placeholder e& AI scoring - replace with actual API integration")
 
         # Simulate AI analysis based on text length and content
-        score = min(
-            0.99, max(0.60, len(text) / 1000.0)
-        )  # Basic scoring based on content length
+        score = min(0.99, max(0.60, len(text) / 1000.0))  # Basic scoring based on content length
+
+        # Determine assessment level
+        assessment_level = "strong" if score > 0.8 else "moderate" if score > 0.6 else "basic"
+
+        # Determine governance status
+        governance_status = (
+            "appears structured" if "governance" in text.lower() else "requires attention"
+        )
+
         feedback = f"""e& AI ESG Analysis (Integration Pending):
 
-**Overall Assessment:** The document shows {'strong' if score > 0.8 else 'moderate' if score > 0.6 else 'basic'} ESG compliance indicators.
+**Overall Assessment:** The document shows {assessment_level} ESG compliance indicators.
 
 **Score: {score:.2f}**
 
 **Environmental Factors:**
-- Document length suggests {'comprehensive' if len(text) > 500 else 'basic'} environmental coverage
+- Document length suggests {"comprehensive" if len(text) > 500 else "basic"} environmental coverage
 - Recommend integrating more specific environmental metrics
 
 **Social Responsibility:**
-- Social aspects {'well documented' if 'social' in text.lower() else 'need enhancement'}
+- Social aspects {"well documented" if "social" in text.lower() else "need enhancement"}
 - Consider adding employee welfare and community impact measures
 
 **Governance:**
-- Governance framework {'appears structured' if 'governance' in text.lower() else 'requires attention'}
+- Governance framework {governance_status}
 - Strengthen transparency and accountability measures
 
 **Recommendations:**
@@ -276,8 +276,6 @@ class AIScorer:
         Returns:
             float: Extracted score between 0.0 and 1.0
         """
-        import re
-
         # Try multiple patterns to extract score
         patterns = [
             r"[Ss]core:\s*([0-1](?:\.\d+)?)",  # "Score: 0.85"
@@ -300,11 +298,10 @@ class AIScorer:
 
                     # Ensure score is in valid range
                     if 0 <= score <= 1:
-                        logger.debug(
-                            f"Extracted score: {score} using pattern: {pattern}"
-                        )
+                        logger.debug(f"Extracted score: {score} using pattern: {pattern}")
                         return score
-                except ValueError:
+                except ValueError as e:
+                    logger.debug(f"Failed to parse score with pattern '{pattern}': {e}")
                     continue
 
         # Fallback: analyze sentiment for approximate scoring

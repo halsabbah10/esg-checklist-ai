@@ -3,33 +3,5 @@
         {
             "path": "."
         }
-    ],
-    "settings": {
-        "python.defaultInterpreterPath": "./.venv/bin/python",
-        "python.terminal.activateEnvironment": true,
-        "python.terminal.activateEnvInCurrentTerminal": true,
-        "python.analysis.typeCheckingMode": "basic",
-        "python.analysis.autoImportCompletions": true,
-        "python.analysis.extraPaths": [
-            "./backend",
-            "./backend/app"
-        ],
-        "python.analysis.include": [
-            "./backend/**/*.py"
-        ],
-        "python.linting.enabled": true,
-        "python.linting.pylintEnabled": false,
-        "python.linting.flake8Enabled": false,
-        "python.linting.mypyEnabled": false,
-        "files.associations": {
-            "*.py": "python"
-        },
-        "python.envFile": "${workspaceFolder}/backend/.env"
-    },
-    "extensions": {
-        "recommendations": [
-            "ms-python.python",
-            "ms-python.pylance"
-        ]
-    }
+    ]
 }

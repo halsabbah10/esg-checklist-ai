@@ -2,12 +2,14 @@
 Notification utilities for automatic user notifications
 """
 
-from sqlmodel import Session
-from app.models import Notification, FileUpload
-from app.utils.audit import log_notification_action
+import logging
 from datetime import datetime, timezone
 from typing import Optional
-import logging
+
+from sqlmodel import Session
+
+from app.models import FileUpload, Notification
+from app.utils.audit import log_notification_action
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ def notify_user(
         return True
 
     except Exception as e:
-        logger.error(f"Failed to send notification to user {user_id}: {e}")
+        logger.exception(f"Failed to send notification to user {user_id}: {e}")
         db.rollback()
         return False
 

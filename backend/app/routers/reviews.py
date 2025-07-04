@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
-from app.models import FileUpload, Comment
-from app.database import get_session
-from app.auth import require_role, get_current_user
-from app.utils.notifications import notify_file_status_change, notify_file_commented
-from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
+from sqlmodel import Session, select
+
+from app.auth import get_current_user, require_role
+from app.database import get_session
+from app.models import Comment, FileUpload
+from app.utils.notifications import notify_file_commented, notify_file_status_change
 
 
 def require_any_role(*roles: str):
@@ -109,7 +111,7 @@ def add_comment(
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send comment notification: {e}")
+            logger.exception(f"Failed to send comment notification: {e}")
 
     return CommentResponse(
         comment_id=comment.id or 0,  # Should never be None after commit/refresh
@@ -160,7 +162,7 @@ def set_status(
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to send status change notification: {e}")
+            logger.exception(f"Failed to send status change notification: {e}")
 
     return StatusResponse(
         status=ReviewStatus(upload.status),

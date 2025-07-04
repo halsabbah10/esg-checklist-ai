@@ -1,14 +1,15 @@
-import time
 import logging
-from typing import Tuple, Optional, Dict, Any
-from ..config import get_settings, get_ai_config
+import time
+from typing import Optional, Tuple, TypedDict
+
+from ..config import get_ai_config, get_settings
 
 # Import the new AI abstraction
 try:
     from app.ai.scorer import AIScorer
 except ImportError:
     # Fallback for development/testing
-    AIScorer = None
+    AIScorer = None  # type: ignore[misc,assignment]
 
 # Get centralized configuration
 settings = get_settings()
@@ -18,11 +19,17 @@ ai_config = get_ai_config()
 logger = logging.getLogger(__name__)
 
 
+class ESGCategoryData(TypedDict):
+    subcategories: list[str]
+    keywords: list[str]
+    weight: float
+
+
 # Circuit breaker state with centralized configuration
 class CircuitBreaker:
-    def __init__(self, 
-                 failure_threshold: int = None, 
-                 recovery_timeout: int = None):
+    def __init__(
+        self, failure_threshold: Optional[int] = None, recovery_timeout: Optional[int] = None
+    ):
         self.failure_threshold = failure_threshold or ai_config["circuit_breaker_threshold"]
         self.recovery_timeout = recovery_timeout or ai_config["circuit_breaker_timeout"]
         self.failure_count = 0
@@ -47,17 +54,17 @@ class CircuitBreaker:
                 self.failure_count = 0
                 logger.info("Circuit breaker moved to CLOSED state")
             return result
-        except Exception as e:
+        except Exception:
             self.failure_count += 1
             self.last_failure_time = time.time()
 
             if self.failure_count >= self.failure_threshold:
                 self.state = "OPEN"
-                logger.error(
+                logger.exception(
                     f"Circuit breaker moved to OPEN state after {self.failure_count} failures"
                 )
 
-            raise e
+            raise
 
 
 # Global circuit breaker instance
@@ -78,17 +85,14 @@ def retry_with_backoff(max_retries=3, base_delay=1, max_delay=10):
                     last_exception = e
                     if attempt < max_retries:
                         delay = min(base_delay * (2**attempt), max_delay)
-                        logger.warning(
-                            f"Attempt {attempt + 1} failed, retrying in {delay}s: {e}"
-                        )
+                        logger.warning(f"Attempt {attempt + 1} failed, retrying in {delay}s: {e}")
                         time.sleep(delay)
                     else:
-                        logger.error(f"All {max_retries + 1} attempts failed: {e}")
+                        logger.exception(f"All {max_retries + 1} attempts failed: {e}")
 
             if last_exception:
                 raise last_exception
-            else:
-                raise Exception("Function failed with no exception recorded")
+            raise Exception("Function failed with no exception recorded")
 
         return wrapper
 
@@ -98,7 +102,8 @@ def retry_with_backoff(max_retries=3, base_delay=1, max_delay=10):
 def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
     """
     Enhanced AI scoring function using the new AI abstraction layer.
-    Supports multiple AI providers with circuit breaker, retry logic, and comprehensive error handling.
+    Supports multiple AI providers with circuit breaker, retry logic,
+    and comprehensive error handling.
     """
     try:
         # Validate input
@@ -107,13 +112,11 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
             return 0.0, "No content provided for analysis"
 
         if len(text) > 50000:  # Reasonable limit for processing
-            logger.warning(
-                f"Text too long ({len(text)} chars), truncating to 50000 chars"
-            )
+            logger.warning(f"Text too long ({len(text)} chars), truncating to 50000 chars")
             text = text[:50000] + "...[truncated for AI processing]"
 
         # Use the new AI abstraction
-        if AIScorer:
+        if AIScorer is not None:  # type: ignore[truthy-function]
             try:
                 scorer = AIScorer()
                 start_time = time.time()
@@ -127,7 +130,7 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
 
                 return score, feedback
             except Exception as e:
-                logger.error(f"AI scoring failed with new abstraction: {str(e)}")
+                logger.exception(f"AI scoring failed with new abstraction: {e!s}")
                 # Fall back to simple scoring
                 return _fallback_simple_scoring(text)
         else:
@@ -135,7 +138,7 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
             return _fallback_simple_scoring(text)
 
     except Exception as e:
-        logger.error(f"Unexpected error in AI scoring: {e}")
+        logger.exception(f"Unexpected error in AI scoring: {e}")
         return _fallback_simple_scoring(text)
 
 
@@ -190,11 +193,12 @@ def _fallback_simple_scoring(text: str) -> Tuple[float, str]:
 
 **Content Analysis:**
 - Environmental aspects: {env_score} indicators found
-- Social responsibility: {social_score} indicators found  
+- Social responsibility: {social_score} indicators found
 - Governance framework: {gov_score} indicators found
 - Document length: {len(text)} characters
 
-**Note:** This is a basic analysis. For comprehensive ESG scoring, ensure AI services are properly configured.
+**Note:** This is a basic analysis. For comprehensive ESG scoring,
+ensure AI services are properly configured.
 
 **Recommendations:**
 1. Configure AI_SCORER environment variable (gemini/openai/eand)
@@ -216,7 +220,7 @@ def get_ai_service_status() -> dict:
     }
 
     # Add AI provider information if available
-    if AIScorer:
+    if AIScorer is not None:  # type: ignore[truthy-function]
         try:
             scorer = AIScorer()
             provider_info = scorer.get_provider_info()
@@ -251,7 +255,7 @@ def get_ai_service_status() -> dict:
 
 
 # Enhanced ESG scoring based on real Internal Audit Checklist data
-REAL_ESG_CATEGORIES = {
+REAL_ESG_CATEGORIES: dict[str, ESGCategoryData] = {
     "Environmental": {
         "subcategories": ["Energy", "Emissions", "Water", "Waste"],
         "keywords": [
@@ -306,8 +310,9 @@ REAL_ESG_CATEGORIES = {
     },
 }
 
-ENHANCED_SYSTEM_PROMPT = """You are an expert ESG auditor trained on real Internal Audit Checklist data. 
-Analyze documents for Environmental, Social, and Governance compliance based on enterprise audit standards.
+ENHANCED_SYSTEM_PROMPT = """You are an expert ESG auditor trained on real
+Internal Audit Checklist data. Analyze documents for Environmental, Social,
+and Governance compliance based on enterprise audit standards.
 Focus on specific evidence, policy implementation, and regulatory compliance indicators."""
 
 
@@ -368,30 +373,24 @@ def calculate_enhanced_esg_score(document_analysis: dict, ai_response: str) -> d
 
         # Extract evidence (simple implementation)
         if evidence_count > 0:
-            scores[category]["evidence"] = [
-                f"Found {evidence_count} relevant indicators"
-            ]
+            scores[category]["evidence"] = [f"Found {evidence_count} relevant indicators"]
 
         # Assess risks
         if category_score < 50:
-            scores[category]["risks"] = [
-                "Low compliance score indicates potential risks"
-            ]
+            scores[category]["risks"] = ["Low compliance score indicates potential risks"]
 
     # Calculate overall score
     overall_score = sum(
-        scores[category]["score"] * REAL_ESG_CATEGORIES[category]["weight"]
+        score_value * REAL_ESG_CATEGORIES[category]["weight"]
         for category in scores
+        if (score_value := scores[category]["score"]) is not None
+        and isinstance(score_value, (int, float))
     )
 
     return {
         "overall_score": round(overall_score, 2),
         "category_scores": scores,
-        "risk_level": "High"
-        if overall_score < 50
-        else "Medium"
-        if overall_score < 75
-        else "Low",
+        "risk_level": "High" if overall_score < 50 else "Medium" if overall_score < 75 else "Low",
         "enhanced_scoring": True,
         "data_source": "real_esg_audit_checklists",
     }

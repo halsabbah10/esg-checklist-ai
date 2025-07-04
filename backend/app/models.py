@@ -1,8 +1,9 @@
-from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship
-from sqlalchemy import Text, Index
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
+from typing import List, Optional
+
+from sqlalchemy import Index, Text
+from sqlmodel import Field, Relationship, SQLModel
 
 
 def generate_uuid() -> str:

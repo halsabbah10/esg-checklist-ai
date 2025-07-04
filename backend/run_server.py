@@ -2,25 +2,25 @@
 """
 Simple server runner for ESG Checklist AI FastAPI application
 """
-import sys
 import os
+import sys
 
 # Add the current directory to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 if __name__ == "__main__":
     import uvicorn
-    
-    print("🚀 Starting ESG Checklist AI server...")
-    print("📋 Swagger UI will be available at: http://localhost:8000/docs")
-    print("📄 ReDoc will be available at: http://localhost:8000/redoc")
-    print("❤️  Health check at: http://localhost:8000/health")
-    print("\nPress Ctrl+C to stop the server")
-    
+
+    from app.config import get_settings
+
+    # Get centralized settings
+    settings = get_settings()
+
+
     uvicorn.run(
         "app.main:app",
-        host="127.0.0.1",
-        port=8000,
-        reload=True,
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=(settings.ENV == "development"),
         log_level="info"
     )

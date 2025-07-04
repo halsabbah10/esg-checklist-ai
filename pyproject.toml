@@ -1,0 +1,304 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "esg-checklist-ai"
+version = "1.0.0"
+description = "AI-enhanced system to validate ESG checklist answers and automate reporting"
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    {name = "ESG Checklist AI Team"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Internet :: WWW/HTTP :: HTTP Servers",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlmodel>=0.0.12",
+    "alembic>=1.12.0",
+    "python-multipart>=0.0.6",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "google-generativeai>=0.3.0",
+    "openai>=1.3.0",
+    "pandas>=2.1.0",
+    "openpyxl>=3.1.0",
+    "python-docx>=1.1.0",
+    "pdfplumber>=0.9.0",
+    "fpdf2>=2.7.0",
+    "aiofiles>=23.2.0",
+    "werkzeug>=3.0.0",
+    "redis>=5.0.0",
+    "psutil>=5.9.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.25.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "bandit[toml]>=1.7.0",
+    "mypy>=1.7.0",
+    "pre-commit>=3.5.0",
+    "coverage>=7.3.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.ruff]
+# Set the maximum line length to 100
+line-length = 100
+
+# Enable Python 3.8+ syntax
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable all security-related rules
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "N",      # pep8-naming
+    "S",      # flake8-bandit (security)
+    "B",      # flake8-bugbear
+    "A",      # flake8-builtins
+    "C4",     # flake8-comprehensions
+    "DTZ",    # flake8-datetimez
+    "EM",     # flake8-errmsg
+    "ISC",    # flake8-implicit-str-concat
+    "PIE",    # flake8-pie
+    "T20",    # flake8-print
+    "PT",     # flake8-pytest-style
+    "Q",      # flake8-quotes
+    "RSE",    # flake8-raise
+    "RET",    # flake8-return
+    "SIM",    # flake8-simplify
+    "TCH",    # flake8-type-checking
+    "ARG",    # flake8-unused-arguments
+    "PTH",    # flake8-use-pathlib
+    "PD",     # pandas-vet
+    "PGH",    # pygrep-hooks
+    "PL",     # pylint
+    "TRY",    # tryceratops
+    "FLY",    # flynt
+    "PERF",   # perflint
+    "FURB",   # refurb
+    "LOG",    # flake8-logging
+    "RUF",    # Ruff-specific rules
+]
+
+# Ignore specific rules that might be too strict
+ignore = [
+    "S101",   # Use of assert detected
+    "S608",   # Possible SQL injection vector through string-based query construction
+    "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements in function
+    "C901",   # Function is too complex
+    "PLR0911", # Too many return statements
+    "TRY003", # Avoid specifying long messages outside the exception class
+    "EM101",  # Exception must not use a string literal, assign to variable first
+    "EM102",  # Exception must not use an f-string literal, assign to variable first
+    "TRY301", # Abstract `raise` to an inner function (too aggressive for FastAPI patterns)
+    "TRY401", # Redundant exception object included in `logging.exception` call (prefer explicit context)
+    "B904",   # Within an `except` clause, raise exceptions with `raise ... from err` (too aggressive)
+    "PLR0912", # Too many branches (would require architectural changes)
+    "PLR2004", # Magic value used in comparison (would require many constants)
+    "PD901",  # Avoid using the generic variable name `df` for DataFrames (minor issue)
+    "A002",   # Function argument shadowing a Python builtin (minor issue)
+    "ARG001", # Unused function argument (many are intentional for FastAPI dependency injection)
+    "PTH103", # `os.makedirs()` should be replaced by `Path.mkdir(parents=True)` (minor modernization)
+    "PTH123", # `open()` should be replaced by `Path.open()` (minor modernization)
+    "PERF401", # Use `list.extend` to create a transformed list (minor performance)
+    "TRY300", # Consider moving this statement to an `else` block (stylistic preference)
+    "DTZ005", # `datetime.datetime.now()` called without a `tz` argument (requires timezone handling)
+]
+
+# Files to exclude from linting
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".env",
+    "migrations",
+    "alembic/versions",
+    "build",
+    "dist",
+    "*.egg-info",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow certain patterns in test files
+"tests/*" = ["S101", "PLR2004", "S106"]
+# Allow certain patterns in migration files
+"backend/alembic/versions/*" = ["ALL"]
+# Allow certain patterns in configuration files
+"backend/app/config.py" = ["S105", "S106", "N802", "PLW0603", "F401"]  # Allow secrets, uppercase property names, global statement, unused imports
+# Allow B008 (do not perform function calls in argument defaults) in FastAPI routers
+# This is the correct FastAPI pattern for Depends(), Query(), etc.
+"backend/app/routers/*" = ["B008"]
+"backend/app/utils/audit.py" = ["B008"]
+"backend/app/auth.py" = ["B008"]
+# Allow AI scorer patterns
+"backend/app/ai/scorer.py" = ["TRY002", "PERF203"]  # Allow generic exceptions for AI provider errors, try-except in loop for parsing
+# Allow SQLModel patterns in models
+"backend/app/models.py" = ["PGH003"]  # Allow generic type: ignore for SQLModel table configurations
+# Allow AI utility patterns
+"backend/app/utils/ai.py" = ["TRY002", "PERF203"]  # Allow generic exceptions and try-except in retry loops
+# Allow patterns in remaining utility files
+"backend/app/utils/email.py" = ["E501"]  # Allow long lines in HTML templates
+"backend/app/utils/emailer.py" = ["TRY002"]  # Allow generic exceptions for external API calls
+"backend/app/utils/notifications.py" = ["E501"]  # Allow long lines in notification messages
+"backend/run_server.py" = ["PTH100", "PTH120"]  # Allow os.path usage in server startup script
+
+[tool.ruff.lint.flake8-bandit]
+# Configuration for bandit security checks
+check-typed-exception = true
+
+[tool.ruff.lint.isort]
+# isort configuration
+known-first-party = ["app", "backend"]
+split-on-trailing-comma = true
+
+[tool.black]
+# Black code formatter configuration
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.git
+  | \.mypy_cache
+  | \.venv
+  | venv
+  | env
+  | \.env
+  | migrations
+  | alembic/versions
+  | build
+  | dist
+)/
+'''
+
+[tool.bandit]
+# Bandit security linter configuration
+exclude_dirs = [
+    "tests",
+    "backend/alembic/versions",
+    ".venv",
+    "venv",
+    "env"
+]
+
+# Skip certain tests that might be too strict
+skips = [
+    "B101",  # Test for use of assert
+    "B601",  # Test for paramiko calls
+]
+
+[tool.bandit.assert_used]
+# Allow assert in test files
+skips = ["*/tests/*", "*test*.py"]
+
+[tool.mypy]
+# MyPy type checker configuration
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+# Ignore missing imports for certain modules
+[[tool.mypy.overrides]]
+module = [
+    "google.generativeai.*",
+    "pdfplumber.*",
+    "docx.*",
+    "openpyxl.*",
+    "fpdf.*",
+    "werkzeug.*",
+    "psutil.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+# Pytest configuration
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--tb=short",
+    "--cov=backend/app",
+    "--cov-report=term-missing",
+    "--cov-report=html:htmlcov",
+    "--cov-fail-under=80"
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+# Coverage configuration
+source = ["backend/app"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/alembic/versions/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+# Coverage reporting
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]

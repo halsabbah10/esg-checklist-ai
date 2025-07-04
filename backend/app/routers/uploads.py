@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlmodel import Session, select
-from app.models import FileUpload
-from app.database import get_session
-from app.auth import require_role
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlmodel import Session, select
+
+from app.auth import require_role
+from app.database import get_session
+from app.models import FileUpload
 
 router = APIRouter(prefix="/search", tags=["Advanced Search"])
 

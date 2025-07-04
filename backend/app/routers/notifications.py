@@ -1,9 +1,11 @@
+from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from app.models import Notification
-from app.database import get_session
+
 from app.auth import require_role
-from typing import Optional
+from app.database import get_session
+from app.models import Notification
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 

@@ -1,9 +1,11 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
-from app.models import SubmissionAnswer, Checklist, ChecklistItem
-from app.database import get_session
+
 from app.auth import require_role
-from typing import List
+from app.database import get_session
+from app.models import Checklist, ChecklistItem, SubmissionAnswer
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 

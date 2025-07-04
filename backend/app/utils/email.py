@@ -1,32 +1,32 @@
-import smtplib
 import logging
-from email.mime.text import MIMEText
+import smtplib
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from typing import List, Optional
-import os
-from jinja2 import Template
-from dotenv import load_dotenv
 
-load_dotenv()
+from jinja2 import Template
+
+from ..config import get_email_config, get_settings
+
 logger = logging.getLogger(__name__)
 
-# Email configuration
-SMTP_SERVER = os.getenv("SMTP_SERVER", "smtp.gmail.com")
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USERNAME = os.getenv("SMTP_USERNAME")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-FROM_EMAIL = os.getenv("FROM_EMAIL", SMTP_USERNAME)
+# Get centralized email configuration
+settings = get_settings()
+email_config = get_email_config()
 
 
 class EmailService:
-    """Enhanced email service for notifications"""
+    """Enhanced email service for notifications with centralized configuration"""
 
     def __init__(self):
-        self.smtp_server = SMTP_SERVER
-        self.smtp_port = SMTP_PORT
-        self.username = SMTP_USERNAME
-        self.password = SMTP_PASSWORD
-        self.from_email = FROM_EMAIL
+        self.smtp_server = email_config["smtp_server"]
+        self.smtp_port = email_config["smtp_port"]
+        self.username = email_config["smtp_username"]
+        self.password = email_config["smtp_password"]
+        self.from_email = email_config["from_email"]
+        self.use_tls = email_config["use_tls"]
+        self.use_ssl = email_config["use_ssl"]
+        self.enabled = email_config["enabled"]
 
     def send_email(
         self,
@@ -65,7 +65,7 @@ class EmailService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to send email: {e}")
+            logger.exception(f"Failed to send email: {e}")
             return False
 
     def send_ai_score_notification(
@@ -106,14 +106,14 @@ ESG Checklist AI System
 <html>
 <body>
     <h2>ESG Checklist AI - Analysis Complete</h2>
-    
+
     <p>Hello,</p>
-    
+
     <p>Your uploaded file "<strong>{{ filename }}</strong>" for checklist "<strong>{{ checklist_title }}</strong>" has been analyzed.</p>
-    
+
     <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3>ESG Compliance Score: {{ score }}/1.0 ({{ score_percentage }}%)</h3>
-        
+
         {% if score >= 0.8 %}
         <div style="color: #28a745; font-weight: bold;">✅ Excellent ESG compliance detected!</div>
         {% elif score >= 0.6 %}
@@ -122,12 +122,12 @@ ESG Checklist AI System
         <div style="color: #dc3545; font-weight: bold;">❌ Low ESG compliance - review recommended.</div>
         {% endif %}
     </div>
-    
+
     <h4>Analysis Summary:</h4>
     <p style="background-color: #f8f9fa; padding: 10px; border-left: 4px solid #007bff;">
         {{ feedback }}
     </p>
-    
+
     <p>Best regards,<br>
     <strong>ESG Checklist AI System</strong></p>
 </body>

@@ -2,12 +2,14 @@
 Example of integrating the emailer with the notification system
 """
 
+import logging
+from typing import Optional
+
+from sqlmodel import Session
+
+from app.models import User
 from app.utils.emailer import send_email
 from app.utils.notifications import notify_user
-from app.models import User
-from sqlmodel import Session
-from typing import Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +81,7 @@ def notify_user_with_email(
                 logger.warning(f"Failed to send email notification to {user.email}")
 
         except Exception as e:
-            logger.error(f"Error sending email notification: {e}")
+            logger.exception(f"Error sending email notification: {e}")
             email_success = False
 
     return in_app_success and email_success
@@ -97,22 +99,29 @@ def setup_email_notifications():
 
     Then you can use notify_user_with_email() in your routers.
     """
-    import os
+    from ..config import get_settings
 
-    required_vars = [
+    settings = get_settings()
+    required_values = [
+        settings.OUTLOOK_CLIENT_ID,
+        settings.OUTLOOK_CLIENT_SECRET,
+        settings.OUTLOOK_TENANT_ID,
+        settings.OUTLOOK_SENDER_ADDRESS,
+    ]
+
+    missing_vars = [i for i, val in enumerate(required_values) if not val]
+    var_names = [
         "OUTLOOK_CLIENT_ID",
         "OUTLOOK_CLIENT_SECRET",
         "OUTLOOK_TENANT_ID",
         "OUTLOOK_SENDER_ADDRESS",
     ]
 
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-
     if missing_vars:
+        missing_names = [var_names[i] for i in missing_vars]
         logger.warning(
-            f"Email notifications disabled. Missing environment variables: {missing_vars}"
+            f"Email notifications disabled. Missing configuration values: {missing_names}"
         )
         return False
-    else:
-        logger.info("Email notifications configured and ready")
-        return True
+    logger.info("Email notifications configured and ready")
+    return True
