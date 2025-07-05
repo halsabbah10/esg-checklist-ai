@@ -1,8 +1,10 @@
 import logging
+import traceback
 
 from fastapi import HTTPException
-from sqlmodel import Session, create_engine, text
+from sqlmodel import Session, SQLModel, create_engine, text
 
+from . import models  # noqa: F401 - Import needed to register models with SQLModel
 from .config import get_database_config, get_settings
 
 logger = logging.getLogger(__name__)
@@ -33,11 +35,15 @@ def get_session():
         # Re-raise FastAPI HTTPExceptions (like authentication errors)
         raise
     except Exception as e:
-        logger.exception(f"Database session error: {e}")
-        import traceback
-
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
+        # Only log database connection errors, not validation errors
+        error_str = str(e)
+        if "RequestValidationError" not in error_str and "ValidationError" not in error_str:
+            logger.exception(f"Database session error: {e}")
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
+        else:
+            # Let validation errors pass through without logging as database errors
+            raise
 
 
 def get_db_health():
@@ -54,9 +60,6 @@ def get_db_health():
 def init_database():
     """Initialize database with proper error handling"""
     try:
-        # Import models to ensure they are registered with SQLModel
-        from sqlmodel import SQLModel
-
         logger.info("Creating database tables...")
         SQLModel.metadata.create_all(engine)
         logger.info("Database tables created successfully")
