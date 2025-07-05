@@ -151,7 +151,8 @@ exclude = [
 
 [tool.ruff.lint.per-file-ignores]
 # Allow certain patterns in test files
-"tests/*" = ["S101", "PLR2004", "S106"]
+"tests/*" = ["S101", "PLR2004", "S106", "PT004", "PT023"]
+"backend/tests/*" = ["S101", "PLR2004", "S106", "PT004", "PT023"]  # Same rules for backend test files
 # Allow certain patterns in migration files
 "backend/alembic/versions/*" = ["ALL"]
 # Allow certain patterns in configuration files

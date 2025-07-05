@@ -16,7 +16,7 @@ class TestUserModel:
         user = User(
             username="testuser",
             email="test@example.com",
-            password_hash="hashed_password",  # noqa: S106
+            password_hash="hashed_password",
             role="auditor",
             is_active=True,
         )
@@ -32,7 +32,7 @@ class TestUserModel:
         user = User(
             username="testuser2",
             email="test2@example.com",
-            password_hash="hashed_password",  # noqa: S106
+            password_hash="hashed_password",
             role="admin",
         )
 
