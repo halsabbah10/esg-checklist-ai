@@ -260,8 +260,8 @@ async def list_checklists(
             )
 
             checklist_dict = (
-                checklist.dict()
-                if hasattr(checklist, "dict")
+                checklist.model_dump()
+                if hasattr(checklist, "model_dump")
                 else {
                     "id": checklist.id,
                     "title": checklist.title,
@@ -467,7 +467,7 @@ async def update_checklist(
                 )
 
         # Update only provided fields
-        update_data = checklist_data.dict(exclude_unset=True)
+        update_data = checklist_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(checklist, field, value)
 
@@ -649,7 +649,7 @@ async def create_checklist_item(
         db.refresh(new_item)
 
         logger.info(f"Admin {current_user.email} created item for checklist {checklist_id}")
-        return ChecklistItemResponse.from_orm(new_item)
+        return ChecklistItemResponse.model_validate(new_item)
 
     except HTTPException:
         raise

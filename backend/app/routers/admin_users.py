@@ -191,7 +191,7 @@ async def list_users(
         logger.info(f"Admin {current_user.email} listed users: page={page}, total={total}")
 
         return UserListResponse(
-            users=[UserReadAdmin.from_orm(user) for user in users],
+            users=[UserReadAdmin.model_validate(user) for user in users],
             total=total,
             page=page,
             per_page=per_page,
@@ -345,7 +345,7 @@ async def update_user(
                 )
 
         # Update only provided fields
-        update_data = user_data.dict(exclude_unset=True)
+        update_data = user_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
