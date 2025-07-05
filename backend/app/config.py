@@ -20,7 +20,7 @@ except ImportError:
 
 # Pydantic v2 imports (project uses Pydantic 2.11.3)
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load environment variables
 load_dotenv()
@@ -140,11 +140,11 @@ class Settings(BaseSettings):
     docs_enabled: bool = Field(default=True, description="Enable API documentation")
     testing_mode: bool = Field(default=False, description="Testing mode")
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        # Remove env_prefix to allow direct variable names
-        extra = "ignore"  # Ignore extra fields in environment
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore",  # Ignore extra fields in environment
+    )
 
     # Convenience properties for backward compatibility
     @property

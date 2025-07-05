@@ -45,8 +45,8 @@ describe('FileUploader Integration Tests', () => {
       </TestWrapper>
     );
 
-    expect(screen.getByText(/drag and drop/i)).toBeInTheDocument();
-    expect(screen.getByText(/browse files/i)).toBeInTheDocument();
+    expect(screen.getByText(/click to select files/i)).toBeInTheDocument();
+    expect(screen.getByText(/choose files/i)).toBeInTheDocument();
   });
 
   it('should handle file selection and upload', async () => {
@@ -73,14 +73,14 @@ describe('FileUploader Integration Tests', () => {
     const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
 
     // Find file input (it might be hidden)
-    const fileInput = screen.getByRole('button', { name: /browse files/i });
+    const fileInput = screen.getByRole('button', { name: /choose files/i });
 
     if (fileInput) {
       await user.click(fileInput);
     }
 
     // Simulate file drop
-    const dropzone = screen.getByText(/drag and drop/i).closest('div');
+    const dropzone = screen.getByText(/click to select files/i).closest('div');
     if (dropzone) {
       fireEvent.drop(dropzone, {
         dataTransfer: {
@@ -95,34 +95,29 @@ describe('FileUploader Integration Tests', () => {
     });
   });
 
-  it('should handle upload errors gracefully', async () => {
-    const mockUploadFile = vi.fn().mockRejectedValue(new Error('Upload failed'));
-
-    vi.doMock('../services/api', () => ({
-      uploadFile: mockUploadFile,
-    }));
-
+  it('should handle file size validation errors', async () => {
     render(
       <TestWrapper>
-        <FileUploader onFilesUploaded={() => {}} />
+        <FileUploader onFilesUploaded={() => {}} maxFileSize={1024} />
       </TestWrapper>
     );
 
-    const file = new File(['test content'], 'test.txt', { type: 'text/plain' });
+    // Create a file that's too large (larger than 1KB limit)
+    const largeFile = new File(['x'.repeat(2048)], 'large-file.txt', { type: 'text/plain' });
 
     // Simulate file drop
-    const dropzone = screen.getByText(/drag and drop/i).closest('div');
+    const dropzone = screen.getByText(/click to select files/i).closest('div');
     if (dropzone) {
       fireEvent.drop(dropzone, {
         dataTransfer: {
-          files: [file],
+          files: [largeFile],
         },
       });
     }
 
-    // Should show error message
+    // Should show error message for file size
     await waitFor(() => {
-      expect(screen.getByText(/error/i) || screen.getByText(/failed/i)).toBeInTheDocument();
+      expect(screen.getByText(/too large/i) || screen.getByText(/maximum size/i)).toBeInTheDocument();
     });
   });
 
@@ -136,7 +131,7 @@ describe('FileUploader Integration Tests', () => {
     // Try to upload an invalid file type
     const invalidFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 
-    const dropzone = screen.getByText(/drag and drop/i).closest('div');
+    const dropzone = screen.getByText(/click to select files/i).closest('div');
     if (dropzone) {
       fireEvent.drop(dropzone, {
         dataTransfer: {

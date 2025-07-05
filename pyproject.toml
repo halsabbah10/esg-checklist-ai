@@ -276,7 +276,19 @@ addopts = [
     "--cov=backend/app",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
-    "--cov-fail-under=80"
+    "--cov-fail-under=80",
+    "-W", "ignore::DeprecationWarning:passlib.utils",
+    "-W", "ignore::DeprecationWarning:jose.jwt",
+    "-W", "ignore::DeprecationWarning:httpx._client",
+    "-W", "ignore::DeprecationWarning:pydantic._internal._config",
+    "-W", "ignore::DeprecationWarning:pytest_asyncio.plugin"
+]
+filterwarnings = [
+    "ignore::DeprecationWarning:passlib.*",
+    "ignore::DeprecationWarning:jose.*",
+    "ignore::DeprecationWarning:httpx.*",
+    "ignore::DeprecationWarning:pydantic.*",
+    "ignore::DeprecationWarning:pytest_asyncio.*"
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",

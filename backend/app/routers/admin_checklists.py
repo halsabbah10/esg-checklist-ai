@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 from sqlmodel import Session, and_, select
 
 from app.auth import UserRoles, require_role
@@ -113,8 +113,7 @@ class ChecklistItemResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChecklistResponseAdmin(BaseModel):
@@ -130,8 +129,7 @@ class ChecklistResponseAdmin(BaseModel):
     items_count: Optional[int] = None
     items: Optional[List[ChecklistItemResponse]] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChecklistCreateAdmin(BaseModel):

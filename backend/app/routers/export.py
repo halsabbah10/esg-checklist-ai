@@ -17,7 +17,7 @@ router = APIRouter(prefix="/export", tags=["export"])
 
 @router.get("/checklists")
 def export_all_checklists(
-    format: str = Query("csv", regex="^(csv|excel|json)$"),
+    format: str = Query("csv", pattern="^(csv|excel|json)$"),
     include_inactive: bool = Query(False, description="Include inactive checklists"),
     db: Session = Depends(get_session),
     current_user=Depends(require_role("admin")),
@@ -89,7 +89,7 @@ def export_all_checklists(
 
 @router.get("/ai-results")
 def export_ai_results(
-    format: str = Query("csv", regex="^(csv|excel|json)$"),
+    format: str = Query("csv", pattern="^(csv|excel|json)$"),
     checklist_id: int = Query(None, description="Filter by checklist ID"),
     min_score: float = Query(None, ge=0.0, le=1.0, description="Minimum AI score"),
     days: int = Query(30, ge=1, le=365, description="Days of data to include"),
@@ -186,7 +186,7 @@ def export_ai_results(
 
 @router.get("/users")
 def export_users(
-    format: str = Query("csv", regex="^(csv|excel|json)$"),
+    format: str = Query("csv", pattern="^(csv|excel|json)$"),
     role: str = Query(None, description="Filter by user role"),
     include_stats: bool = Query(True, description="Include user activity statistics"),
     db: Session = Depends(get_session),
@@ -275,7 +275,7 @@ def export_users(
 
 @router.get("/submissions")
 def export_submissions(
-    format: str = Query("csv", regex="^(csv|excel|json)$"),
+    format: str = Query("csv", pattern="^(csv|excel|json)$"),
     checklist_id: int = Query(None, description="Filter by checklist ID"),
     user_id: int = Query(None, description="Filter by user ID"),
     days: int = Query(30, ge=1, le=365, description="Days of data to include"),

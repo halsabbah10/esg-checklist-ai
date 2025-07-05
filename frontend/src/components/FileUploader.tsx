@@ -12,6 +12,7 @@ import {
   IconButton,
   Chip,
   Paper,
+  Alert,
 } from '@mui/material';
 import { CloudUpload, Delete, Description, CheckCircle, Error } from '@mui/icons-material';
 
@@ -38,6 +39,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   multiple = true,
 }) => {
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes';
@@ -50,23 +52,31 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
   const handleFileSelect = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
 
+    // Clear previous error
+    setErrorMessage(null);
+
     const fileArray = Array.from(selectedFiles);
     const validFiles = fileArray.filter(file => {
       if (file.size > maxFileSize) {
-        alert(`File ${file.name} is too large. Maximum size is ${formatFileSize(maxFileSize)}`);
+        setErrorMessage(`File ${file.name} is too large. Maximum size is ${formatFileSize(maxFileSize)}`);
         return false;
       }
 
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
       if (!acceptedFileTypes.includes(fileExtension)) {
-        alert(
-          `File ${file.name} is not a supported format. Supported: ${acceptedFileTypes.join(', ')}`
+        setErrorMessage(
+          `Invalid file type. File ${file.name} is not supported. Supported formats: ${acceptedFileTypes.join(', ')}`
         );
         return false;
       }
 
       return true;
     });
+
+    // If all files are invalid, don't proceed
+    if (validFiles.length === 0) {
+      return;
+    }
 
     const newFiles: UploadedFile[] = validFiles.map(file => ({
       id: `${file.name}-${Date.now()}`,
@@ -85,6 +95,27 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   const removeFile = (fileId: string) => {
     setFiles(prev => prev.filter(file => file.id !== fileId));
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const droppedFiles = e.dataTransfer.files;
+    handleFileSelect(droppedFiles);
+  };
+
+  const handleClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = multiple;
+    input.accept = acceptedFileTypes.join(',');
+    input.onchange = e => handleFileSelect((e.target as HTMLInputElement).files);
+    input.click();
   };
 
   const getStatusIcon = (status: UploadedFile['status']) => {
@@ -117,6 +148,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
 
   return (
     <Box>
+      {errorMessage && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setErrorMessage(null)}>
+          {errorMessage}
+        </Alert>
+      )}
+      
       <Paper
         sx={{
           p: 4,
@@ -130,14 +167,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             bgcolor: 'action.hover',
           },
         }}
-        onClick={() => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.multiple = multiple;
-          input.accept = acceptedFileTypes.join(',');
-          input.onchange = e => handleFileSelect((e.target as HTMLInputElement).files);
-          input.click();
-        }}
+        onClick={handleClick}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
       >
         <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
 
