@@ -39,8 +39,6 @@ ehthumbs.db
 Thumbs.db
 
 # Temporary and test files
-test_*.py
-*_test.py
 TEST_*.md
 *_TEST.md
 *_REPORT.md
