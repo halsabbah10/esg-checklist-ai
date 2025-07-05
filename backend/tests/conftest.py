@@ -111,7 +111,7 @@ def auth_headers():
 
 # Mock configurations for external services
 @pytest.fixture(autouse=True)
-def mock_external_services(monkeypatch):
+def _mock_external_services(monkeypatch):
     """Mock external services to avoid real API calls during tests."""
 
     # Mock AI service calls

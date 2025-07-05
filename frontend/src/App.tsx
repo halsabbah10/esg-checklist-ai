@@ -177,10 +177,10 @@ function Home() {
           Enterprise-Grade ESG Compliance Platform
         </Typography>
         <Typography variant="body1" sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}>
-          AI-powered ESG compliance automation system with advanced analytics,
-          multi-user management, and comprehensive audit trails.
+          AI-powered ESG compliance automation system with advanced analytics, multi-user
+          management, and comprehensive audit trails.
         </Typography>
-        
+
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
           {isAuthenticated ? (
             <>

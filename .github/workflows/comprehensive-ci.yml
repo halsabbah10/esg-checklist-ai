@@ -163,7 +163,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload security reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: security-reports
@@ -403,7 +403,7 @@ jobs:
           echo "Branch: ${{ github.ref_name }}" >> deployment-status.txt
 
       - name: Upload deployment status
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: deployment-status
           path: deployment-status.txt
