@@ -35,15 +35,9 @@ def get_session():
         # Re-raise FastAPI HTTPExceptions (like authentication errors)
         raise
     except Exception as e:
-        # Only log database connection errors, not validation errors
-        error_str = str(e)
-        if "RequestValidationError" not in error_str and "ValidationError" not in error_str:
-            logger.exception(f"Database session error: {e}")
-            traceback.print_exc()
-            raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
-        else:
-            # Let validation errors pass through without logging as database errors
-            raise
+        logger.exception(f"Database session error: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Database error: {e!s}")
 
 
 def get_db_health():
