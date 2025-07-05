@@ -58,7 +58,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     const fileArray = Array.from(selectedFiles);
     const validFiles = fileArray.filter(file => {
       if (file.size > maxFileSize) {
-        setErrorMessage(`File ${file.name} is too large. Maximum size is ${formatFileSize(maxFileSize)}`);
+        setErrorMessage(
+          `File ${file.name} is too large. Maximum size is ${formatFileSize(maxFileSize)}`
+        );
         return false;
       }
 
@@ -153,7 +155,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           {errorMessage}
         </Alert>
       )}
-      
+
       <Paper
         sx={{
           p: 4,

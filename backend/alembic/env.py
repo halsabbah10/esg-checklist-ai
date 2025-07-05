@@ -21,14 +21,21 @@ from sqlmodel import SQLModel
 
 from app.models import (  # noqa: F401
     AIResult,
+    AnalyticsSnapshot,
     AuditLog,
     Checklist,
     ChecklistItem,
     Comment,
+    ComplianceTracking,
     FileUpload,
+    Notification,
+    RealtimeEvent,
     Submission,
+    SubmissionAnswer,
     SystemConfig,
+    SystemMetrics,
     User,
+    UserActivity,
 )
 
 # this is the Alembic Config object, which provides

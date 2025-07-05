@@ -117,7 +117,9 @@ describe('FileUploader Integration Tests', () => {
 
     // Should show error message for file size
     await waitFor(() => {
-      expect(screen.getByText(/too large/i) || screen.getByText(/maximum size/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/too large/i) || screen.getByText(/maximum size/i)
+      ).toBeInTheDocument();
     });
   });
 

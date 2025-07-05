@@ -273,7 +273,7 @@ addopts = [
     "--strict-config",
     "--verbose",
     "--tb=short",
-    "--cov=backend/app",
+    "--cov=app",
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
     "--cov-fail-under=80",
@@ -299,7 +299,7 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 # Coverage configuration
-source = ["backend/app"]
+source = ["app"]
 branch = true
 omit = [
     "*/tests/*",
