@@ -2,81 +2,115 @@
 """
 Simple test to verify server startup and basic functionality
 """
+
+import logging
 import subprocess
-import time
-import requests
 import sys
-import os
+import time
+
+import requests
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 def test_server():
-    print("🧪 Simple Server Test")
-    print("=" * 50)
-    
-    # Kill any existing server
-    os.system("pkill -f 'uvicorn.*8000' 2>/dev/null || true")
+    """Simple server test."""
+    logger.info("Simple Server Test")
+    logger.info("=" * 50)
+
+    # Kill any existing server using subprocess
+    try:
+        # S603, S607: subprocess call is safe - controlled command with fixed arguments
+        subprocess.run(
+            ["pkill", "-f", "uvicorn.*8000"],
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        logger.warning("Could not kill existing uvicorn processes")
     time.sleep(2)
-    
+
     # Start server
-    print("🚀 Starting server...")
+    logger.info("Starting server...")
+    # S603: subprocess call is safe - controlled test environment
     process = subprocess.Popen(
-        ["python", "run_server.py"],
+        [sys.executable, "run_server.py"],
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        universal_newlines=True
+        universal_newlines=True,
     )
-    
+
     # Wait for startup
-    print("⏳ Waiting for server...")
+    logger.info("Waiting for server...")
     time.sleep(10)
-    
+
     success = False
     try:
         # Test health endpoint
-        print("🏥 Testing health endpoint...")
+        logger.info("Testing health endpoint...")
         response = requests.get("http://localhost:8000/health", timeout=5)
         if response.status_code == 200:
-            print("✅ Health check passed")
+            logger.info("Health check passed")
             data = response.json()
-            print(f"✅ Status: {data['status']}")
-            print(f"✅ Version: {data['version']}")
+            logger.info("Status: %s", data["status"])
+            logger.info("Version: %s", data["version"])
             success = True
         else:
-            print(f"❌ Health check failed: {response.status_code}")
-            
+            logger.error("Health check failed: %s", response.status_code)
+
         # Test root endpoint
-        print("🏠 Testing root endpoint...")
+        logger.info("Testing root endpoint...")
         response = requests.get("http://localhost:8000/", timeout=5)
         if response.status_code == 200:
-            print("✅ Root endpoint works")
+            logger.info("Root endpoint works")
             data = response.json()
-            print(f"✅ API Prefix: {data['api_prefix']}")
+            logger.info("API Prefix: %s", data["api_prefix"])
         else:
-            print(f"❌ Root endpoint failed: {response.status_code}")
-            
+            logger.error("Root endpoint failed: %s", response.status_code)
+
         # Test API docs
-        print("📋 Testing API docs...")
+        logger.info("Testing API docs...")
         response = requests.get("http://localhost:8000/v1/docs", timeout=5)
         if response.status_code == 200:
-            print("✅ Swagger UI accessible")
+            logger.info("Swagger UI accessible")
         else:
-            print(f"❌ Swagger UI failed: {response.status_code}")
-            
+            logger.error("Swagger UI failed: %s", response.status_code)
+
     except Exception as e:
-        print(f"❌ Test failed: {e}")
-        
+        logger.exception("Test failed: %s", e)
+
     finally:
         # Clean up
-        print("🛑 Stopping server...")
+        logger.info("Stopping server...")
         try:
             process.terminate()
             process.wait(timeout=10)
-        except:
+        except (subprocess.TimeoutExpired, OSError):
             process.kill()
-        
-        os.system("pkill -f 'uvicorn.*8000' 2>/dev/null || true")
-        
+
+        try:
+            # S603, S607: subprocess call is safe - controlled command with fixed arguments
+            subprocess.run(
+                ["pkill", "-f", "uvicorn.*8000"],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            logger.warning("Could not kill remaining uvicorn processes")
+
     return success
 
+
 if __name__ == "__main__":
-    success = test_server()
-    sys.exit(0 if success else 1)
+    if test_server():
+        logger.info("✅ Simple test passed!")
+        sys.exit(0)
+    else:
+        logger.error("❌ Simple test failed!")
+        sys.exit(1)

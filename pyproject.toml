@@ -174,6 +174,9 @@ exclude = [
 "backend/run_server.py" = ["PTH100", "PTH120"]  # Allow os.path usage in server startup script
 # Allow subprocess usage in test runners (controlled test environment)
 "tools/e2e_test_runner.py" = ["S603", "S607"]
+"backend/comprehensive_swagger_test.py" = ["S603", "S607"]
+"backend/simple_test.py" = ["S603", "S607"]
+"backend/test_config.py" = ["PLC0415"]  # Allow imports inside functions for testing import functionality
 
 [tool.ruff.lint.flake8-pytest-style]
 # Pytest style configuration
