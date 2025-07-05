@@ -111,9 +111,9 @@ def ai_score_text_with_gemini(text: str) -> Tuple[float, str]:
             logger.warning("Empty or whitespace-only text provided for AI scoring")
             return 0.0, "No content provided for analysis"
 
-        if len(text) > 50000:  # Reasonable limit for processing
-            logger.warning(f"Text too long ({len(text)} chars), truncating to 50000 chars")
-            text = text[:50000] + "...[truncated for AI processing]"
+        if len(text) > 20000:  # Reduced limit to prevent API quota issues
+            logger.warning(f"Text too long ({len(text)} chars), truncating to 20000 chars")
+            text = text[:20000] + "...[truncated for AI processing]"
 
         # Use the new AI abstraction
         if AIScorer is not None:  # type: ignore[truthy-function]

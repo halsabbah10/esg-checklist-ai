@@ -9,7 +9,8 @@ export const TestDashboard: React.FC = () => {
           Test Dashboard (Minimal)
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          This is a minimal dashboard with no API calls or complex logic to test for infinite reload issues.
+          This is a minimal dashboard with no API calls or complex logic to test for infinite reload
+          issues.
         </Typography>
       </Box>
     </Container>

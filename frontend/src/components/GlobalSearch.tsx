@@ -55,7 +55,7 @@ export const GlobalSearch: React.FC = () => {
         limit: 10,
       }),
     enabled: query.length >= 2,
-    select: (response) => response.data,
+    select: response => response.data,
   });
 
   const handleSearch = useCallback((value: string) => {
@@ -72,8 +72,8 @@ export const GlobalSearch: React.FC = () => {
   };
 
   const toggleFilter = (filter: string) => {
-    setFilters((prev) =>
-      prev.includes(filter) ? prev.filter((f) => f !== filter) : [...prev, filter]
+    setFilters(prev =>
+      prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
     handleFilterClose();
   };
@@ -129,7 +129,7 @@ export const GlobalSearch: React.FC = () => {
         fullWidth
         placeholder="Search checklists, uploads, users..."
         value={query}
-        onChange={(e) => handleSearch(e.target.value)}
+        onChange={e => handleSearch(e.target.value)}
         onFocus={() => setShowResults(query.length >= 2)}
         InputProps={{
           startAdornment: (
@@ -162,10 +162,10 @@ export const GlobalSearch: React.FC = () => {
       {/* Active Filters */}
       {filters.length > 0 && (
         <Box sx={{ mb: 1 }}>
-          {filters.map((filter) => (
+          {filters.map(filter => (
             <Chip
               key={filter}
-              label={filterOptions.find((f) => f.value === filter)?.label || filter}
+              label={filterOptions.find(f => f.value === filter)?.label || filter}
               onDelete={() => toggleFilter(filter)}
               size="small"
               sx={{ mr: 0.5, mb: 0.5 }}
@@ -183,7 +183,7 @@ export const GlobalSearch: React.FC = () => {
 
       {/* Filter Menu */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleFilterClose}>
-        {filterOptions.map((option) => (
+        {filterOptions.map(option => (
           <MenuItem
             key={option.value}
             onClick={() => toggleFilter(option.value)}

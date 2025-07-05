@@ -2,11 +2,34 @@
 
 ## 🔐 Login Credentials
 
-### Primary Test Account
+### Available Test Accounts
+
+#### Admin Account
+
+- **Email**: `admin@test.com`
+- **Password**: `admin123`
+- **Role**: Admin (Full Access)
+- **User ID**: 1
+
+#### Secondary Admin Account
 
 - **Email**: `test@admin.com`
 - **Password**: `admin123`
 - **Role**: Admin (Full Access)
+- **User ID**: 2
+
+#### Auditor Account
+
+- **Email**: `test@user.com`
+- **Password**: `test123`
+- **Role**: Auditor
+- **User ID**: 3
+
+#### Reviewer Account
+
+- **Email**: `reviewer@test.com`
+- **Password**: `reviewer123`
+- **Role**: Reviewer
 - **User ID**: 4
 
 ### Alternative Login Methods

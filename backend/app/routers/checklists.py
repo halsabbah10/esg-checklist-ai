@@ -15,6 +15,11 @@ from fastapi.responses import StreamingResponse
 from fpdf import FPDF  # type: ignore[import-untyped]
 from sqlmodel import Session, select
 
+from app.services.realtime_analytics import (
+    realtime_analytics,
+    track_ai_processing,
+    track_file_upload,
+)
 from app.utils.ai import ai_score_text_with_gemini
 from app.utils.email import send_ai_score_notification
 from app.utils.file_security import generate_secure_filepath, validate_upload_file
@@ -264,8 +269,34 @@ async def upload_file(
             logger.exception(f"Error extracting text from {secure_filepath}: {e}")
             raw_text = f"Error extracting text: {e}"
 
-        # AI/NLP scoring using Gemini
-        score, feedback = ai_score_text_with_gemini(raw_text)
+        # AI/NLP scoring using Gemini with real-time tracking
+        logger.info(f"Starting AI scoring for file: {secure_filename}")
+        ai_start_time = datetime.now(timezone.utc)
+
+        try:
+            score, feedback = ai_score_text_with_gemini(raw_text)
+            ai_end_time = datetime.now(timezone.utc)
+            processing_time_ms = int((ai_end_time - ai_start_time).total_seconds() * 1000)
+
+            logger.info(
+                f"AI scoring completed - Score: {score:.3f}, Feedback length: {len(feedback)} chars"
+            )
+
+            # Track AI processing metrics
+            track_ai_processing(
+                db=db,
+                user_id=current_user.id,
+                session_id=f"upload_{file_record.id}",
+                file_id=file_record.id,
+                ai_score=score,
+                processing_time_ms=processing_time_ms,
+            )
+
+        except Exception as e:
+            logger.exception(f"AI scoring failed for file {secure_filename}: {e}")
+            # Provide fallback score and feedback
+            score = 0.5
+            feedback = f"AI scoring temporarily unavailable. Error: {str(e)[:200]}..."
 
         # Truncate text if too long for database (TEXT can hold ~65k chars)
         max_text_length = 65000
@@ -309,13 +340,42 @@ async def upload_file(
                 title="File Upload Successful ✅",
                 message=(
                     f"Your file '{secure_filename}' has been uploaded and analyzed. "
-                    f"AI Score: {score:.1f}/100"
+                    f"AI Score: {score:.3f}/1.0 ({score * 100:.1f}%)"
                 ),
                 link=f"/uploads/{file_record.id}",
                 notification_type="success",
             )
         except Exception as e:
             # Log error but don't fail the upload
+            logger.exception(f"Failed to send upload notification: {e}")
+
+        # Track file upload completion with real-time analytics
+        try:
+            upload_end_time = datetime.now(timezone.utc)
+            total_processing_time = int((upload_end_time - ai_start_time).total_seconds() * 1000)
+
+            track_file_upload(
+                db=db,
+                user_id=current_user.id,
+                session_id=f"upload_{file_record.id}",
+                file_id=file_record.id,
+                filename=secure_filename,
+                processing_time_ms=total_processing_time,
+            )
+
+            # Track compliance metrics for analytics
+            realtime_analytics.track_compliance_update(
+                db=db,
+                checklist_id=checklist_id,
+                file_upload_id=file_record.id,
+                compliance_score=score,
+                risk_level="High" if score < 0.5 else "Medium" if score < 0.7 else "Low",
+                recommendations=["Improve ESG documentation", "Enhance reporting quality"],
+            )
+
+        except Exception as e:
+            # Log error but don't fail the upload
+            logger.exception(f"Failed to track analytics: {e}")
             logger.exception(f"Failed to send upload notification: {e}")
 
         return {

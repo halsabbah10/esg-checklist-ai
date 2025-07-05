@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
@@ -30,7 +31,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   });
 
   const toggleTheme = () => {
-    setIsDarkMode((prev) => {
+    setIsDarkMode(prev => {
       const newValue = !prev;
       localStorage.setItem('darkMode', JSON.stringify(newValue));
       return newValue;

@@ -64,6 +64,13 @@ interface Checklist {
   completion_rate?: number;
 }
 
+interface ProcessedChecklist extends Checklist {
+  status: 'active' | 'inactive' | 'draft';
+  category: string;
+  completion_rate: number;
+  last_run?: string;
+}
+
 type SortDirection = 'asc' | 'desc';
 type SortKey = 'title' | 'updated_at' | 'status' | 'category' | 'completion_rate';
 
@@ -84,48 +91,55 @@ export const Checklists = () => {
   const [selectedChecklist, setSelectedChecklist] = useState<Checklist | null>(null);
 
   const {
-    data: checklists = [],
+    data: checklists = [] as Checklist[],
     isLoading,
     error,
     refetch,
-  } = useQuery({
+  } = useQuery<Checklist[]>({
     queryKey: ['checklists'],
-    queryFn: () => checklistsAPI.getAll().then((res: any) => res.data),
+    queryFn: () => checklistsAPI.getAll().then((res: { data: Checklist[] }) => res.data),
   });
 
   // Transform and filter data
   const processedChecklists = useMemo(() => {
-    let filtered = checklists.map((checklist: Checklist) => ({
-      ...checklist,
-      status: checklist.is_active ? 'active' : 'inactive',
-      category: checklist.category || 'General',
-      completion_rate: Math.floor(Math.random() * 100), // Mock data
-      last_run: checklist.updated_at,
-    }));
+    let filtered: ProcessedChecklist[] = checklists.map(
+      (checklist: Checklist): ProcessedChecklist => ({
+        ...checklist,
+        status: checklist.is_active ? 'active' : 'inactive',
+        category: checklist.category || 'General',
+        completion_rate: Math.floor(Math.random() * 100), // Mock data
+        last_run: checklist.updated_at,
+      })
+    );
 
     // Apply search filter
     if (searchTerm) {
-      filtered = filtered.filter((checklist: Checklist) =>
-        checklist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        checklist.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        checklist.category?.toLowerCase().includes(searchTerm.toLowerCase())
+      filtered = filtered.filter(
+        (checklist: ProcessedChecklist) =>
+          checklist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          checklist.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          checklist.category?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Apply status filter
     if (filters.status !== 'all') {
-      filtered = filtered.filter((checklist: Checklist) => checklist.status === filters.status);
+      filtered = filtered.filter(
+        (checklist: ProcessedChecklist) => checklist.status === filters.status
+      );
     }
 
     // Apply category filter
     if (filters.category !== 'all') {
-      filtered = filtered.filter((checklist: Checklist) => checklist.category === filters.category);
+      filtered = filtered.filter(
+        (checklist: ProcessedChecklist) => checklist.category === filters.category
+      );
     }
 
     // Apply sorting
-    filtered.sort((a: Checklist, b: Checklist) => {
+    filtered.sort((a: ProcessedChecklist, b: ProcessedChecklist) => {
       let aValue, bValue;
-      
+
       switch (sortKey) {
         case 'title':
           aValue = a.title.toLowerCase();
@@ -202,12 +216,7 @@ export const Checklists = () => {
 
   if (isLoading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="400px"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
         <CircularProgress />
       </Box>
     );
@@ -216,7 +225,7 @@ export const Checklists = () => {
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
-        <Alert 
+        <Alert
           severity="error"
           action={
             <Button color="inherit" size="small" onClick={() => refetch()}>
@@ -231,15 +240,16 @@ export const Checklists = () => {
   }
 
   const getStatusBadge = (status: string) => {
-    const color = status === 'active' ? 'success' : status === 'draft' ? 'warning' : 'default';
+    const color: 'success' | 'warning' | 'default' =
+      status === 'active' ? 'success' : status === 'draft' ? 'warning' : 'default';
     return (
       <Chip
         label={status.charAt(0).toUpperCase() + status.slice(1)}
         size="small"
-        color={color as any}
-        sx={{ 
+        color={color}
+        sx={{
           minWidth: 72,
-          '& .MuiChip-label': { px: 1, fontWeight: 500 }
+          '& .MuiChip-label': { px: 1, fontWeight: 500 },
         }}
       />
     );
@@ -254,7 +264,7 @@ export const Checklists = () => {
         bgcolor: 'background.paper',
         color: 'primary.main',
         borderColor: 'primary.main',
-        '& .MuiChip-label': { px: 1.5, fontSize: 12 }
+        '& .MuiChip-label': { px: 1.5, fontSize: 12 },
       }}
     />
   );
@@ -283,11 +293,11 @@ export const Checklists = () => {
       </Box>
 
       {/* Filter Bar */}
-      <Box 
-        display="flex" 
-        flexWrap="wrap" 
-        gap={2} 
-        mb={3} 
+      <Box
+        display="flex"
+        flexWrap="wrap"
+        gap={2}
+        mb={3}
         p={2}
         sx={{
           bgcolor: 'background.paper',
@@ -300,13 +310,13 @@ export const Checklists = () => {
         <TextField
           placeholder="Search by title or ID"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           size="small"
-          sx={{ 
+          sx={{
             width: { xs: '100%', sm: 300 },
             '& .MuiOutlinedInput-root': {
               borderRadius: '0.25rem',
-            }
+            },
           }}
           InputProps={{
             startAdornment: (
@@ -316,14 +326,14 @@ export const Checklists = () => {
             ),
           }}
         />
-        
+
         {/* Status Filter */}
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Status</InputLabel>
           <Select
             value={filters.status}
             label="Status"
-            onChange={(e) => handleFilterChange('status', e.target.value)}
+            onChange={e => handleFilterChange('status', e.target.value)}
             sx={{ borderRadius: '0.25rem' }}
           >
             <MenuItem value="all">All Status</MenuItem>
@@ -339,12 +349,14 @@ export const Checklists = () => {
           <Select
             value={filters.category}
             label="Category"
-            onChange={(e) => handleFilterChange('category', e.target.value)}
+            onChange={e => handleFilterChange('category', e.target.value)}
             sx={{ borderRadius: '0.25rem' }}
           >
             <MenuItem value="all">All Categories</MenuItem>
             {categories.map((cat: string) => (
-              <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -421,7 +433,7 @@ export const Checklists = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {processedChecklists.map((checklist: Checklist, index: number) => (
+              {processedChecklists.map((checklist: ProcessedChecklist, index: number) => (
                 <TableRow
                   key={checklist.id}
                   hover
@@ -437,42 +449,44 @@ export const Checklists = () => {
                 >
                   <TableCell>
                     <Box>
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          fontWeight: 500, 
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 500,
                           color: 'primary.main',
-                          '&:hover': { textDecoration: 'underline' }
+                          '&:hover': { textDecoration: 'underline' },
                         }}
                       >
                         #{checklist.id} {checklist.title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ display: 'block', mt: 0.5 }}
+                      >
                         {checklist.items?.length || 0} questions
                       </Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    {getCategoryBadge(checklist.category || 'General')}
-                  </TableCell>
-                  <TableCell>
-                    {getStatusBadge(checklist.status || 'inactive')}
-                  </TableCell>
+                  <TableCell>{getCategoryBadge(checklist.category || 'General')}</TableCell>
+                  <TableCell>{getStatusBadge(checklist.status || 'inactive')}</TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {checklist.updated_at ? new Date(checklist.updated_at).toLocaleDateString() : '-'}
+                      {checklist.updated_at
+                        ? new Date(checklist.updated_at).toLocaleDateString()
+                        : '-'}
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <IconButton
                       size="small"
-                      onClick={(e) => handleActionClick(e, checklist.id)}
+                      onClick={e => handleActionClick(e, checklist.id)}
                       sx={{
                         color: 'text.secondary',
-                        '&:hover': { 
+                        '&:hover': {
                           color: 'primary.main',
-                          bgcolor: 'primary.50'
-                        }
+                          bgcolor: 'primary.50',
+                        },
                       }}
                     >
                       <MoreVert />
@@ -490,10 +504,9 @@ export const Checklists = () => {
               No checklists found
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              {searchTerm || activeFilterCount > 0 
-                ? 'Try adjusting your search criteria' 
-                : 'Create your first checklist to get started'
-              }
+              {searchTerm || activeFilterCount > 0
+                ? 'Try adjusting your search criteria'
+                : 'Create your first checklist to get started'}
             </Typography>
             <Button
               variant="contained"
@@ -514,31 +527,39 @@ export const Checklists = () => {
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={() => {
-          if (selectedRow) navigate(`/checklists/${selectedRow}`);
-          setActionMenuAnchor(null);
-        }}>
+        <MenuItem
+          onClick={() => {
+            if (selectedRow) navigate(`/checklists/${selectedRow}`);
+            setActionMenuAnchor(null);
+          }}
+        >
           <Visibility sx={{ mr: 1, fontSize: 18 }} />
           View Details
         </MenuItem>
-        <MenuItem onClick={() => {
-          if (selectedRow) navigate(`/checklists/${selectedRow}/edit`);
-          setActionMenuAnchor(null);
-        }}>
+        <MenuItem
+          onClick={() => {
+            if (selectedRow) navigate(`/checklists/${selectedRow}/edit`);
+            setActionMenuAnchor(null);
+          }}
+        >
           <Edit sx={{ mr: 1, fontSize: 18 }} />
           Edit
         </MenuItem>
-        <MenuItem onClick={() => {
-          if (selectedRow) navigate(`/checklists/${selectedRow}/submit`);
-          setActionMenuAnchor(null);
-        }}>
+        <MenuItem
+          onClick={() => {
+            if (selectedRow) navigate(`/checklists/${selectedRow}/submit`);
+            setActionMenuAnchor(null);
+          }}
+        >
           <PlayArrow sx={{ mr: 1, fontSize: 18 }} />
           Start Assessment
         </MenuItem>
-        <MenuItem onClick={() => {
-          if (selectedRow) navigate(`/checklists/${selectedRow}/upload`);
-          setActionMenuAnchor(null);
-        }}>
+        <MenuItem
+          onClick={() => {
+            if (selectedRow) navigate(`/checklists/${selectedRow}/upload`);
+            setActionMenuAnchor(null);
+          }}
+        >
           <Upload sx={{ mr: 1, fontSize: 18 }} />
           Upload File
         </MenuItem>
@@ -603,7 +624,9 @@ export const Checklists = () => {
                 <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                   Questions
                 </Typography>
-                <Typography variant="body2">{selectedChecklist.items?.length || 0} total questions</Typography>
+                <Typography variant="body2">
+                  {selectedChecklist.items?.length || 0} total questions
+                </Typography>
               </Box>
 
               <Box>
@@ -611,7 +634,9 @@ export const Checklists = () => {
                   Last Updated
                 </Typography>
                 <Typography variant="body2">
-                  {selectedChecklist.updated_at ? new Date(selectedChecklist.updated_at).toLocaleDateString() : '-'}
+                  {selectedChecklist.updated_at
+                    ? new Date(selectedChecklist.updated_at).toLocaleDateString()
+                    : '-'}
                 </Typography>
               </Box>
 

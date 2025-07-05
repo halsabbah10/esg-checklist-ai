@@ -112,10 +112,10 @@ class Settings(BaseSettings):
     )
 
     # AI Configuration
-    ai_timeout_seconds: int = Field(default=30, description="AI request timeout")
+    ai_timeout_seconds: int = Field(default=120, description="AI request timeout")
     ai_max_retries: int = Field(default=3, description="Maximum AI request retries")
     ai_circuit_breaker_threshold: int = Field(default=5, description="Circuit breaker threshold")
-    ai_circuit_breaker_timeout: int = Field(default=60, description="Circuit breaker timeout")
+    ai_circuit_breaker_timeout: int = Field(default=120, description="Circuit breaker timeout")
     ai_model_temperature: float = Field(default=0.7, description="AI model temperature")
     ai_max_tokens: int = Field(default=2048, description="Maximum AI tokens")
 

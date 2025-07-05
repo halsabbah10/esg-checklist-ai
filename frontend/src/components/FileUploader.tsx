@@ -13,13 +13,7 @@ import {
   Chip,
   Paper,
 } from '@mui/material';
-import {
-  CloudUpload,
-  Delete,
-  Description,
-  CheckCircle,
-  Error,
-} from '@mui/icons-material';
+import { CloudUpload, Delete, Description, CheckCircle, Error } from '@mui/icons-material';
 
 interface UploadedFile {
   id: string;
@@ -62,13 +56,15 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         alert(`File ${file.name} is too large. Maximum size is ${formatFileSize(maxFileSize)}`);
         return false;
       }
-      
+
       const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
       if (!acceptedFileTypes.includes(fileExtension)) {
-        alert(`File ${file.name} is not a supported format. Supported: ${acceptedFileTypes.join(', ')}`);
+        alert(
+          `File ${file.name} is not a supported format. Supported: ${acceptedFileTypes.join(', ')}`
+        );
         return false;
       }
-      
+
       return true;
     });
 
@@ -102,7 +98,9 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     }
   };
 
-  const getStatusColor = (status: UploadedFile['status']) => {
+  const getStatusColor = (
+    status: UploadedFile['status']
+  ): 'success' | 'error' | 'warning' | 'info' | 'default' => {
     switch (status) {
       case 'completed':
         return 'success';
@@ -137,12 +135,12 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
           input.type = 'file';
           input.multiple = multiple;
           input.accept = acceptedFileTypes.join(',');
-          input.onchange = (e) => handleFileSelect((e.target as HTMLInputElement).files);
+          input.onchange = e => handleFileSelect((e.target as HTMLInputElement).files);
           input.click();
         }}
       >
         <CloudUpload sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-        
+
         <Typography variant="h6" gutterBottom>
           Click to select files
         </Typography>
@@ -163,7 +161,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
             <Typography variant="h6" gutterBottom>
               Selected Files ({files.length})
             </Typography>
-            
+
             <List>
               {files.map((file, index) => (
                 <Box key={file.id}>
@@ -171,7 +169,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                     <Box display="flex" alignItems="center" mr={2}>
                       {getStatusIcon(file.status)}
                     </Box>
-                    
+
                     <ListItemText
                       primary={
                         <Box display="flex" alignItems="center" gap={1}>
@@ -179,7 +177,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                           <Chip
                             label={file.status}
                             size="small"
-                            color={getStatusColor(file.status) as any}
+                            color={getStatusColor(file.status)}
                           />
                         </Box>
                       }
@@ -189,7 +187,7 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                         </Typography>
                       }
                     />
-                    
+
                     <ListItemSecondaryAction>
                       <IconButton
                         edge="end"
@@ -200,8 +198,10 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
                       </IconButton>
                     </ListItemSecondaryAction>
                   </ListItem>
-                  
-                  {index < files.length - 1 && <Box sx={{ borderBottom: 1, borderColor: 'divider' }} />}
+
+                  {index < files.length - 1 && (
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }} />
+                  )}
                 </Box>
               ))}
             </List>

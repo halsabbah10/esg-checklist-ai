@@ -70,17 +70,31 @@ class AIScorer:
         """Score text using Google's Gemini AI model."""
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
 
-        # Enhanced prompt for ESG scoring
+        # Enhanced prompt for ESG scoring with balanced evaluation criteria
         esg_prompt = f"""
         Analyze the following ESG (Environmental, Social, Governance) document and
         provide a comprehensive assessment.
 
         Document text: {text}
 
+        SCORING GUIDELINES:
+        - 0.9-1.0: Exceptional ESG performance with comprehensive reporting and best practices
+        - 0.8-0.89: Strong ESG performance with good practices and detailed reporting
+        - 0.7-0.79: Good ESG performance with solid practices, some areas for improvement
+        - 0.6-0.69: Adequate ESG performance, basic compliance with room for enhancement
+        - 0.5-0.59: Moderate ESG performance, basic practices but significant gaps
+        - 0.3-0.49: Below average ESG performance, limited practices and reporting
+        - 0.1-0.29: Poor ESG performance, minimal or inadequate practices
+        - 0.0-0.09: No meaningful ESG content or practices
+
         Please provide:
-        1. An overall ESG compliance score between 0.0 and 1.0 (where 1.0 is excellent compliance)
-        2. Detailed feedback on strengths and areas for improvement
-        3. Specific recommendations for better ESG practices
+        1. An overall ESG compliance score between 0.0 and 1.0 based on the guidelines above
+        2. Detailed feedback highlighting both strengths and areas for improvement
+        3. Specific, actionable recommendations for better ESG practices
+
+        Be fair and balanced in your assessment. Consider that many organizations are at
+        different stages of their ESG journey. Recognize good intentions and partial
+        implementations while identifying areas for growth.
 
         Format your response with the score clearly indicated as "Score: X.XX"
         followed by your detailed analysis.
@@ -89,10 +103,10 @@ class AIScorer:
         payload = {
             "contents": [{"parts": [{"text": esg_prompt}]}],
             "generationConfig": {
-                "temperature": 0.2,
-                "maxOutputTokens": 1024,
-                "topP": 0.9,
-                "topK": 1,
+                "temperature": 0.3,  # Slightly higher for more balanced responses
+                "maxOutputTokens": 1500,  # More tokens for detailed feedback
+                "topP": 0.8,
+                "topK": 40,
             },
         }
         headers = {"Content-Type": "application/json"}
@@ -102,7 +116,7 @@ class AIScorer:
                 f"{url}?key={self.gemini_api_key}",
                 json=payload,
                 headers=headers,
-                timeout=30,
+                timeout=120,  # Increased to 2 minutes for complex document analysis
             )
 
             if response.status_code != 200:
@@ -160,7 +174,7 @@ class AIScorer:
         }
 
         try:
-            response = requests.post(url, headers=headers, json=payload, timeout=30)
+            response = requests.post(url, headers=headers, json=payload, timeout=120)
 
             if response.status_code != 200:
                 raise Exception(
@@ -304,7 +318,7 @@ class AIScorer:
                     logger.debug(f"Failed to parse score with pattern '{pattern}': {e}")
                     continue
 
-        # Fallback: analyze sentiment for approximate scoring
+        # Fallback: analyze sentiment for approximate scoring with more balanced ranges
         text_lower = response_text.lower()
         positive_words = [
             "excellent",
@@ -313,6 +327,14 @@ class AIScorer:
             "compliant",
             "adequate",
             "satisfactory",
+            "implemented",
+            "established",
+            "monitored",
+            "tracked",
+            "measured",
+            "reported",
+            "sustainable",
+            "responsible",
         ]
         negative_words = [
             "poor",
@@ -321,20 +343,25 @@ class AIScorer:
             "lacking",
             "non-compliant",
             "inadequate",
+            "missing",
+            "absent",
+            "failed",
+            "violated",
         ]
 
         positive_count = sum(1 for word in positive_words if word in text_lower)
         negative_count = sum(1 for word in negative_words if word in text_lower)
 
+        # More balanced fallback scoring
         if positive_count > negative_count:
-            fallback_score = 0.75 + (positive_count - negative_count) * 0.05
+            fallback_score = 0.65 + (positive_count - negative_count) * 0.05
         elif negative_count > positive_count:
-            fallback_score = 0.65 - (negative_count - positive_count) * 0.05
+            fallback_score = 0.55 - (negative_count - positive_count) * 0.05
         else:
-            fallback_score = 0.70
+            fallback_score = 0.60  # Default to 60% for neutral content
 
-        # Ensure fallback score is in valid range
-        fallback_score = max(0.0, min(1.0, fallback_score))
+        # Ensure fallback score is in valid range with reasonable minimum
+        fallback_score = max(0.35, min(0.85, fallback_score))
 
         logger.warning(
             f"Could not extract explicit score, using sentiment-based fallback: {fallback_score}"

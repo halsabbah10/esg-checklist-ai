@@ -37,6 +37,31 @@ import {
 } from '@mui/icons-material';
 import { analyticsAPI, aiAPI, submissionsAPI } from '../../services/api';
 
+interface AIResult {
+  id: number;
+  checklist_id: number;
+  overall_score: number;
+  analysis: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  upload_id?: number;
+  filename?: string;
+  file_upload_id?: number;
+}
+
+interface Submission {
+  id: number;
+  checklist_id: number;
+  user_id: number;
+  status: 'pending' | 'approved' | 'rejected' | 'in_review';
+  created_at: string;
+  updated_at: string;
+  filename?: string;
+  ai_score?: number;
+  submitted_at?: string;
+}
+
 interface StatsCardProps {
   title: string;
   value: number | string;
@@ -64,23 +89,19 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend,
           )}
           {trend && (
             <Box display="flex" alignItems="center" mt={0.5}>
-              <TrendingUp 
-                fontSize="small" 
-                color={trend > 0 ? 'success' : 'error'} 
-              />
-              <Typography 
-                variant="caption" 
+              <TrendingUp fontSize="small" color={trend > 0 ? 'success' : 'error'} />
+              <Typography
+                variant="caption"
                 color={trend > 0 ? 'success.main' : 'error.main'}
                 sx={{ ml: 0.5 }}
               >
-                {trend > 0 ? '+' : ''}{trend}%
+                {trend > 0 ? '+' : ''}
+                {trend}%
               </Typography>
             </Box>
           )}
         </Box>
-        <Box color={`${color}.main`}>
-          {icon}
-        </Box>
+        <Box color={`${color}.main`}>{icon}</Box>
       </Box>
     </CardContent>
   </Card>
@@ -110,9 +131,9 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({ category, score, maxS
           {score.toFixed(1)}/{maxScore}
         </Typography>
       </Box>
-      <LinearProgress 
-        variant="determinate" 
-        value={percentage} 
+      <LinearProgress
+        variant="determinate"
+        value={percentage}
         color={getColor()}
         sx={{ height: 8, borderRadius: 4 }}
       />
@@ -134,13 +155,13 @@ export const AuditorDashboard: React.FC = () => {
   });
 
   // Fetch AI results for compliance scoring
-  const { data: aiResults, isLoading: aiLoading } = useQuery({
+  const { data: aiResults, isLoading: aiLoading } = useQuery<{ data: { results: AIResult[] } }>({
     queryKey: ['ai-results', 'compliance'],
     queryFn: () => aiAPI.getResults({ limit: 20 }),
   });
 
   // Fetch recent submissions
-  const { data: submissions, isLoading: submissionsLoading } = useQuery({
+  const { data: submissions, isLoading: submissionsLoading } = useQuery<{ data: Submission[] }>({
     queryKey: ['submissions', 'recent'],
     queryFn: () => submissionsAPI.getAll(),
   });
@@ -159,13 +180,21 @@ export const AuditorDashboard: React.FC = () => {
   const submissionsData = submissions?.data || [];
 
   // Calculate compliance metrics
-  const overallScore = aiResultsData.length > 0 
-    ? aiResultsData.reduce((sum: number, result: any) => sum + (result.overall_score || 0), 0) / aiResultsData.length 
-    : 0;
+  const overallScore =
+    aiResultsData.length > 0
+      ? aiResultsData.reduce(
+          (sum: number, result: AIResult) => sum + (result.overall_score || 0),
+          0
+        ) / aiResultsData.length
+      : 0;
 
-  const passedAudits = aiResultsData.filter((result: any) => (result.overall_score || 0) >= 0.7).length;
-  const failedAudits = aiResultsData.filter((result: any) => (result.overall_score || 0) < 0.5).length;
-  const warningAudits = aiResultsData.filter((result: any) => {
+  const passedAudits = aiResultsData.filter(
+    (result: AIResult) => (result.overall_score || 0) >= 0.7
+  ).length;
+  const failedAudits = aiResultsData.filter(
+    (result: AIResult) => (result.overall_score || 0) < 0.5
+  ).length;
+  const warningAudits = aiResultsData.filter((result: AIResult) => {
     const score = result.overall_score || 0;
     return score >= 0.5 && score < 0.7;
   }).length;
@@ -191,7 +220,14 @@ export const AuditorDashboard: React.FC = () => {
       </Box>
 
       {/* Key Metrics */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
         <StatsCard
           title="Overall Compliance"
           value={`${Math.round(overallScore * 100)}%`}
@@ -229,12 +265,8 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               ESG Compliance Scores
             </Typography>
-            {esgCategories.map((item) => (
-              <ComplianceScore
-                key={item.category}
-                category={item.category}
-                score={item.score}
-              />
+            {esgCategories.map(item => (
+              <ComplianceScore key={item.category} category={item.category} score={item.score} />
             ))}
           </CardContent>
         </Card>
@@ -258,11 +290,12 @@ export const AuditorDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {aiResultsData.slice(0, 6).map((result: any) => {
+                    {aiResultsData.slice(0, 6).map((result: AIResult) => {
                       const score = (result.overall_score || 0) * 100;
                       const status = score >= 70 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail';
-                      const statusColor = score >= 70 ? 'success' : score >= 50 ? 'warning' : 'error';
-                      
+                      const statusColor =
+                        score >= 70 ? 'success' : score >= 50 ? 'warning' : 'error';
+
                       return (
                         <TableRow key={result.id}>
                           <TableCell>
@@ -276,11 +309,7 @@ export const AuditorDashboard: React.FC = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip
-                              label={status}
-                              color={statusColor}
-                              size="small"
-                            />
+                            <Chip label={status} color={statusColor} size="small" />
                           </TableCell>
                         </TableRow>
                       );
@@ -293,7 +322,9 @@ export const AuditorDashboard: React.FC = () => {
         </Card>
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}
+      >
         {/* Compliance Trends */}
         <Card elevation={2}>
           <CardContent>
@@ -304,7 +335,7 @@ export const AuditorDashboard: React.FC = () => {
               <Alert severity="info">No submission data available</Alert>
             ) : (
               <List>
-                {submissionsData.slice(0, 8).map((submission: any, index: number) => (
+                {submissionsData.slice(0, 8).map((submission: Submission, index: number) => (
                   <React.Fragment key={submission.id}>
                     <ListItem>
                       <ListItemIcon>
@@ -318,7 +349,10 @@ export const AuditorDashboard: React.FC = () => {
                               User ID: {submission.user_id}
                             </Typography>
                             <Typography variant="caption" display="block">
-                              Submitted: {new Date(submission.submitted_at).toLocaleDateString()}
+                              Submitted:{' '}
+                              {submission.submitted_at
+                                ? new Date(submission.submitted_at).toLocaleDateString()
+                                : 'N/A'}
                             </Typography>
                           </Box>
                         }
@@ -326,13 +360,21 @@ export const AuditorDashboard: React.FC = () => {
                       <Chip
                         label={submission.status}
                         color={
-                          submission.status === 'approved' ? 'success' :
-                          submission.status === 'rejected' ? 'error' : 'warning'
+                          submission.status === 'approved'
+                            ? 'success'
+                            : submission.status === 'rejected'
+                              ? 'error'
+                              : 'warning'
                         }
                         size="small"
                       />
                     </ListItem>
-                    {index < submissionsData.length - 1 && <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }} />}
+                    {index < submissionsData.length - 1 && (
+                      <Box
+                        component="hr"
+                        sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
+                      />
+                    )}
                   </React.Fragment>
                 ))}
               </List>
@@ -354,16 +396,19 @@ export const AuditorDashboard: React.FC = () => {
                 </Typography>
               </Box>
             </Box>
-            
+
             <Box sx={{ mb: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Pass Rate</Typography>
                 <Typography variant="body2" fontWeight={500} color="success.main">
-                  {aiResultsData.length > 0 ? Math.round((passedAudits / aiResultsData.length) * 100) : 0}%
+                  {aiResultsData.length > 0
+                    ? Math.round((passedAudits / aiResultsData.length) * 100)
+                    : 0}
+                  %
                 </Typography>
               </Box>
             </Box>
-            
+
             <Box sx={{ mb: 2 }}>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Avg Processing Time</Typography>
@@ -385,7 +430,13 @@ export const AuditorDashboard: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Quick Actions
         </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 2 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+            gap: 2,
+          }}
+        >
           <Button variant="contained" fullWidth startIcon={<FileDownload />}>
             Generate Report
           </Button>

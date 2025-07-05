@@ -110,8 +110,8 @@ export const Reports: React.FC = () => {
     },
   ];
 
-  const filteredReports = mockReports.filter(report => 
-    reportType === 'all' || report.type === reportType
+  const filteredReports = mockReports.filter(
+    report => reportType === 'all' || report.type === reportType
   );
 
   const KPICard: React.FC<{ data: KPIData }> = ({ data }) => {
@@ -128,8 +128,8 @@ export const Reports: React.FC = () => {
     };
 
     return (
-      <Card 
-        sx={{ 
+      <Card
+        sx={{
           bgcolor: 'background.paper',
           border: '1px solid',
           borderColor: 'divider',
@@ -137,14 +137,14 @@ export const Reports: React.FC = () => {
           p: 2,
           '&:hover': {
             boxShadow: '0 4px 8px rgba(0,0,0,0.05)',
-          }
+          },
         }}
       >
         <CardContent sx={{ p: 0 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 textTransform: 'uppercase',
                 color: 'text.secondary',
                 fontSize: 12,
@@ -154,16 +154,12 @@ export const Reports: React.FC = () => {
             >
               {data.label}
             </Typography>
-            {data.icon && (
-              <Box sx={{ color: 'text.secondary' }}>
-                {data.icon}
-              </Box>
-            )}
+            {data.icon && <Box sx={{ color: 'text.secondary' }}>{data.icon}</Box>}
           </Box>
-          
-          <Typography 
-            variant="h3" 
-            sx={{ 
+
+          <Typography
+            variant="h3"
+            sx={{
               fontWeight: 700,
               color: 'text.primary',
               mb: 1,
@@ -171,18 +167,19 @@ export const Reports: React.FC = () => {
           >
             {data.value}
           </Typography>
-          
+
           {data.change !== undefined && (
             <Box display="flex" alignItems="center" gap={0.5}>
               {getTrendIcon()}
-              <Typography 
-                variant="caption" 
-                sx={{ 
+              <Typography
+                variant="caption"
+                sx={{
                   color: getTrendColor(),
                   fontWeight: 500,
                 }}
               >
-                {data.change > 0 ? '+' : ''}{data.change}
+                {data.change > 0 ? '+' : ''}
+                {data.change}
                 {data.trend !== 'neutral' ? '%' : ''}
               </Typography>
             </Box>
@@ -193,22 +190,16 @@ export const Reports: React.FC = () => {
   };
 
   const getStatusChip = (status: string) => {
-    const statusConfig = {
-      ready: { color: 'success', label: 'Ready' },
-      generating: { color: 'warning', label: 'Generating' },
-      failed: { color: 'error', label: 'Failed' },
-    };
-    
+    const statusConfig: Record<string, { color: 'success' | 'warning' | 'error'; label: string }> =
+      {
+        ready: { color: 'success', label: 'Ready' },
+        generating: { color: 'warning', label: 'Generating' },
+        failed: { color: 'error', label: 'Failed' },
+      };
+
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.ready;
-    
-    return (
-      <Chip
-        label={config.label}
-        size="small"
-        color={config.color as any}
-        sx={{ minWidth: 80 }}
-      />
-    );
+
+    return <Chip label={config.label} size="small" color={config.color} sx={{ minWidth: 80 }} />;
   };
 
   const getTypeChip = (type: string) => (
@@ -254,25 +245,25 @@ export const Reports: React.FC = () => {
       </Box>
 
       {/* KPI Summary Cards */}
-      <Box 
-        display="grid" 
+      <Box
+        display="grid"
         gridTemplateColumns={{
           xs: '1fr',
           sm: 'repeat(2, 1fr)',
           md: 'repeat(4, 1fr)',
         }}
-        gap={3} 
+        gap={3}
         mb={4}
       >
-        {kpiData.map((kpi) => (
+        {kpiData.map(kpi => (
           <KPICard key={kpi.label} data={kpi} />
         ))}
       </Box>
 
       {/* Filters */}
-      <Box 
-        display="flex" 
-        gap={2} 
+      <Box
+        display="flex"
+        gap={2}
         mb={3}
         p={2}
         sx={{
@@ -287,7 +278,7 @@ export const Reports: React.FC = () => {
           <Select
             value={reportType}
             label="Report Type"
-            onChange={(e) => setReportType(e.target.value)}
+            onChange={e => setReportType(e.target.value)}
             sx={{ borderRadius: '0.25rem' }}
           >
             <MenuItem value="all">All Types</MenuItem>
@@ -302,7 +293,7 @@ export const Reports: React.FC = () => {
           <Select
             value={timeRange}
             label="Time Range"
-            onChange={(e) => setTimeRange(e.target.value)}
+            onChange={e => setTimeRange(e.target.value)}
             sx={{ borderRadius: '0.25rem' }}
           >
             <MenuItem value="7">Last 7 days</MenuItem>
@@ -319,19 +310,19 @@ export const Reports: React.FC = () => {
           <Typography variant="h6" sx={{ fontWeight: 600, mb: 3 }}>
             Available Reports
           </Typography>
-          
+
           <Stack spacing={2}>
-            {filteredReports.map((report) => (
-              <Card 
+            {filteredReports.map(report => (
+              <Card
                 key={report.id}
-                sx={{ 
+                sx={{
                   bgcolor: 'background.paper',
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: '0.25rem',
                   '&:hover': {
                     boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
-                  }
+                  },
                 }}
               >
                 <CardContent>
@@ -340,17 +331,17 @@ export const Reports: React.FC = () => {
                       <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
                         {report.name}
                       </Typography>
-                      
+
                       <Box display="flex" gap={1} mb={2}>
                         {getTypeChip(report.type)}
                         {getStatusChip(report.status)}
                       </Box>
-                      
+
                       <Typography variant="body2" color="text.secondary">
                         Generated: {formatDate(report.generated_at)} • Size: {report.size}
                       </Typography>
                     </Box>
-                    
+
                     <Box display="flex" gap={1}>
                       {report.status === 'ready' && (
                         <>

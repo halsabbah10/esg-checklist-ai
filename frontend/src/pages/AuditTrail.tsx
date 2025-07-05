@@ -54,7 +54,7 @@ interface AuditLog {
   ip_address: string;
   user_agent: string;
   status: 'success' | 'failure' | 'warning' | 'info';
-  details: any;
+  details: unknown;
   session_id: string;
 }
 
@@ -73,14 +73,20 @@ export const AuditTrail: React.FC = () => {
   const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
 
-  const { data: auditLogs, isLoading, refetch } = useQuery({
+  const {
+    data: auditLogs,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ['audit-logs', page, rowsPerPage, filters],
     queryFn: () =>
-      auditAPI.getAuditLogs({
-        page: page + 1,
-        limit: rowsPerPage,
-        ...filters,
-      }).then(res => res.data),
+      auditAPI
+        .getAuditLogs({
+          page: page + 1,
+          limit: rowsPerPage,
+          ...filters,
+        })
+        .then(res => res.data),
   });
 
   const handleFilterChange = (field: string, value: string) => {
@@ -110,7 +116,10 @@ export const AuditTrail: React.FC = () => {
     try {
       const response = await exportAPI.exportAuditLogs({ format, ...filters });
       const blob = new Blob([response.data], {
-        type: format === 'csv' ? 'text/csv' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        type:
+          format === 'csv'
+            ? 'text/csv'
+            : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -163,29 +172,15 @@ export const AuditTrail: React.FC = () => {
   return (
     <Box p={3}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">
-          Audit Trail
-        </Typography>
+        <Typography variant="h4">Audit Trail</Typography>
         <Box display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            startIcon={<GetApp />}
-            onClick={() => handleExport('csv')}
-          >
+          <Button variant="outlined" startIcon={<GetApp />} onClick={() => handleExport('csv')}>
             Export CSV
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<GetApp />}
-            onClick={() => handleExport('xlsx')}
-          >
+          <Button variant="outlined" startIcon={<GetApp />} onClick={() => handleExport('xlsx')}>
             Export Excel
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={() => refetch()}
-          >
+          <Button variant="outlined" startIcon={<Refresh />} onClick={() => refetch()}>
             Refresh
           </Button>
         </Box>
@@ -197,11 +192,16 @@ export const AuditTrail: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Filters
           </Typography>
-          <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }} gap={2} mb={2}>
+          <Box
+            display="grid"
+            gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }}
+            gap={2}
+            mb={2}
+          >
             <TextField
               label="Search"
               value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
+              onChange={e => handleFilterChange('search', e.target.value)}
               placeholder="Search logs..."
               InputProps={{
                 startAdornment: <Search sx={{ mr: 1, color: 'action.active' }} />,
@@ -212,7 +212,7 @@ export const AuditTrail: React.FC = () => {
               <Select
                 value={filters.status}
                 label="Status"
-                onChange={(e) => handleFilterChange('status', e.target.value)}
+                onChange={e => handleFilterChange('status', e.target.value)}
               >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="success">Success</MenuItem>
@@ -226,7 +226,7 @@ export const AuditTrail: React.FC = () => {
               <Select
                 value={filters.action}
                 label="Action"
-                onChange={(e) => handleFilterChange('action', e.target.value)}
+                onChange={e => handleFilterChange('action', e.target.value)}
               >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="login">Login</MenuItem>
@@ -243,7 +243,7 @@ export const AuditTrail: React.FC = () => {
               <Select
                 value={filters.resource_type}
                 label="Resource Type"
-                onChange={(e) => handleFilterChange('resource_type', e.target.value)}
+                onChange={e => handleFilterChange('resource_type', e.target.value)}
               >
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="user">User</MenuItem>
@@ -259,21 +259,17 @@ export const AuditTrail: React.FC = () => {
               type="datetime-local"
               label="Start Date"
               value={filters.start_date}
-              onChange={(e) => handleFilterChange('start_date', e.target.value)}
+              onChange={e => handleFilterChange('start_date', e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
             <TextField
               type="datetime-local"
               label="End Date"
               value={filters.end_date}
-              onChange={(e) => handleFilterChange('end_date', e.target.value)}
+              onChange={e => handleFilterChange('end_date', e.target.value)}
               InputLabelProps={{ shrink: true }}
             />
-            <Button
-              variant="outlined"
-              startIcon={<FilterList />}
-              onClick={clearFilters}
-            >
+            <Button variant="outlined" startIcon={<FilterList />} onClick={clearFilters}>
               Clear Filters
             </Button>
           </Box>
@@ -302,31 +298,21 @@ export const AuditTrail: React.FC = () => {
           <TableBody>
             {logs.map((log: AuditLog) => (
               <TableRow key={log.id} hover>
-                <TableCell>
-                  {new Date(log.timestamp).toLocaleString()}
-                </TableCell>
+                <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                 <TableCell>
                   <Box>
-                    <Typography variant="body2">
-                      {log.user_name}
-                    </Typography>
+                    <Typography variant="body2">{log.user_name}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       ID: {log.user_id}
                     </Typography>
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Chip
-                    label={log.action}
-                    size="small"
-                    variant="outlined"
-                  />
+                  <Chip label={log.action} size="small" variant="outlined" />
                 </TableCell>
                 <TableCell>
                   <Box>
-                    <Typography variant="body2">
-                      {log.resource_type}
-                    </Typography>
+                    <Typography variant="body2">{log.resource_type}</Typography>
                     <Typography variant="caption" color="text.secondary">
                       {log.resource_id}
                     </Typography>
@@ -335,11 +321,7 @@ export const AuditTrail: React.FC = () => {
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
                     {getStatusIcon(log.status)}
-                    <Chip
-                      label={log.status}
-                      color={getStatusColor(log.status)}
-                      size="small"
-                    />
+                    <Chip label={log.status} color={getStatusColor(log.status)} size="small" />
                   </Stack>
                 </TableCell>
                 <TableCell>
@@ -349,10 +331,7 @@ export const AuditTrail: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <Tooltip title="View Details">
-                    <IconButton
-                      onClick={() => handleViewDetails(log)}
-                      size="small"
-                    >
+                    <IconButton onClick={() => handleViewDetails(log)} size="small">
                       <Visibility />
                     </IconButton>
                   </Tooltip>
@@ -370,7 +349,7 @@ export const AuditTrail: React.FC = () => {
         page={page}
         onPageChange={(_, newPage) => setPage(newPage)}
         rowsPerPage={rowsPerPage}
-        onRowsPerPageChange={(e) => {
+        onRowsPerPageChange={e => {
           setRowsPerPage(parseInt(e.target.value, 10));
           setPage(0);
         }}
@@ -384,9 +363,7 @@ export const AuditTrail: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          Audit Log Details
-        </DialogTitle>
+        <DialogTitle>Audit Log Details</DialogTitle>
         <DialogContent>
           {selectedLog && (
             <Box>
@@ -414,9 +391,7 @@ export const AuditTrail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     Action
                   </Typography>
-                  <Typography variant="body1">
-                    {selectedLog.action}
-                  </Typography>
+                  <Typography variant="body1">{selectedLog.action}</Typography>
                 </Box>
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -432,9 +407,7 @@ export const AuditTrail: React.FC = () => {
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1}>
                     {getStatusIcon(selectedLog.status)}
-                    <Typography variant="body1">
-                      {selectedLog.status}
-                    </Typography>
+                    <Typography variant="body1">{selectedLog.status}</Typography>
                   </Box>
                 </Box>
                 <Box>
@@ -463,20 +436,36 @@ export const AuditTrail: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">
                     User Agent
                   </Typography>
-                  <Typography variant="body1" fontFamily="monospace" sx={{ wordBreak: 'break-all' }}>
+                  <Typography
+                    variant="body1"
+                    fontFamily="monospace"
+                    sx={{ wordBreak: 'break-all' }}
+                  >
                     {selectedLog.user_agent}
                   </Typography>
                 </Box>
               </Box>
 
-              {selectedLog.details && (
+              {selectedLog.details != null && (
                 <>
                   <Typography variant="h6" gutterBottom>
                     Additional Details
                   </Typography>
                   <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
-                    <Typography component="pre" variant="body2" fontFamily="monospace" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {JSON.stringify(selectedLog.details, null, 2)}
+                    <Typography
+                      component="pre"
+                      variant="body2"
+                      fontFamily="monospace"
+                      sx={{ whiteSpace: 'pre-wrap' }}
+                    >
+                      {(() => {
+                        const details = selectedLog.details;
+                        if (details == null) return 'No additional details available';
+                        if (typeof details === 'object') {
+                          return JSON.stringify(details, null, 2);
+                        }
+                        return String(details);
+                      })()}
                     </Typography>
                   </Paper>
                 </>
@@ -485,9 +474,7 @@ export const AuditTrail: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDetailDialogOpen(false)}>
-            Close
-          </Button>
+          <Button onClick={() => setDetailDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Box>

@@ -16,21 +16,47 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load pages for code splitting
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
-const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
-const Checklists = lazy(() => import('./pages/Checklists').then(module => ({ default: module.Checklists })));
-const ChecklistDetail = lazy(() => import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail })));
-const ChecklistSubmit = lazy(() => import('./pages/ChecklistSubmit').then(module => ({ default: module.ChecklistSubmit })));
-const ChecklistUpload = lazy(() => import('./pages/ChecklistUpload').then(module => ({ default: module.ChecklistUpload })));
+const Dashboard = lazy(() =>
+  import('./pages/Dashboard').then(module => ({ default: module.Dashboard }))
+);
+const Checklists = lazy(() =>
+  import('./pages/Checklists').then(module => ({ default: module.Checklists }))
+);
+const ChecklistDetail = lazy(() =>
+  import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail }))
+);
+const ChecklistSubmit = lazy(() =>
+  import('./pages/ChecklistSubmit').then(module => ({ default: module.ChecklistSubmit }))
+);
+const ChecklistUpload = lazy(() =>
+  import('./pages/ChecklistUpload').then(module => ({ default: module.ChecklistUpload }))
+);
 const Reviews = lazy(() => import('./pages/Reviews').then(module => ({ default: module.Reviews })));
-const Analytics = lazy(() => import('./pages/Analytics').then(module => ({ default: module.Analytics })));
+const Analytics = lazy(() =>
+  import('./pages/Analytics').then(module => ({ default: module.Analytics }))
+);
 const Reports = lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
-const Settings = lazy(() => import('./pages/Settings').then(module => ({ default: module.default })));
-const UserManagement = lazy(() => import('./pages/UserManagement').then(module => ({ default: module.UserManagement })));
-const SystemAdministration = lazy(() => import('./pages/SystemAdministration').then(module => ({ default: module.SystemAdministration })));
-const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement').then(module => ({ default: module.ChecklistManagement })));
-const AdvancedAnalytics = lazy(() => import('./pages/AdvancedAnalytics').then(module => ({ default: module.AdvancedAnalytics })));
-const SystemConfiguration = lazy(() => import('./pages/SystemConfiguration').then(module => ({ default: module.SystemConfiguration })));
-const AdvancedFileUpload = lazy(() => import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload })));
+const Settings = lazy(() =>
+  import('./pages/Settings').then(module => ({ default: module.default }))
+);
+const UserManagement = lazy(() =>
+  import('./pages/UserManagement').then(module => ({ default: module.UserManagement }))
+);
+const SystemAdministration = lazy(() =>
+  import('./pages/SystemAdministration').then(module => ({ default: module.SystemAdministration }))
+);
+const ChecklistManagement = lazy(() =>
+  import('./pages/ChecklistManagement').then(module => ({ default: module.ChecklistManagement }))
+);
+const AdvancedAnalytics = lazy(() =>
+  import('./pages/AdvancedAnalytics').then(module => ({ default: module.AdvancedAnalytics }))
+);
+const SystemConfiguration = lazy(() =>
+  import('./pages/SystemConfiguration').then(module => ({ default: module.SystemConfiguration }))
+);
+const AdvancedFileUpload = lazy(() =>
+  import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload }))
+);
 
 // Loading component
 const LoadingSpinner = () => (
@@ -96,18 +122,16 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           bgcolor: 'background.default',
           minHeight: '100vh',
           width: '100%',
-          ml: { 
-            xs: 0, 
-            md: isMobile ? 0 : (sidebarCollapsed ? '64px' : '240px')
+          ml: {
+            xs: 0,
+            md: isMobile ? 0 : sidebarCollapsed ? '64px' : '240px',
           },
           transition: 'margin 0.3s ease',
         }}
       >
         <Toolbar />
         <Box sx={{ p: { xs: 2, sm: 3 } }}>
-          <Suspense fallback={<LoadingSpinner />}>
-            {children}
-          </Suspense>
+          <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
         </Box>
       </Box>
     </Box>
@@ -117,14 +141,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 // Create a Home component that handles initial routing
 function Home() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   console.log('🏠 Home render:', { isAuthenticated, isLoading });
-  
+
   if (isLoading) {
     console.log('⏳ Home: Loading, showing spinner');
     return <LoadingSpinner />;
   }
-  
+
   if (isAuthenticated) {
     console.log('✅ Home: Authenticated, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
@@ -162,14 +186,17 @@ function AppContent() {
           <Routes>
             {/* Root route - shows login if not authenticated, dashboard if authenticated */}
             <Route path="/" element={<Home />} />
-            
+
             {/* Login route - accessible without authentication */}
-            <Route path="/login" element={
-              <Suspense fallback={<LoadingSpinner />}>
-                <Login />
-              </Suspense>
-            } />
-            
+            <Route
+              path="/login"
+              element={
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Login />
+                </Suspense>
+              }
+            />
+
             {/* Dashboard route - requires authentication */}
             <Route
               path="/dashboard"

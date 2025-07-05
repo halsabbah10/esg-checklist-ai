@@ -19,14 +19,7 @@ import {
   InputLabel,
   Select,
 } from '@mui/material';
-import {
-  Person,
-  Security,
-  Notifications,
-  Palette,
-  Save,
-  Restore,
-} from '@mui/icons-material';
+import { Person, Security, Notifications, Palette, Save, Restore } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 interface TabPanelProps {
@@ -100,7 +93,7 @@ export const Settings: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       setSaveStatus('saved');
       setTimeout(() => setSaveStatus('idle'), 3000);
-    } catch (error) {
+    } catch {
       setSaveStatus('error');
       setTimeout(() => setSaveStatus('idle'), 3000);
     }
@@ -178,7 +171,7 @@ export const Settings: React.FC = () => {
                 fullWidth
                 label="Full Name"
                 value={profile.name}
-                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                onChange={e => setProfile({ ...profile, name: e.target.value })}
                 sx={{ mb: 2 }}
               />
             </Box>
@@ -197,7 +190,7 @@ export const Settings: React.FC = () => {
                 fullWidth
                 label="Department"
                 value={profile.department}
-                onChange={(e) => setProfile({ ...profile, department: e.target.value })}
+                onChange={e => setProfile({ ...profile, department: e.target.value })}
                 sx={{ mb: 2 }}
               />
             </Box>
@@ -206,7 +199,7 @@ export const Settings: React.FC = () => {
                 fullWidth
                 label="Phone Number"
                 value={profile.phone}
-                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                onChange={e => setProfile({ ...profile, phone: e.target.value })}
                 sx={{ mb: 2 }}
               />
             </Box>
@@ -239,7 +232,7 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={security.twoFactorAuth}
-                    onChange={(e) => setSecurity({ ...security, twoFactorAuth: e.target.checked })}
+                    onChange={e => setSecurity({ ...security, twoFactorAuth: e.target.checked })}
                   />
                 }
                 label="Enable Two-Factor Authentication"
@@ -254,7 +247,9 @@ export const Settings: React.FC = () => {
                 label="Session Timeout (minutes)"
                 type="number"
                 value={security.sessionTimeout}
-                onChange={(e) => setSecurity({ ...security, sessionTimeout: parseInt(e.target.value) })}
+                onChange={e =>
+                  setSecurity({ ...security, sessionTimeout: parseInt(e.target.value) })
+                }
                 inputProps={{ min: 15, max: 480 }}
               />
             </Box>
@@ -264,7 +259,9 @@ export const Settings: React.FC = () => {
                 label="Password Expiry (days)"
                 type="number"
                 value={security.passwordExpiry}
-                onChange={(e) => setSecurity({ ...security, passwordExpiry: parseInt(e.target.value) })}
+                onChange={e =>
+                  setSecurity({ ...security, passwordExpiry: parseInt(e.target.value) })
+                }
                 inputProps={{ min: 30, max: 365 }}
               />
             </Box>
@@ -288,7 +285,9 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.emailNotifications}
-                    onChange={(e) => setNotifications({ ...notifications, emailNotifications: e.target.checked })}
+                    onChange={e =>
+                      setNotifications({ ...notifications, emailNotifications: e.target.checked })
+                    }
                   />
                 }
                 label="Email Notifications"
@@ -302,7 +301,9 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.pushNotifications}
-                    onChange={(e) => setNotifications({ ...notifications, pushNotifications: e.target.checked })}
+                    onChange={e =>
+                      setNotifications({ ...notifications, pushNotifications: e.target.checked })
+                    }
                   />
                 }
                 label="Push Notifications"
@@ -316,7 +317,9 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.reportAlerts}
-                    onChange={(e) => setNotifications({ ...notifications, reportAlerts: e.target.checked })}
+                    onChange={e =>
+                      setNotifications({ ...notifications, reportAlerts: e.target.checked })
+                    }
                   />
                 }
                 label="Report Alerts"
@@ -330,7 +333,9 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.reviewReminders}
-                    onChange={(e) => setNotifications({ ...notifications, reviewReminders: e.target.checked })}
+                    onChange={e =>
+                      setNotifications({ ...notifications, reviewReminders: e.target.checked })
+                    }
                   />
                 }
                 label="Review Reminders"
@@ -344,7 +349,9 @@ export const Settings: React.FC = () => {
                 control={
                   <Switch
                     checked={notifications.systemUpdates}
-                    onChange={(e) => setNotifications({ ...notifications, systemUpdates: e.target.checked })}
+                    onChange={e =>
+                      setNotifications({ ...notifications, systemUpdates: e.target.checked })
+                    }
                   />
                 }
                 label="System Updates"
@@ -368,7 +375,7 @@ export const Settings: React.FC = () => {
                 <Select
                   value={appearance.theme}
                   label="Theme"
-                  onChange={(e) => setAppearance({ ...appearance, theme: e.target.value })}
+                  onChange={e => setAppearance({ ...appearance, theme: e.target.value })}
                 >
                   <MenuItem value="light">Light</MenuItem>
                   <MenuItem value="dark">Dark</MenuItem>
@@ -382,7 +389,7 @@ export const Settings: React.FC = () => {
                 <Select
                   value={appearance.language}
                   label="Language"
-                  onChange={(e) => setAppearance({ ...appearance, language: e.target.value })}
+                  onChange={e => setAppearance({ ...appearance, language: e.target.value })}
                 >
                   <MenuItem value="en">English</MenuItem>
                   <MenuItem value="ar">العربية (Arabic)</MenuItem>
@@ -396,7 +403,7 @@ export const Settings: React.FC = () => {
                 <Select
                   value={appearance.dateFormat}
                   label="Date Format"
-                  onChange={(e) => setAppearance({ ...appearance, dateFormat: e.target.value })}
+                  onChange={e => setAppearance({ ...appearance, dateFormat: e.target.value })}
                 >
                   <MenuItem value="MM/DD/YYYY">MM/DD/YYYY</MenuItem>
                   <MenuItem value="DD/MM/YYYY">DD/MM/YYYY</MenuItem>
@@ -410,7 +417,7 @@ export const Settings: React.FC = () => {
                 <Select
                   value={appearance.timezone}
                   label="Timezone"
-                  onChange={(e) => setAppearance({ ...appearance, timezone: e.target.value })}
+                  onChange={e => setAppearance({ ...appearance, timezone: e.target.value })}
                 >
                   <MenuItem value="UTC">UTC</MenuItem>
                   <MenuItem value="Asia/Dubai">Asia/Dubai (GST)</MenuItem>

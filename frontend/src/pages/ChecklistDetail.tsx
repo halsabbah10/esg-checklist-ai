@@ -27,12 +27,7 @@ import {
   Step,
   StepLabel,
 } from '@mui/material';
-import {
-  ArrowBack,
-  Save,
-  CheckCircle,
-  RadioButtonUnchecked,
-} from '@mui/icons-material';
+import { ArrowBack, Save, CheckCircle, RadioButtonUnchecked } from '@mui/icons-material';
 import api from '../services/api';
 
 interface Question {
@@ -75,13 +70,14 @@ export const ChecklistDetail = () => {
     error,
   } = useQuery({
     queryKey: ['checklist', id],
-    queryFn: () => api.get(`/checklists/${id}`).then((res: any) => res.data as ChecklistDetail),
+    queryFn: () =>
+      api.get(`/checklists/${id}`).then((res: { data: unknown }) => res.data as ChecklistDetail),
     enabled: !!id,
   });
 
   const saveAnswersMutation = useMutation({
     mutationFn: (data: { answers: Answer[] }) =>
-      api.post(`/checklists/${id}/answers`, data).then((res: any) => res.data),
+      api.post(`/checklists/${id}/answers`, data).then((res: { data: unknown }) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist', id] });
     },
@@ -89,7 +85,7 @@ export const ChecklistDetail = () => {
 
   const submitChecklistMutation = useMutation({
     mutationFn: () =>
-      api.post(`/checklists/${id}/submit`).then((res: any) => res.data),
+      api.post(`/checklists/${id}/submit`).then((res: { data: unknown }) => res.data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checklist', id] });
       navigate('/checklists');
@@ -131,8 +127,8 @@ export const ChecklistDetail = () => {
 
   const getCompletedQuestionsCount = () => {
     if (!checklist) return 0;
-    return checklist.questions.filter(q => 
-      answers[q.id] || checklist.answers?.find(a => a.question_id === q.id)
+    return checklist.questions.filter(
+      q => answers[q.id] || checklist.answers?.find(a => a.question_id === q.id)
     ).length;
   };
 
@@ -157,7 +153,7 @@ export const ChecklistDetail = () => {
             )}
             <RadioGroup
               value={currentAnswer}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              onChange={e => handleAnswerChange(question.id, e.target.value)}
             >
               <FormControlLabel value="yes" control={<Radio />} label="Yes" />
               <FormControlLabel value="no" control={<Radio />} label="No" />
@@ -176,15 +172,10 @@ export const ChecklistDetail = () => {
             )}
             <RadioGroup
               value={currentAnswer}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              onChange={e => handleAnswerChange(question.id, e.target.value)}
             >
               {question.options?.map((option, index) => (
-                <FormControlLabel
-                  key={index}
-                  value={option}
-                  control={<Radio />}
-                  label={option}
-                />
+                <FormControlLabel key={index} value={option} control={<Radio />} label={option} />
               ))}
             </RadioGroup>
           </FormControl>
@@ -206,7 +197,7 @@ export const ChecklistDetail = () => {
               multiline
               rows={4}
               value={currentAnswer}
-              onChange={(e) => handleAnswerChange(question.id, e.target.value)}
+              onChange={e => handleAnswerChange(question.id, e.target.value)}
               placeholder="Enter your answer..."
             />
           </Box>
@@ -228,9 +219,7 @@ export const ChecklistDetail = () => {
   if (error || !checklist) {
     return (
       <Box p={3}>
-        <Alert severity="error">
-          Failed to load checklist. Please try again later.
-        </Alert>
+        <Alert severity="error">Failed to load checklist. Please try again later.</Alert>
       </Box>
     );
   }
@@ -240,11 +229,7 @@ export const ChecklistDetail = () => {
   return (
     <Box p={3}>
       <Box display="flex" alignItems="center" mb={3}>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/checklists')}
-          sx={{ mr: 2 }}
-        >
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/checklists')} sx={{ mr: 2 }}>
           Back to Checklists
         </Button>
         <Box flexGrow={1}>
@@ -270,11 +255,7 @@ export const ChecklistDetail = () => {
               {getCompletedQuestionsCount()} of {checklist.questions.length} questions completed
             </Typography>
           </Box>
-          <LinearProgress
-            variant="determinate"
-            value={getProgressPercentage()}
-            sx={{ mb: 1 }}
-          />
+          <LinearProgress variant="determinate" value={getProgressPercentage()} sx={{ mb: 1 }} />
           <Typography variant="body2" color="text.secondary">
             {Math.round(getProgressPercentage())}% complete
           </Typography>
@@ -285,13 +266,14 @@ export const ChecklistDetail = () => {
       <Box mb={3}>
         <Stepper activeStep={currentStep} alternativeLabel>
           {checklist.questions.map((question, index) => {
-            const isAnswered = answers[question.id] || checklist.answers?.find(a => a.question_id === question.id);
+            const isAnswered =
+              answers[question.id] || checklist.answers?.find(a => a.question_id === question.id);
             return (
               <Step key={question.id}>
                 <StepLabel
-                  StepIconComponent={() => (
+                  StepIconComponent={() =>
                     isAnswered ? <CheckCircle color="success" /> : <RadioButtonUnchecked />
-                  )}
+                  }
                 >
                   Question {index + 1}
                 </StepLabel>
@@ -317,11 +299,7 @@ export const ChecklistDetail = () => {
 
       {/* Navigation Buttons */}
       <Box display="flex" justifyContent="space-between" alignItems="center">
-        <Button
-          variant="outlined"
-          onClick={handlePrevious}
-          disabled={currentStep === 0}
-        >
+        <Button variant="outlined" onClick={handlePrevious} disabled={currentStep === 0}>
           Previous
         </Button>
 
@@ -336,10 +314,7 @@ export const ChecklistDetail = () => {
           </Button>
 
           {currentStep < checklist.questions.length - 1 ? (
-            <Button
-              variant="contained"
-              onClick={handleNext}
-            >
+            <Button variant="contained" onClick={handleNext}>
               Next
             </Button>
           ) : (
@@ -364,7 +339,8 @@ export const ChecklistDetail = () => {
           </Typography>
           <List>
             {checklist.questions.map((question, index) => {
-              const isAnswered = answers[question.id] || checklist.answers?.find(a => a.question_id === question.id);
+              const isAnswered =
+                answers[question.id] || checklist.answers?.find(a => a.question_id === question.id);
               return (
                 <Box key={question.id}>
                   <ListItem>

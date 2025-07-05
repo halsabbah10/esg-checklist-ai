@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { useParams } from 'react-router-dom';
 import {
   Container,
   Card,
@@ -16,32 +17,64 @@ import {
   ListItemIcon,
   Paper,
 } from '@mui/material';
-import {
-  CloudUpload,
-  CheckCircle,
-  Warning,
-  Error as ErrorIcon,
-} from '@mui/icons-material';
+import { CloudUpload, CheckCircle, Warning, Error as ErrorIcon } from '@mui/icons-material';
 import { checklistsAPI, aiAPI } from '../services/api';
 
 export const ChecklistUpload: React.FC = () => {
+  const { id: checklistId } = useParams<{ id: string }>();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadId, setUploadId] = useState<string | null>(null);
 
+  // Always call hooks at the top level
   // Fetch AI results for uploaded file
   const { data: aiResults, refetch: refetchAIResults } = useQuery({
     queryKey: ['ai-results', uploadId],
-    queryFn: () => uploadId ? aiAPI.getResultByUpload(uploadId) : null,
-    enabled: !!uploadId,
+    queryFn: () => (uploadId ? aiAPI.getResultByUpload(uploadId) : null),
+    enabled: !!uploadId && !!checklistId,
   });
 
   // Upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
+      if (!checklistId) {
+        throw new Error('Checklist ID is required for upload');
+      }
+
+      // Get file extension and set correct content type
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      const mimeTypeMap: Record<string, string> = {
+        pdf: 'application/pdf',
+        docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        csv: 'text/csv',
+        txt: 'text/plain',
+      };
+
+      const correctMimeType = fileExtension ? mimeTypeMap[fileExtension] : file.type;
+
+      // Create a new File object with correct MIME type if needed
+      const fileWithCorrectType =
+        correctMimeType && correctMimeType !== file.type
+          ? new File([file], file.name, { type: correctMimeType })
+          : file;
+
+      console.log('File details:', {
+        name: fileWithCorrectType.name,
+        type: fileWithCorrectType.type,
+        size: fileWithCorrectType.size,
+        checklistId: checklistId,
+      });
+
       const formData = new FormData();
-      formData.append('file', file);
-      
+      formData.append('file', fileWithCorrectType);
+
+      // Debug FormData
+      console.log('FormData contents:');
+      for (const [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
+
       // Simulate upload progress
       setUploadProgress(0);
       const interval = setInterval(() => {
@@ -55,7 +88,7 @@ export const ChecklistUpload: React.FC = () => {
       }, 100);
 
       try {
-        const response = await checklistsAPI.upload('1', formData); // Default checklist ID
+        const response = await checklistsAPI.upload(checklistId, formData);
         clearInterval(interval);
         setUploadProgress(100);
         return response.data;
@@ -65,7 +98,7 @@ export const ChecklistUpload: React.FC = () => {
         throw error;
       }
     },
-    onSuccess: (data) => {
+    onSuccess: data => {
       setUploadId(data.upload_id || data.id);
       // Refetch AI results after successful upload
       setTimeout(() => {
@@ -76,6 +109,20 @@ export const ChecklistUpload: React.FC = () => {
       setUploadProgress(0);
     },
   });
+
+  // Show error if no checklist ID is provided
+  if (!checklistId) {
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="error">
+          <Typography variant="h6">Invalid Checklist</Typography>
+          <Typography>
+            No checklist ID provided. Please navigate to a specific checklist to upload files.
+          </Typography>
+        </Alert>
+      </Container>
+    );
+  }
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -117,7 +164,7 @@ export const ChecklistUpload: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Upload Document
           </Typography>
-          
+
           <Box sx={{ mb: 3 }}>
             <input
               accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
@@ -136,7 +183,7 @@ export const ChecklistUpload: React.FC = () => {
                 Choose File
               </Button>
             </label>
-            
+
             {selectedFile && (
               <Chip
                 label={selectedFile.name}
@@ -187,8 +234,10 @@ export const ChecklistUpload: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               AI Analysis Results
             </Typography>
-            
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+
+            <Box
+              sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}
+            >
               {/* Overall Score */}
               <Paper elevation={1} sx={{ p: 3 }}>
                 <Box display="flex" alignItems="center" mb={2}>
@@ -197,7 +246,10 @@ export const ChecklistUpload: React.FC = () => {
                     Overall Compliance Score
                   </Typography>
                 </Box>
-                <Typography variant="h3" color={`${getScoreColor(aiResults.data.overall_score)}.main`}>
+                <Typography
+                  variant="h3"
+                  color={`${getScoreColor(aiResults.data.overall_score)}.main`}
+                >
                   {Math.round(aiResults.data.overall_score * 100)}%
                 </Typography>
                 <LinearProgress
@@ -235,7 +287,14 @@ export const ChecklistUpload: React.FC = () => {
             </Box>
 
             {/* Recommendations and Gaps */}
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3, mt: 3 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                gap: 3,
+                mt: 3,
+              }}
+            >
               {/* Recommendations */}
               <Paper elevation={1} sx={{ p: 3 }}>
                 <Typography variant="h6" gutterBottom color="success.main">

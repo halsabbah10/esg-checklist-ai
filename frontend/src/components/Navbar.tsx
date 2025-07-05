@@ -10,10 +10,7 @@ import {
   Avatar,
   Button,
 } from '@mui/material';
-import {
-  Menu as MenuIcon,
-  AccountCircle,
-} from '@mui/icons-material';
+import { Menu as MenuIcon, AccountCircle } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NotificationDropdown } from './Notifications';
@@ -50,16 +47,11 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
   ];
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar position="fixed" sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
       <Toolbar sx={{ height: '64px', justifyContent: 'space-between' }}>
         {/* Mobile menu button */}
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={onMenuClick}
-          >
+          <IconButton color="inherit" aria-label="open drawer" edge="start" onClick={onMenuClick}>
             <MenuIcon />
           </IconButton>
         </Box>
@@ -82,7 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
 
         {/* Desktop Navigation */}
         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4, alignItems: 'center', flex: 1 }}>
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <Button
               key={item.path}
               onClick={() => navigate(item.path)}
@@ -104,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
               {item.label}
             </Button>
           ))}
-          
+
           {/* Global Search */}
           <Box sx={{ ml: 'auto', mr: 2 }}>
             <GlobalSearch />
@@ -115,12 +107,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {/* Notifications */}
           <NotificationDropdown />
-          
-          <IconButton
-            onClick={handleMenuOpen}
-            sx={{ p: 0 }}
-            aria-label="account menu"
-          >
+
+          <IconButton onClick={handleMenuOpen} sx={{ p: 0 }} aria-label="account menu">
             {user?.name ? (
               <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
                 {user.name.charAt(0).toUpperCase()}
@@ -159,10 +147,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
                 {user?.email}
               </Typography>
             </MenuItem>
-            <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }}>
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                navigate('/profile');
+              }}
+            >
               Profile
             </MenuItem>
-            <MenuItem onClick={() => { handleMenuClose(); navigate('/help'); }}>
+            <MenuItem
+              onClick={() => {
+                handleMenuClose();
+                navigate('/help');
+              }}
+            >
               Help
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>

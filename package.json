@@ -1,5 +1,26 @@
 {
+  "name": "esg-checklist-ai",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ESG Checklist AI Application",
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "make dev",
+    "dev:full": "cd frontend && npm run dev:full",
+    "build": "cd frontend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview",
+    "lint": "cd frontend && npm run lint",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && pip install -r requirements.txt",
+    "setup": "npm run install:frontend && npm run install:backend",
+    "start": "npm run dev:full"
+  },
   "dependencies": {
     "react-dropzone": "^14.3.8"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

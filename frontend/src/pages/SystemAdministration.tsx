@@ -93,7 +93,7 @@ export const SystemAdministration: React.FC = () => {
   const security: AuditLog[] = securityEvents?.data || [];
   const stats = analytics?.data || {};
 
-  const getHealthColor = (status: string) => {
+  const getHealthColor = (status: string): 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case 'healthy':
         return 'success';
@@ -119,7 +119,7 @@ export const SystemAdministration: React.FC = () => {
     }
   };
 
-  const getUsageColor = (usage: number) => {
+  const getUsageColor = (usage: number): 'success' | 'warning' | 'error' => {
     if (usage < 60) return 'success';
     if (usage < 80) return 'warning';
     return 'error';
@@ -137,7 +137,7 @@ export const SystemAdministration: React.FC = () => {
             </Box>
             <Chip
               label={health.api_status?.toUpperCase() || 'UNKNOWN'}
-              color={getHealthColor(health.api_status) as any}
+              color={getHealthColor(health.api_status)}
               size="small"
             />
             {health.response_time && (
@@ -156,7 +156,7 @@ export const SystemAdministration: React.FC = () => {
             </Box>
             <Chip
               label={health.database_status?.toUpperCase() || 'UNKNOWN'}
-              color={getHealthColor(health.database_status) as any}
+              color={getHealthColor(health.database_status)}
               size="small"
             />
           </CardContent>
@@ -184,7 +184,7 @@ export const SystemAdministration: React.FC = () => {
             <LinearProgress
               variant="determinate"
               value={health.storage_usage || 0}
-              color={getUsageColor(health.storage_usage || 0) as any}
+              color={getUsageColor(health.storage_usage || 0)}
               sx={{ mb: 1 }}
             />
             <Typography variant="body2" color="text.secondary">
@@ -202,7 +202,7 @@ export const SystemAdministration: React.FC = () => {
             <LinearProgress
               variant="determinate"
               value={health.memory_usage || 0}
-              color={getUsageColor(health.memory_usage || 0) as any}
+              color={getUsageColor(health.memory_usage || 0)}
               sx={{ mb: 1 }}
             />
             <Typography variant="body2" color="text.secondary">
@@ -220,7 +220,7 @@ export const SystemAdministration: React.FC = () => {
             <LinearProgress
               variant="determinate"
               value={health.cpu_usage || 0}
-              color={getUsageColor(health.cpu_usage || 0) as any}
+              color={getUsageColor(health.cpu_usage || 0)}
               sx={{ mb: 1 }}
             />
             <Typography variant="body2" color="text.secondary">
@@ -252,11 +252,9 @@ export const SystemAdministration: React.FC = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {logs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((log) => (
+                {logs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(log => (
                   <TableRow key={log.id} hover>
-                    <TableCell>
-                      {new Date(log.timestamp).toLocaleString()}
-                    </TableCell>
+                    <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                     <TableCell>{log.user_id}</TableCell>
                     <TableCell>{log.action}</TableCell>
                     <TableCell>{log.resource}</TableCell>
@@ -280,7 +278,7 @@ export const SystemAdministration: React.FC = () => {
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => {
+            onRowsPerPageChange={event => {
               setRowsPerPage(parseInt(event.target.value, 10));
               setPage(0);
             }}
@@ -301,7 +299,7 @@ export const SystemAdministration: React.FC = () => {
             <Alert severity="info">No security events found</Alert>
           ) : (
             <List>
-              {security.map((event) => (
+              {security.map(event => (
                 <ListItem key={event.id}>
                   <ListItemIcon>
                     <Security color={event.status === 'success' ? 'success' : 'error'} />

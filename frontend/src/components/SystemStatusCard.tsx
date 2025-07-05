@@ -28,42 +28,43 @@ import {
 import { auditAPI } from '../services/api';
 import { LoadingSpinner } from './LoadingSpinner';
 
-interface SystemMetric {
-  name: string;
-  value: number;
-  unit: string;
-  status: 'healthy' | 'warning' | 'critical';
-  threshold?: number;
-}
-
 interface SystemHealth {
   status: 'healthy' | 'degraded' | 'down';
-  uptime: string;
+  timestamp: string;
   version: string;
-  last_check: string;
-  metrics: {
-    cpu_usage: SystemMetric;
-    memory_usage: SystemMetric;
-    disk_usage: SystemMetric;
-    database_connections: SystemMetric;
-    api_response_time: SystemMetric;
+  environment: string;
+  api_version: string;
+  uptime_seconds: number;
+  checks: {
+    database: string;
+    api: string;
+    ai_services: string;
+    file_system: {
+      uploads_directory: string;
+      logs_directory: string;
+    };
   };
-  services: Array<{
-    name: string;
-    status: 'up' | 'down' | 'degraded';
-    last_check: string;
-  }>;
+  metrics: {
+    cpu_percent: number;
+    memory_percent: number;
+    disk_usage_percent: number;
+  };
 }
 
 export const SystemStatusCard: React.FC = () => {
-  const { data: systemHealth, isLoading, error, refetch } = useQuery({
+  const {
+    data: systemHealth,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['systemHealth'],
     queryFn: () => auditAPI.getSystemHealth(),
     refetchInterval: 30000, // Refresh every 30 seconds
-    select: (response) => response.data as SystemHealth,
+    select: response => response.data as SystemHealth,
   });
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'error' | 'primary' => {
     switch (status) {
       case 'healthy':
       case 'up':
@@ -75,7 +76,7 @@ export const SystemStatusCard: React.FC = () => {
       case 'down':
         return 'error';
       default:
-        return 'default';
+        return 'primary';
     }
   };
 
@@ -95,13 +96,11 @@ export const SystemStatusCard: React.FC = () => {
     }
   };
 
-  const formatUptime = (uptime: string) => {
-    // Assume uptime is in seconds
-    const seconds = parseInt(uptime);
-    const days = Math.floor(seconds / 86400);
-    const hours = Math.floor((seconds % 86400) / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
+  const formatUptime = (uptimeSeconds: number) => {
+    const days = Math.floor(uptimeSeconds / 86400);
+    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+
     if (days > 0) {
       return `${days}d ${hours}h ${minutes}m`;
     } else if (hours > 0) {
@@ -109,6 +108,20 @@ export const SystemStatusCard: React.FC = () => {
     } else {
       return `${minutes}m`;
     }
+  };
+
+  const getMetricStatus = (value: number, type: string) => {
+    if (type.includes('cpu') || type.includes('memory')) {
+      if (value > 90) return 'critical';
+      if (value > 70) return 'warning';
+      return 'healthy';
+    }
+    if (type.includes('disk')) {
+      if (value > 95) return 'critical';
+      if (value > 85) return 'warning';
+      return 'healthy';
+    }
+    return 'healthy';
   };
 
   if (isLoading) {
@@ -125,9 +138,7 @@ export const SystemStatusCard: React.FC = () => {
     return (
       <Card>
         <CardContent>
-          <Alert severity="error">
-            Failed to load system status. Please try again.
-          </Alert>
+          <Alert severity="error">Failed to load system status. Please try again.</Alert>
         </CardContent>
       </Card>
     );
@@ -146,7 +157,7 @@ export const SystemStatusCard: React.FC = () => {
             <Chip
               icon={getStatusIcon(systemHealth.status)}
               label={systemHealth.status.toUpperCase()}
-              color={getStatusColor(systemHealth.status) as any}
+              color={getStatusColor(systemHealth.status)}
               size="small"
             />
             <Tooltip title="Refresh">
@@ -162,9 +173,7 @@ export const SystemStatusCard: React.FC = () => {
             <Typography variant="body2" color="text.secondary">
               Uptime
             </Typography>
-            <Typography variant="h6">
-              {formatUptime(systemHealth.uptime)}
-            </Typography>
+            <Typography variant="h6">{formatUptime(systemHealth.uptime_seconds)}</Typography>
           </Box>
           <Box>
             <Typography variant="body2" color="text.secondary">
@@ -177,60 +186,91 @@ export const SystemStatusCard: React.FC = () => {
         <Typography variant="subtitle1" gutterBottom>
           System Metrics
         </Typography>
-        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }} gap={2} mb={3}>
-          {Object.entries(systemHealth.metrics).map(([key, metric]) => (
-            <Box key={key}>
-              <Box display="flex" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" color="text.secondary">
-                  {metric.name}
-                </Typography>
-                <Chip
-                  label={metric.status}
-                  color={getStatusColor(metric.status) as any}
-                  size="small"
+        <Box
+          display="grid"
+          gridTemplateColumns={{ xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' }}
+          gap={2}
+          mb={3}
+        >
+          {Object.entries(systemHealth.metrics).map(([key, value]) => {
+            const status = getMetricStatus(value, key);
+            const displayName = key
+              .replace(/_/g, ' ')
+              .replace(/percent/g, '')
+              .trim();
+            return (
+              <Box key={key}>
+                <Box display="flex" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2" color="text.secondary">
+                    {displayName.charAt(0).toUpperCase() + displayName.slice(1)}
+                  </Typography>
+                  <Chip label={status} color={getStatusColor(status)} size="small" />
+                </Box>
+                <Typography variant="h6">{value.toFixed(1)}%</Typography>
+                <LinearProgress
+                  variant="determinate"
+                  value={value}
+                  color={getStatusColor(status)}
+                  sx={{ mt: 1, height: 6, borderRadius: 3 }}
                 />
               </Box>
-              <Typography variant="h6">
-                {metric.value}
-                {metric.unit}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={metric.value}
-                color={getStatusColor(metric.status) as any}
-                sx={{ mt: 1, height: 6, borderRadius: 3 }}
-              />
-            </Box>
-          ))}
+            );
+          })}
         </Box>
 
         <Typography variant="subtitle1" gutterBottom>
-          Services
+          Service Checks
         </Typography>
         <List dense>
-          {systemHealth.services.map((service) => (
-            <ListItem key={service.name}>
-              <ListItemIcon>
-                {service.name.includes('database') ? (
-                  <Storage />
-                ) : service.name.includes('api') ? (
-                  <NetworkCheck />
-                ) : (
-                  <Speed />
-                )}
-              </ListItemIcon>
-              <ListItemText
-                primary={service.name}
-                secondary={`Last check: ${new Date(service.last_check).toLocaleString()}`}
-              />
-              <Chip
-                icon={getStatusIcon(service.status)}
-                label={service.status.toUpperCase()}
-                color={getStatusColor(service.status) as any}
-                size="small"
-              />
-            </ListItem>
-          ))}
+          {Object.entries(systemHealth.checks).map(([key, value]) => {
+            if (typeof value === 'object') {
+              // Handle file_system which is nested
+              return Object.entries(value).map(([subKey, subValue]) => (
+                <ListItem key={`${key}.${subKey}`}>
+                  <ListItemIcon>
+                    <Storage />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={`${key.replace(/_/g, ' ')} - ${subKey.replace(/_/g, ' ')}`}
+                    secondary={`Status: ${subValue}`}
+                  />
+                  <Chip
+                    icon={getStatusIcon(subValue)}
+                    label={subValue.toUpperCase()}
+                    color={getStatusColor(subValue)}
+                    size="small"
+                  />
+                </ListItem>
+              ));
+            } else {
+              return (
+                <ListItem key={key}>
+                  <ListItemIcon>
+                    {key.includes('database') ? (
+                      <Storage />
+                    ) : key.includes('api') ? (
+                      <NetworkCheck />
+                    ) : (
+                      <Speed />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      key.replace(/_/g, ' ').charAt(0).toUpperCase() +
+                      key.replace(/_/g, ' ').slice(1)
+                    }
+                    secondary={`Status: ${value}`}
+                  />
+                  <Chip
+                    icon={getStatusIcon(value)}
+                    label={value.toUpperCase()}
+                    color={getStatusColor(value)}
+                    size="small"
+                  />
+                </ListItem>
+              );
+            }
+          })}
         </List>
       </CardContent>
     </Card>

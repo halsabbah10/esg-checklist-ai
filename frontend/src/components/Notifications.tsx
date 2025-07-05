@@ -48,7 +48,7 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-const getNotificationColor = (type: string) => {
+const getNotificationColor = (type: string): 'success' | 'warning' | 'error' | 'info' => {
   switch (type) {
     case 'success':
       return 'success';
@@ -119,11 +119,11 @@ export const NotificationDropdown: React.FC = () => {
       <IconButton
         color="inherit"
         onClick={handleClick}
-        sx={{ 
+        sx={{
           color: 'inherit',
-          '&:hover': { 
-            backgroundColor: 'rgba(255, 255, 255, 0.1)' 
-          }
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+          },
         }}
       >
         <Badge badgeContent={unreadCountValue} color="error">
@@ -219,7 +219,7 @@ export const NotificationDropdown: React.FC = () => {
                         <Chip
                           label={notification.type}
                           size="small"
-                          color={getNotificationColor(notification.type) as any}
+                          color={getNotificationColor(notification.type)}
                           variant="outlined"
                           sx={{ fontSize: '0.6rem', height: 20 }}
                         />
@@ -268,7 +268,11 @@ export const NotificationsList: React.FC = () => {
   const queryClient = useQueryClient();
 
   // Fetch all notifications
-  const { data: notifications, isLoading, error } = useQuery({
+  const {
+    data: notifications,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ['notifications'],
     queryFn: () => notificationsAPI.getAll(),
   });
@@ -294,11 +298,7 @@ export const NotificationsList: React.FC = () => {
   }
 
   if (error) {
-    return (
-      <Alert severity="error">
-        Failed to load notifications. Please try again.
-      </Alert>
-    );
+    return <Alert severity="error">Failed to load notifications. Please try again.</Alert>;
   }
 
   const notificationsList: Notification[] = notifications?.data || [];
@@ -328,23 +328,18 @@ export const NotificationsList: React.FC = () => {
               mb: 1,
             }}
           >
-            <ListItemIcon>
-              {getNotificationIcon(notification.type)}
-            </ListItemIcon>
+            <ListItemIcon>{getNotificationIcon(notification.type)}</ListItemIcon>
             <ListItemText
               primary={
                 <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={notification.read ? 400 : 600}
-                  >
+                  <Typography variant="subtitle1" fontWeight={notification.read ? 400 : 600}>
                     {notification.title}
                   </Typography>
                   <Box display="flex" alignItems="center" gap={1}>
                     <Chip
                       label={notification.type}
                       size="small"
-                      color={getNotificationColor(notification.type) as any}
+                      color={getNotificationColor(notification.type)}
                       variant="outlined"
                     />
                     {!notification.read && (

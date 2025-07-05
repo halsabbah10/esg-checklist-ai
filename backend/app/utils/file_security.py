@@ -19,10 +19,17 @@ settings = get_settings()
 # MIME type mappings for validation
 ALLOWED_MIME_TYPES: Dict[str, Set[str]] = {
     "pdf": {"application/pdf"},
-    "docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
-    "xlsx": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
-    "csv": {"text/csv", "application/csv"},
-    "txt": {"text/plain"},
+    "docx": {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/octet-stream",  # Common fallback for Office files
+    },
+    "xlsx": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/octet-stream",  # Common fallback for Office files
+        "application/vnd.ms-excel",  # Alternative Excel MIME type
+    },
+    "csv": {"text/csv", "application/csv", "text/plain"},
+    "txt": {"text/plain", "application/octet-stream"},
 }
 
 # Security patterns

@@ -172,6 +172,8 @@ exclude = [
 "backend/app/utils/emailer.py" = ["TRY002"]  # Allow generic exceptions for external API calls
 "backend/app/utils/notifications.py" = ["E501"]  # Allow long lines in notification messages
 "backend/run_server.py" = ["PTH100", "PTH120"]  # Allow os.path usage in server startup script
+# Allow subprocess usage in test runners (controlled test environment)
+"tools/e2e_test_runner.py" = ["S603", "S607"]
 
 [tool.ruff.lint.flake8-bandit]
 # Configuration for bandit security checks

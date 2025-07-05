@@ -20,14 +20,7 @@ import {
   ListItemSecondaryAction,
   Divider,
 } from '@mui/material';
-import {
-  Search,
-  CheckCircle,
-  Error,
-  Pending,
-  Comment,
-  Visibility,
-} from '@mui/icons-material';
+import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
 import { reviewsAPI, uploadsAPI } from '../services/api';
 
 interface ReviewItem {
@@ -40,9 +33,19 @@ interface ReviewItem {
   ai_score?: number;
 }
 
+interface UploadData {
+  id: string;
+  filename?: string;
+  status?: string;
+  created_at?: string;
+  ai_score?: number;
+}
+
 export const Reviews: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
+    'all'
+  );
 
   // Fetch review items
   const {
@@ -55,14 +58,18 @@ export const Reviews: React.FC = () => {
     queryFn: async () => {
       // Since reviews endpoint might not be fully implemented, simulate with uploads
       const response = await uploadsAPI.search({});
-      return response.data.map((upload: any) => ({
-        id: upload.id,
-        filename: upload.filename || `Document ${upload.id}`,
-        status: upload.status || 'pending',
-        uploaded_at: upload.created_at || new Date().toISOString(),
-        ai_score: upload.ai_score || Math.floor(Math.random() * 100),
-        comments: [],
-      }));
+      return response.data.map((upload: unknown) => {
+        // Type guard for upload data
+        const uploadData = upload as UploadData;
+        return {
+          id: uploadData.id,
+          filename: uploadData.filename || `Document ${uploadData.id}`,
+          status: (uploadData.status || 'pending') as 'pending' | 'approved' | 'rejected',
+          uploaded_at: uploadData.created_at || new Date().toISOString(),
+          ai_score: uploadData.ai_score || Math.floor(Math.random() * 100),
+          comments: [],
+        };
+      });
     },
   });
 
@@ -83,7 +90,7 @@ export const Reviews: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'warning' => {
     switch (status) {
       case 'approved':
         return 'success';
@@ -125,9 +132,7 @@ export const Reviews: React.FC = () => {
   if (error) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Alert severity="error">
-          Failed to load reviews. Please try again later.
-        </Alert>
+        <Alert severity="error">Failed to load reviews. Please try again later.</Alert>
       </Container>
     );
   }
@@ -142,13 +147,18 @@ export const Reviews: React.FC = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         Document Reviews
       </Typography>
-      
+
       <Typography variant="body1" color="text.secondary" paragraph>
         Review and approve ESG compliance documents submitted for analysis.
       </Typography>
 
       {/* Summary Cards */}
-      <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))" gap={2} sx={{ mb: 4 }}>
+      <Box
+        display="grid"
+        gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))"
+        gap={2}
+        sx={{ mb: 4 }}
+      >
         <Card>
           <CardContent>
             <Typography color="text.secondary" gutterBottom>
@@ -189,7 +199,7 @@ export const Reviews: React.FC = () => {
               size="small"
               placeholder="Search documents..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               sx={{ minWidth: 250 }}
               InputProps={{
                 startAdornment: (
@@ -199,7 +209,7 @@ export const Reviews: React.FC = () => {
                 ),
               }}
             />
-            
+
             <Tabs
               value={statusFilter}
               onChange={(_, value) => setStatusFilter(value)}
@@ -220,7 +230,7 @@ export const Reviews: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Review Queue ({filteredReviews.length})
           </Typography>
-          
+
           {filteredReviews.length === 0 ? (
             <Box textAlign="center" py={4}>
               <Typography variant="body1" color="text.secondary">
@@ -235,16 +245,14 @@ export const Reviews: React.FC = () => {
                     <Box display="flex" alignItems="center" mr={2}>
                       {getStatusIcon(review.status)}
                     </Box>
-                    
+
                     <ListItemText
                       primary={
                         <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="subtitle1">
-                            {review.filename}
-                          </Typography>
+                          <Typography variant="subtitle1">{review.filename}</Typography>
                           <Chip
                             label={review.status}
-                            color={getStatusColor(review.status) as any}
+                            color={getStatusColor(review.status)}
                             size="small"
                           />
                           {review.ai_score && (
@@ -263,7 +271,7 @@ export const Reviews: React.FC = () => {
                         </Typography>
                       }
                     />
-                    
+
                     <ListItemSecondaryAction>
                       <Box display="flex" gap={1}>
                         <Button
@@ -273,7 +281,7 @@ export const Reviews: React.FC = () => {
                         >
                           View
                         </Button>
-                        
+
                         {review.status === 'pending' && (
                           <>
                             <Button
@@ -294,7 +302,7 @@ export const Reviews: React.FC = () => {
                             </Button>
                           </>
                         )}
-                        
+
                         <Button
                           size="small"
                           startIcon={<Comment />}

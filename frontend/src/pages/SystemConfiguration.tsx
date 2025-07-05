@@ -36,6 +36,7 @@ import { adminAPI } from '../services/api';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 
 interface SystemConfig {
+  [key: string]: Record<string, unknown>;
   ai_processing: {
     enabled: boolean;
     max_file_size: number;
@@ -70,12 +71,16 @@ export const SystemConfiguration: React.FC = () => {
   const [config, setConfig] = useState<SystemConfig | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingField, setEditingField] = useState<{ section: string; field: string; value: any } | null>(null);
+  const [editingField, setEditingField] = useState<{
+    section: string;
+    field: string;
+    value: unknown;
+  } | null>(null);
   const queryClient = useQueryClient();
 
   const { data: systemConfig, isLoading } = useQuery({
     queryKey: ['system-config'],
-    queryFn: () => adminAPI.getSystemConfig().then((res: any) => res.data),
+    queryFn: () => adminAPI.getSystemConfig().then((res: { data: SystemConfig }) => res.data),
   });
 
   // Set config when data is loaded
@@ -101,9 +106,9 @@ export const SystemConfiguration: React.FC = () => {
     },
   });
 
-  const handleConfigChange = (section: keyof SystemConfig, field: string, value: any) => {
+  const handleConfigChange = (section: keyof SystemConfig, field: string, value: unknown) => {
     if (!config) return;
-    
+
     const newConfig = {
       ...config,
       [section]: {
@@ -115,12 +120,18 @@ export const SystemConfiguration: React.FC = () => {
     setHasChanges(true);
   };
 
-  const handleArrayChange = (section: keyof SystemConfig, field: string, action: 'add' | 'remove', value?: string, index?: number) => {
+  const handleArrayChange = (
+    section: keyof SystemConfig,
+    field: string,
+    action: 'add' | 'remove',
+    value?: string,
+    index?: number
+  ) => {
     if (!config) return;
-    
-    const currentArray = (config[section] as any)[field] as string[];
+
+    const currentArray = (config[section] as Record<string, unknown>)[field] as string[];
     let newArray: string[];
-    
+
     if (action === 'add' && value) {
       newArray = [...currentArray, value];
     } else if (action === 'remove' && index !== undefined) {
@@ -128,11 +139,11 @@ export const SystemConfiguration: React.FC = () => {
     } else {
       return;
     }
-    
+
     handleConfigChange(section, field, newArray);
   };
 
-  const openEditDialog = (section: string, field: string, value: any) => {
+  const openEditDialog = (section: string, field: string, value: unknown) => {
     setEditingField({ section, field, value });
     setEditDialogOpen(true);
   };
@@ -144,7 +155,11 @@ export const SystemConfiguration: React.FC = () => {
 
   const saveEdit = () => {
     if (editingField) {
-      handleConfigChange(editingField.section as keyof SystemConfig, editingField.field, editingField.value);
+      handleConfigChange(
+        editingField.section as keyof SystemConfig,
+        editingField.field,
+        editingField.value
+      );
     }
     closeEditDialog();
   };
@@ -154,11 +169,7 @@ export const SystemConfiguration: React.FC = () => {
   }
 
   if (!config) {
-    return (
-      <Alert severity="error">
-        Failed to load system configuration.
-      </Alert>
-    );
+    return <Alert severity="error">Failed to load system configuration.</Alert>;
   }
 
   const configSections = [
@@ -181,7 +192,12 @@ export const SystemConfiguration: React.FC = () => {
         { key: 'email_enabled', label: 'Email Notifications', type: 'boolean' },
         { key: 'sms_enabled', label: 'SMS Notifications', type: 'boolean' },
         { key: 'in_app_enabled', label: 'In-App Notifications', type: 'boolean' },
-        { key: 'notification_frequency', label: 'Notification Frequency', type: 'select', options: ['immediate', 'daily', 'weekly'] },
+        {
+          key: 'notification_frequency',
+          label: 'Notification Frequency',
+          type: 'select',
+          options: ['immediate', 'daily', 'weekly'],
+        },
       ],
     },
     {
@@ -211,7 +227,12 @@ export const SystemConfiguration: React.FC = () => {
       icon: <Storage />,
       fields: [
         { key: 'max_upload_size', label: 'Max Upload Size (MB)', type: 'number' },
-        { key: 'cleanup_frequency', label: 'Cleanup Frequency', type: 'select', options: ['daily', 'weekly', 'monthly'] },
+        {
+          key: 'cleanup_frequency',
+          label: 'Cleanup Frequency',
+          type: 'select',
+          options: ['daily', 'weekly', 'monthly'],
+        },
         { key: 'backup_enabled', label: 'Backup Enabled', type: 'boolean' },
       ],
     },
@@ -250,7 +271,7 @@ export const SystemConfiguration: React.FC = () => {
       )}
 
       <Box display="grid" sx={{ gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-        {configSections.map((section) => (
+        {configSections.map(section => (
           <Box key={section.key}>
             <Card>
               <CardContent>
@@ -261,11 +282,13 @@ export const SystemConfiguration: React.FC = () => {
                   </Typography>
                 </Box>
                 <Divider sx={{ mb: 2 }} />
-                
+
                 <List dense>
-                  {section.fields.map((field) => {
-                    const value = (config[section.key as keyof SystemConfig] as any)[field.key];
-                    
+                  {section.fields.map(field => {
+                    const value = (
+                      config[section.key as keyof SystemConfig] as Record<string, unknown>
+                    )[field.key];
+
                     return (
                       <ListItem key={field.key}>
                         <ListItemText
@@ -273,14 +296,23 @@ export const SystemConfiguration: React.FC = () => {
                           secondary={
                             field.type === 'array' ? (
                               <Box display="flex" gap={1} flexWrap="wrap" mt={1}>
-                                {value.map((item: string, index: number) => (
-                                  <Chip
-                                    key={index}
-                                    label={item}
-                                    size="small"
-                                    onDelete={() => handleArrayChange(section.key as keyof SystemConfig, field.key, 'remove', undefined, index)}
-                                  />
-                                ))}
+                                {Array.isArray(value) &&
+                                  value.map((item: string, index: number) => (
+                                    <Chip
+                                      key={index}
+                                      label={item}
+                                      size="small"
+                                      onDelete={() =>
+                                        handleArrayChange(
+                                          section.key as keyof SystemConfig,
+                                          field.key,
+                                          'remove',
+                                          undefined,
+                                          index
+                                        )
+                                      }
+                                    />
+                                  ))}
                                 <Chip
                                   label="+ Add"
                                   size="small"
@@ -292,8 +324,14 @@ export const SystemConfiguration: React.FC = () => {
                               <FormControlLabel
                                 control={
                                   <Switch
-                                    checked={value}
-                                    onChange={(e) => handleConfigChange(section.key as keyof SystemConfig, field.key, e.target.checked)}
+                                    checked={Boolean(value)}
+                                    onChange={e =>
+                                      handleConfigChange(
+                                        section.key as keyof SystemConfig,
+                                        field.key,
+                                        e.target.checked
+                                      )
+                                    }
                                   />
                                 }
                                 label=""
@@ -338,7 +376,7 @@ export const SystemConfiguration: React.FC = () => {
               fullWidth
               label="Add Format"
               value={editingField.value}
-              onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
+              onChange={e => setEditingField({ ...editingField, value: e.target.value })}
               placeholder="e.g., .pdf, .xlsx, .docx"
             />
           ) : (
@@ -346,10 +384,15 @@ export const SystemConfiguration: React.FC = () => {
               fullWidth
               type={typeof editingField?.value === 'number' ? 'number' : 'text'}
               value={editingField?.value || ''}
-              onChange={(e) => setEditingField({ 
-                ...editingField!, 
-                value: typeof editingField?.value === 'number' ? Number(e.target.value) : e.target.value 
-              })}
+              onChange={e =>
+                setEditingField({
+                  ...editingField!,
+                  value:
+                    typeof editingField?.value === 'number'
+                      ? Number(e.target.value)
+                      : e.target.value,
+                })
+              }
             />
           )}
         </DialogContent>

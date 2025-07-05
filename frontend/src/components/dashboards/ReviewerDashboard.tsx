@@ -14,7 +14,6 @@ import {
   ListItem,
   ListItemText,
   ListItemIcon,
-
   IconButton,
   Paper,
   Table,
@@ -43,6 +42,29 @@ import {
 } from '@mui/icons-material';
 import { uploadsAPI, aiAPI, reviewsAPI, analyticsAPI } from '../../services/api';
 
+interface Upload {
+  id: number;
+  filename: string;
+  user_id: number;
+  uploaded_at: string;
+  status: 'approved' | 'rejected' | 'pending' | 'processing';
+  file_size?: number;
+  ai_score?: number;
+}
+
+interface AIResult {
+  id: number;
+  checklist_id: number;
+  overall_score: number;
+  analysis: string;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  upload_id?: number;
+  filename?: string;
+  file_upload_id?: number;
+}
+
 interface StatsCardProps {
   title: string;
   value: number;
@@ -62,9 +84,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color }) => (
             {title}
           </Typography>
         </Box>
-        <Box color={`${color}.main`}>
-          {icon}
-        </Box>
+        <Box color={`${color}.main`}>{icon}</Box>
       </Box>
     </CardContent>
   </Card>
@@ -73,7 +93,7 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color }) => (
 interface ReviewDialogProps {
   open: boolean;
   onClose: () => void;
-  upload: any;
+  upload: Upload | null;
   onReview: (uploadId: string, action: 'approve' | 'reject', comment?: string) => void;
 }
 
@@ -83,7 +103,7 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
 
   const handleSubmit = () => {
     if (selectedAction) {
-      onReview(upload?.id, selectedAction, comment);
+      onReview(upload?.id?.toString() || '', selectedAction, comment);
       setComment('');
       setSelectedAction(null);
       onClose();
@@ -100,15 +120,22 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
               {upload.filename}
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Uploaded by User ID: {upload.user_id} on {new Date(upload.uploaded_at).toLocaleString()}
+              Uploaded by User ID: {upload.user_id} on{' '}
+              {new Date(upload.uploaded_at).toLocaleString()}
             </Typography>
-            
+
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
-                Current Status: 
-                <Chip 
-                  label={upload.status} 
-                  color={upload.status === 'approved' ? 'success' : upload.status === 'rejected' ? 'error' : 'warning'}
+                Current Status:
+                <Chip
+                  label={upload.status}
+                  color={
+                    upload.status === 'approved'
+                      ? 'success'
+                      : upload.status === 'rejected'
+                        ? 'error'
+                        : 'warning'
+                  }
                   size="small"
                   sx={{ ml: 1 }}
                 />
@@ -121,7 +148,7 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
               rows={4}
               label="Review Comment"
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={e => setComment(e.target.value)}
               placeholder="Add your review comments here..."
               sx={{ mb: 2 }}
             />
@@ -149,11 +176,7 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button 
-          onClick={handleSubmit} 
-          variant="contained"
-          disabled={!selectedAction}
-        >
+        <Button onClick={handleSubmit} variant="contained" disabled={!selectedAction}>
           Submit Review
         </Button>
       </DialogActions>
@@ -163,10 +186,14 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
 
 export const ReviewerDashboard: React.FC = () => {
   const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false);
-  const [selectedUpload, setSelectedUpload] = React.useState<any>(null);
+  const [selectedUpload, setSelectedUpload] = React.useState<Upload | null>(null);
 
   // Fetch pending reviews
-  const { data: pendingUploads, isLoading: uploadsLoading, refetch: refetchUploads } = useQuery({
+  const {
+    data: pendingUploads,
+    isLoading: uploadsLoading,
+    refetch: refetchUploads,
+  } = useQuery<{ data: { results: Upload[] } }>({
     queryKey: ['uploads', 'pending'],
     queryFn: () => uploadsAPI.search({ status: 'pending', limit: 20 }),
   });
@@ -178,7 +205,7 @@ export const ReviewerDashboard: React.FC = () => {
   });
 
   // Fetch AI results for analysis
-  const { data: aiResults, isLoading: aiLoading } = useQuery({
+  const { data: aiResults, isLoading: aiLoading } = useQuery<{ data: { results: AIResult[] } }>({
     queryKey: ['ai-results', 'recent'],
     queryFn: () => aiAPI.getResults({ limit: 10 }),
   });
@@ -196,7 +223,7 @@ export const ReviewerDashboard: React.FC = () => {
     }
   };
 
-  const openReviewDialog = (upload: any) => {
+  const openReviewDialog = (upload: Upload) => {
     setSelectedUpload(upload);
     setReviewDialogOpen(true);
   };
@@ -216,10 +243,10 @@ export const ReviewerDashboard: React.FC = () => {
   const aiResultsData = aiResults?.data?.results || [];
 
   // Calculate reviewer-specific stats
-  const pendingCount = uploads.filter((u: any) => u.status === 'pending').length;
-  const completedToday = uploads.filter((u: any) => 
-    u.status !== 'pending' && 
-    new Date(u.uploaded_at).toDateString() === new Date().toDateString()
+  const pendingCount = uploads.filter((u: Upload) => u.status === 'pending').length;
+  const completedToday = uploads.filter(
+    (u: Upload) =>
+      u.status !== 'pending' && new Date(u.uploaded_at).toDateString() === new Date().toDateString()
   ).length;
 
   return (
@@ -234,7 +261,14 @@ export const ReviewerDashboard: React.FC = () => {
       </Box>
 
       {/* Key Metrics */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
         <StatsCard
           title="Pending Reviews"
           value={pendingCount}
@@ -282,7 +316,7 @@ export const ReviewerDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {uploads.slice(0, 8).map((upload: any) => (
+                    {uploads.slice(0, 8).map((upload: Upload) => (
                       <TableRow key={upload.id}>
                         <TableCell>
                           <Typography variant="body2" fontWeight={500}>
@@ -301,8 +335,11 @@ export const ReviewerDashboard: React.FC = () => {
                           <Chip
                             label={upload.status}
                             color={
-                              upload.status === 'approved' ? 'success' :
-                              upload.status === 'rejected' ? 'error' : 'warning'
+                              upload.status === 'approved'
+                                ? 'success'
+                                : upload.status === 'rejected'
+                                  ? 'error'
+                                  : 'warning'
                             }
                             size="small"
                           />
@@ -344,7 +381,7 @@ export const ReviewerDashboard: React.FC = () => {
               <Alert severity="info">No AI results available</Alert>
             ) : (
               <List>
-                {aiResultsData.slice(0, 5).map((result: any, index: number) => (
+                {aiResultsData.slice(0, 5).map((result: AIResult, index: number) => (
                   <React.Fragment key={result.id}>
                     <ListItem>
                       <ListItemIcon>
@@ -357,18 +394,23 @@ export const ReviewerDashboard: React.FC = () => {
                             <Typography variant="caption" display="block">
                               File ID: {result.file_upload_id}
                             </Typography>
-                            <Rating 
-                              value={result.overall_score || 0} 
-                              precision={0.1} 
-                              size="small" 
-                              readOnly 
+                            <Rating
+                              value={result.overall_score || 0}
+                              precision={0.1}
+                              size="small"
+                              readOnly
                               max={1}
                             />
                           </Box>
                         }
                       />
                     </ListItem>
-                    {index < aiResultsData.length - 1 && <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }} />}
+                    {index < aiResultsData.length - 1 && (
+                      <Box
+                        component="hr"
+                        sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
+                      />
+                    )}
                   </React.Fragment>
                 ))}
               </List>
@@ -382,7 +424,13 @@ export const ReviewerDashboard: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Quick Actions
         </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 2 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' },
+            gap: 2,
+          }}
+        >
           <Button variant="contained" fullWidth startIcon={<Assignment />}>
             Review Queue
           </Button>

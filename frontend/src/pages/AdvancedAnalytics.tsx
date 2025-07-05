@@ -56,6 +56,13 @@ import {
 } from '@mui/icons-material';
 import { analyticsAPI, exportAPI } from '../services/api';
 
+interface User {
+  id: number;
+  name?: string;
+  email: string;
+  averageScore?: number;
+}
+
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 export const AdvancedAnalytics: React.FC = () => {
@@ -71,7 +78,8 @@ export const AdvancedAnalytics: React.FC = () => {
 
   const { data: scoreTrends, isLoading: loadingTrends } = useQuery({
     queryKey: ['analytics', 'score-trends', timeRange],
-    queryFn: () => analyticsAPI.getScoreTrends(selectedChecklist !== 'all' ? selectedChecklist : undefined),
+    queryFn: () =>
+      analyticsAPI.getScoreTrends(selectedChecklist !== 'all' ? selectedChecklist : undefined),
   });
 
   const { data: scoreByChecklist, isLoading: loadingByChecklist } = useQuery({
@@ -111,7 +119,10 @@ export const AdvancedAnalytics: React.FC = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `analytics-${type}-${new Date().toISOString().split('T')[0]}.xlsx`);
+      link.setAttribute(
+        'download',
+        `analytics-${type}-${new Date().toISOString().split('T')[0]}.xlsx`
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -120,7 +131,21 @@ export const AdvancedAnalytics: React.FC = () => {
     }
   };
 
-  const MetricCard = ({ title, value, icon, trend, color = 'primary' }: any) => (
+  interface MetricCardProps {
+    title: string;
+    value: number | string;
+    icon: React.ReactNode;
+    trend?: number;
+    color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+  }
+
+  const MetricCard: React.FC<MetricCardProps> = ({
+    title,
+    value,
+    icon,
+    trend,
+    color = 'primary',
+  }) => (
     <Card elevation={2}>
       <CardContent>
         <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -138,19 +163,18 @@ export const AdvancedAnalytics: React.FC = () => {
                 ) : (
                   <TrendingDown fontSize="small" color="error" />
                 )}
-                <Typography 
-                  variant="caption" 
+                <Typography
+                  variant="caption"
                   color={trend > 0 ? 'success.main' : 'error.main'}
                   sx={{ ml: 0.5 }}
                 >
-                  {trend > 0 ? '+' : ''}{trend}%
+                  {trend > 0 ? '+' : ''}
+                  {trend}%
                 </Typography>
               </Box>
             )}
           </Box>
-          <Box color={`${color}.main`}>
-            {icon}
-          </Box>
+          <Box color={`${color}.main`}>{icon}</Box>
         </Box>
       </CardContent>
     </Card>
@@ -158,11 +182,18 @@ export const AdvancedAnalytics: React.FC = () => {
 
   const OverviewTab = () => {
     const data = overallAnalytics?.data || {};
-    
+
     return (
       <Box>
         {/* Key Metrics */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+            gap: 3,
+            mb: 4,
+          }}
+        >
           <MetricCard
             title="Total Submissions"
             value={data.totalSubmissions || 0}
@@ -208,11 +239,11 @@ export const AdvancedAnalytics: React.FC = () => {
                   <YAxis />
                   <Tooltip />
                   <Legend />
-                  <Area 
-                    type="monotone" 
-                    dataKey="averageScore" 
-                    stroke="#8884d8" 
-                    fill="#8884d8" 
+                  <Area
+                    type="monotone"
+                    dataKey="averageScore"
+                    stroke="#8884d8"
+                    fill="#8884d8"
                     fillOpacity={0.3}
                   />
                 </AreaChart>
@@ -233,12 +264,14 @@ export const AdvancedAnalytics: React.FC = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }: { name?: string; percent?: number }) =>
+                      `${name || 'Unknown'} ${((percent || 0) * 100).toFixed(0)}%`
+                    }
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {(scoreDistribution?.data || []).map((_: any, index: number) => (
+                    {(scoreDistribution?.data || []).map((_: unknown, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
@@ -307,7 +340,7 @@ export const AdvancedAnalytics: React.FC = () => {
               Top Performers
             </Typography>
             <List>
-              {(leaderboard?.data || []).slice(0, 10).map((user: any, index: number) => (
+              {(leaderboard?.data || []).slice(0, 10).map((user: User, index: number) => (
                 <ListItem key={user.id}>
                   <ListItemAvatar>
                     <Avatar sx={{ bgcolor: index < 3 ? 'gold' : 'primary.main' }}>
@@ -383,7 +416,7 @@ export const AdvancedAnalytics: React.FC = () => {
             <Select
               value={timeRange}
               label="Time Range"
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={e => setTimeRange(e.target.value)}
             >
               <MenuItem value="7">Last 7 days</MenuItem>
               <MenuItem value="30">Last 30 days</MenuItem>
@@ -418,9 +451,7 @@ export const AdvancedAnalytics: React.FC = () => {
           {tabValue === 1 && <TrendsTab />}
           {tabValue === 2 && <LeaderboardTab />}
           {tabValue === 3 && (
-            <Alert severity="info">
-              Detailed analysis with AI insights coming soon
-            </Alert>
+            <Alert severity="info">Detailed analysis with AI insights coming soon</Alert>
           )}
         </Box>
       </Paper>

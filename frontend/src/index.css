@@ -29,6 +29,7 @@ body {
   min-height: 100vh;
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   background-color: #f5f5f5;
+  box-sizing: border-box;
 }
 
 #root {
@@ -36,6 +37,22 @@ body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure MUI containers are properly centered */
+.MuiContainer-root {
+  max-width: 100% !important;
+  margin: 0 auto !important;
+}
+
+/* Fix any layout shifts */
+.MuiBox-root {
+  box-sizing: border-box;
 }
 
 h1 {
@@ -98,7 +115,7 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-  
+
   body {
     background-color: #fafafa;
     color: #213547;

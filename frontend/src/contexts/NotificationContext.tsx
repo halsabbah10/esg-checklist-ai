@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { notificationsAPI } from '../services/api';
@@ -43,10 +44,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     staleTime: 25000, // Consider data fresh for 25 seconds
-    select: (data: any[]) => data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()),
+    select: (data: Notification[]) =>
+      data.sort(
+        (a: Notification, b: Notification) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      ),
   });
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n: Notification) => !n.read).length;
 
   const markAsRead = async (id: string) => {
     try {
@@ -96,7 +101,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }}
     >
       {children}
-      
+
       {/* Toast Notification */}
       <Snackbar
         open={snackbarOpen}

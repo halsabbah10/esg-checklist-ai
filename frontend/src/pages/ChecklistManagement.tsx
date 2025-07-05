@@ -58,6 +58,11 @@ interface Checklist {
   submissions_count: number;
 }
 
+type ChecklistData = Omit<
+  Checklist,
+  'id' | 'created_at' | 'updated_at' | 'items_count' | 'submissions_count'
+>;
+
 interface ChecklistItem {
   id: string;
   question: string;
@@ -76,11 +81,11 @@ export const ChecklistManagement: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
-  const [newChecklist, setNewChecklist] = useState({
+  const [newChecklist, setNewChecklist] = useState<ChecklistData>({
     title: '',
     description: '',
     category: '',
-    status: 'draft' as const,
+    status: 'draft',
   });
 
   const queryClient = useQueryClient();
@@ -94,7 +99,7 @@ export const ChecklistManagement: React.FC = () => {
   // Fetch checklist items when a checklist is selected
   const { data: checklistItems } = useQuery({
     queryKey: ['admin', 'checklist-items', selectedChecklist?.id],
-    queryFn: () => selectedChecklist ? adminAPI.getChecklistItems(selectedChecklist.id) : null,
+    queryFn: () => (selectedChecklist ? adminAPI.getChecklistItems(selectedChecklist.id) : null),
     enabled: !!selectedChecklist,
   });
 
@@ -106,7 +111,7 @@ export const ChecklistManagement: React.FC = () => {
 
   // Create checklist mutation
   const createMutation = useMutation({
-    mutationFn: (data: any) => adminAPI.createChecklist(data),
+    mutationFn: (data: ChecklistData) => adminAPI.createChecklist(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'checklists'] });
       setCreateDialogOpen(false);
@@ -116,7 +121,8 @@ export const ChecklistManagement: React.FC = () => {
 
   // Update checklist mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => adminAPI.updateChecklist(id, data),
+    mutationFn: ({ id, data }: { id: string; data: Partial<ChecklistData> }) =>
+      adminAPI.updateChecklist(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'checklists'] });
       setEditDialogOpen(false);
@@ -138,9 +144,9 @@ export const ChecklistManagement: React.FC = () => {
 
   const handleUpdateChecklist = () => {
     if (selectedChecklist) {
-      updateMutation.mutate({ 
-        id: selectedChecklist.id, 
-        data: selectedChecklist 
+      updateMutation.mutate({
+        id: selectedChecklist.id,
+        data: selectedChecklist,
       });
     }
   };
@@ -161,7 +167,7 @@ export const ChecklistManagement: React.FC = () => {
     setItemsDialogOpen(true);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'warning' | 'default' => {
     switch (status) {
       case 'active':
         return 'success';
@@ -188,13 +194,23 @@ export const ChecklistManagement: React.FC = () => {
   };
 
   const checklistData = checklists?.data || [];
-  const paginatedChecklists = checklistData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedChecklists = checklistData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
   const statsData = stats?.data || {};
 
   const ChecklistsTab = () => (
     <Box>
       {/* Statistics Cards */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
         <Card elevation={2}>
           <CardContent>
             <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -271,11 +287,7 @@ export const ChecklistManagement: React.FC = () => {
           >
             Export
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setCreateDialogOpen(true)}
-          >
+          <Button variant="contained" startIcon={<Add />} onClick={() => setCreateDialogOpen(true)}>
             Create Checklist
           </Button>
         </Box>
@@ -319,16 +331,14 @@ export const ChecklistManagement: React.FC = () => {
                         {getStatusIcon(checklist.status)}
                         <Chip
                           label={checklist.status.toUpperCase()}
-                          color={getStatusColor(checklist.status) as any}
+                          color={getStatusColor(checklist.status)}
                           size="small"
                         />
                       </Box>
                     </TableCell>
                     <TableCell>{checklist.items_count || 0}</TableCell>
                     <TableCell>{checklist.submissions_count || 0}</TableCell>
-                    <TableCell>
-                      {new Date(checklist.created_at).toLocaleDateString()}
-                    </TableCell>
+                    <TableCell>{new Date(checklist.created_at).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <Box display="flex" gap={1}>
                         <Tooltip title="View Items">
@@ -372,7 +382,7 @@ export const ChecklistManagement: React.FC = () => {
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => {
+            onRowsPerPageChange={event => {
               setRowsPerPage(parseInt(event.target.value, 10));
               setPage(0);
             }}
@@ -416,35 +426,32 @@ export const ChecklistManagement: React.FC = () => {
 
         <Box sx={{ p: 3 }}>
           {tabValue === 0 && <ChecklistsTab />}
-          {tabValue === 1 && (
-            <Alert severity="info">
-              Template management feature coming soon
-            </Alert>
-          )}
-          {tabValue === 2 && (
-            <Alert severity="info">
-              Checklist analytics feature coming soon
-            </Alert>
-          )}
+          {tabValue === 1 && <Alert severity="info">Template management feature coming soon</Alert>}
+          {tabValue === 2 && <Alert severity="info">Checklist analytics feature coming soon</Alert>}
         </Box>
       </Paper>
 
       {/* Create Checklist Dialog */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={createDialogOpen}
+        onClose={() => setCreateDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Create New Checklist</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
               label="Title"
               value={newChecklist.title}
-              onChange={(e) => setNewChecklist({ ...newChecklist, title: e.target.value })}
+              onChange={e => setNewChecklist({ ...newChecklist, title: e.target.value })}
               fullWidth
               required
             />
             <TextField
               label="Description"
               value={newChecklist.description}
-              onChange={(e) => setNewChecklist({ ...newChecklist, description: e.target.value })}
+              onChange={e => setNewChecklist({ ...newChecklist, description: e.target.value })}
               fullWidth
               multiline
               rows={3}
@@ -452,7 +459,7 @@ export const ChecklistManagement: React.FC = () => {
             <TextField
               label="Category"
               value={newChecklist.category}
-              onChange={(e) => setNewChecklist({ ...newChecklist, category: e.target.value })}
+              onChange={e => setNewChecklist({ ...newChecklist, category: e.target.value })}
               fullWidth
               required
             />
@@ -461,7 +468,12 @@ export const ChecklistManagement: React.FC = () => {
               <Select
                 value={newChecklist.status}
                 label="Status"
-                onChange={(e) => setNewChecklist({ ...newChecklist, status: e.target.value as any })}
+                onChange={e =>
+                  setNewChecklist({
+                    ...newChecklist,
+                    status: e.target.value as 'draft' | 'active' | 'archived',
+                  })
+                }
               >
                 <MenuItem value="draft">Draft</MenuItem>
                 <MenuItem value="active">Active</MenuItem>
@@ -483,7 +495,12 @@ export const ChecklistManagement: React.FC = () => {
       </Dialog>
 
       {/* Edit Checklist Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Edit Checklist</DialogTitle>
         <DialogContent>
           {selectedChecklist && (
@@ -491,14 +508,18 @@ export const ChecklistManagement: React.FC = () => {
               <TextField
                 label="Title"
                 value={selectedChecklist.title}
-                onChange={(e) => setSelectedChecklist({ ...selectedChecklist, title: e.target.value })}
+                onChange={e =>
+                  setSelectedChecklist({ ...selectedChecklist, title: e.target.value })
+                }
                 fullWidth
                 required
               />
               <TextField
                 label="Description"
                 value={selectedChecklist.description}
-                onChange={(e) => setSelectedChecklist({ ...selectedChecklist, description: e.target.value })}
+                onChange={e =>
+                  setSelectedChecklist({ ...selectedChecklist, description: e.target.value })
+                }
                 fullWidth
                 multiline
                 rows={3}
@@ -506,7 +527,9 @@ export const ChecklistManagement: React.FC = () => {
               <TextField
                 label="Category"
                 value={selectedChecklist.category}
-                onChange={(e) => setSelectedChecklist({ ...selectedChecklist, category: e.target.value })}
+                onChange={e =>
+                  setSelectedChecklist({ ...selectedChecklist, category: e.target.value })
+                }
                 fullWidth
                 required
               />
@@ -515,7 +538,12 @@ export const ChecklistManagement: React.FC = () => {
                 <Select
                   value={selectedChecklist.status}
                   label="Status"
-                  onChange={(e) => setSelectedChecklist({ ...selectedChecklist, status: e.target.value as any })}
+                  onChange={e =>
+                    setSelectedChecklist({
+                      ...selectedChecklist,
+                      status: e.target.value as 'draft' | 'active' | 'archived',
+                    })
+                  }
                 >
                   <MenuItem value="draft">Draft</MenuItem>
                   <MenuItem value="active">Active</MenuItem>
@@ -538,10 +566,13 @@ export const ChecklistManagement: React.FC = () => {
       </Dialog>
 
       {/* Checklist Items Dialog */}
-      <Dialog open={itemsDialogOpen} onClose={() => setItemsDialogOpen(false)} maxWidth="lg" fullWidth>
-        <DialogTitle>
-          Checklist Items: {selectedChecklist?.title}
-        </DialogTitle>
+      <Dialog
+        open={itemsDialogOpen}
+        onClose={() => setItemsDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogTitle>Checklist Items: {selectedChecklist?.title}</DialogTitle>
         <DialogContent>
           {checklistItems?.data && checklistItems.data.length > 0 ? (
             <TableContainer sx={{ mt: 2 }}>

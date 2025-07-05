@@ -37,6 +37,12 @@ import {
 } from '@mui/icons-material';
 import { checklistsAPI, aiAPI } from '../services/api';
 
+interface AIResults {
+  overall_score: number;
+  category_scores: Record<string, number>;
+  recommendations: string[];
+}
+
 interface UploadedFile {
   id: string;
   name: string;
@@ -44,7 +50,7 @@ interface UploadedFile {
   type: string;
   uploadProgress: number;
   status: 'uploading' | 'processing' | 'completed' | 'error';
-  aiResults?: any;
+  aiResults?: AIResults;
   error?: string;
 }
 
@@ -54,19 +60,14 @@ export const AdvancedFileUpload: React.FC = () => {
   const [previewDialogOpen, setPreviewDialogOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
 
-  const steps = [
-    'Select Files',
-    'Upload & Process',
-    'AI Analysis',
-    'Review Results'
-  ];
+  const steps = ['Select Files', 'Upload & Process', 'AI Analysis', 'Review Results'];
 
   // File upload mutation
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // Create temporary file entry
       const tempFile: UploadedFile = {
         id: Date.now().toString(),
@@ -76,59 +77,53 @@ export const AdvancedFileUpload: React.FC = () => {
         uploadProgress: 0,
         status: 'uploading',
       };
-      
+
       setUploadedFiles(prev => [...prev, tempFile]);
-      
+
       // Simulate upload progress
       const progressInterval = setInterval(() => {
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.id === tempFile.id 
-              ? { ...f, uploadProgress: Math.min(f.uploadProgress + 10, 90) }
-              : f
+        setUploadedFiles(prev =>
+          prev.map(f =>
+            f.id === tempFile.id ? { ...f, uploadProgress: Math.min(f.uploadProgress + 10, 90) } : f
           )
         );
       }, 200);
-      
+
       try {
         const response = await checklistsAPI.upload('default', formData);
         clearInterval(progressInterval);
-        
+
         // Update file status
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.id === tempFile.id 
-              ? { 
-                  ...f, 
-                  uploadProgress: 100, 
+        setUploadedFiles(prev =>
+          prev.map(f =>
+            f.id === tempFile.id
+              ? {
+                  ...f,
+                  uploadProgress: 100,
                   status: 'processing',
-                  id: response.data.id 
+                  id: response.data.id,
                 }
               : f
           )
         );
-        
+
         // Start AI processing
         setTimeout(() => {
-          setUploadedFiles(prev => 
-            prev.map(f => 
-              f.id === response.data.id 
-                ? { ...f, status: 'completed' }
-                : f
-            )
+          setUploadedFiles(prev =>
+            prev.map(f => (f.id === response.data.id ? { ...f, status: 'completed' } : f))
           );
         }, 2000);
-        
+
         return response;
       } catch (error) {
         clearInterval(progressInterval);
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.id === tempFile.id 
-              ? { 
-                  ...f, 
-                  status: 'error', 
-                  error: 'Upload failed' 
+        setUploadedFiles(prev =>
+          prev.map(f =>
+            f.id === tempFile.id
+              ? {
+                  ...f,
+                  status: 'error',
+                  error: 'Upload failed',
                 }
               : f
           )
@@ -138,12 +133,15 @@ export const AdvancedFileUpload: React.FC = () => {
     },
   });
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    acceptedFiles.forEach(file => {
-      uploadMutation.mutate(file);
-    });
-    if (activeStep === 0) setActiveStep(1);
-  }, [uploadMutation, activeStep]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      acceptedFiles.forEach(file => {
+        uploadMutation.mutate(file);
+      });
+      if (activeStep === 0) setActiveStep(1);
+    },
+    [uploadMutation, activeStep]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -188,7 +186,7 @@ export const AdvancedFileUpload: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'info' | 'primary' | 'error' | 'default' => {
     switch (status) {
       case 'completed':
         return 'success';
@@ -224,7 +222,7 @@ export const AdvancedFileUpload: React.FC = () => {
       <Card elevation={2} sx={{ mb: 4 }}>
         <CardContent>
           <Stepper activeStep={activeStep} orientation="horizontal">
-            {steps.map((label) => (
+            {steps.map(label => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
               </Step>
@@ -234,9 +232,9 @@ export const AdvancedFileUpload: React.FC = () => {
       </Card>
 
       {/* Drag & Drop Upload Area */}
-      <Card 
-        elevation={2} 
-        sx={{ 
+      <Card
+        elevation={2}
+        sx={{
           mb: 4,
           border: isDragActive ? '2px dashed #1976d2' : '2px dashed #e0e0e0',
           bgcolor: isDragActive ? 'action.hover' : 'background.paper',
@@ -276,7 +274,7 @@ export const AdvancedFileUpload: React.FC = () => {
               Uploaded Files ({uploadedFiles.length})
             </Typography>
             <List>
-              {uploadedFiles.map((file) => (
+              {uploadedFiles.map(file => (
                 <ListItem
                   key={file.id}
                   sx={{
@@ -286,16 +284,14 @@ export const AdvancedFileUpload: React.FC = () => {
                     mb: 1,
                   }}
                 >
-                  <ListItemIcon>
-                    {getStatusIcon(file.status)}
-                  </ListItemIcon>
+                  <ListItemIcon>{getStatusIcon(file.status)}</ListItemIcon>
                   <ListItemText
                     primary={
                       <Box display="flex" alignItems="center" gap={1}>
                         <Typography variant="subtitle2">{file.name}</Typography>
                         <Chip
                           label={file.status}
-                          color={getStatusColor(file.status) as any}
+                          color={getStatusColor(file.status)}
                           size="small"
                         />
                       </Box>
@@ -323,19 +319,13 @@ export const AdvancedFileUpload: React.FC = () => {
                   <Box display="flex" gap={1}>
                     {file.status === 'completed' && (
                       <Tooltip title="View AI Analysis">
-                        <IconButton
-                          color="primary"
-                          onClick={() => handlePreview(file)}
-                        >
+                        <IconButton color="primary" onClick={() => handlePreview(file)}>
                           <Visibility />
                         </IconButton>
                       </Tooltip>
                     )}
                     <Tooltip title="Delete">
-                      <IconButton
-                        color="error"
-                        onClick={() => handleDelete(file.id)}
-                      >
+                      <IconButton color="error" onClick={() => handleDelete(file.id)}>
                         <Delete />
                       </IconButton>
                     </Tooltip>
@@ -354,9 +344,7 @@ export const AdvancedFileUpload: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>
-          AI Analysis Results: {selectedFile?.name}
-        </DialogTitle>
+        <DialogTitle>AI Analysis Results: {selectedFile?.name}</DialogTitle>
         <DialogContent>
           {selectedFile?.aiResults ? (
             <Box sx={{ mt: 2 }}>
@@ -373,26 +361,28 @@ export const AdvancedFileUpload: React.FC = () => {
                   sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
                 />
               </Box>
-              
+
               <Typography variant="h6" gutterBottom>
                 Category Breakdown
               </Typography>
-              {Object.entries(selectedFile.aiResults.category_scores || {}).map(([category, score]) => (
-                <Box key={category} sx={{ mb: 2 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="body2">{category}</Typography>
-                    <Typography variant="body2" color="primary.main">
-                      {Math.round((score as number) * 100)}%
-                    </Typography>
+              {Object.entries(selectedFile.aiResults.category_scores || {}).map(
+                ([category, score]) => (
+                  <Box key={category} sx={{ mb: 2 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="body2">{category}</Typography>
+                      <Typography variant="body2" color="primary.main">
+                        {Math.round((score as number) * 100)}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={(score as number) * 100}
+                      sx={{ height: 6, borderRadius: 3 }}
+                    />
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={(score as number) * 100}
-                    sx={{ height: 6, borderRadius: 3 }}
-                  />
-                </Box>
-              ))}
-              
+                )
+              )}
+
               {selectedFile.aiResults.recommendations && (
                 <>
                   <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>

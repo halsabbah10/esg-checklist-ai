@@ -233,3 +233,124 @@ class Notification(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     read: bool = Field(default=False)
     type: str = Field(default="info", max_length=20)  # e.g., info, warning, error, success
+
+
+# Real-time Analytics and Tracking Models
+
+
+class UserActivity(SQLModel, table=True):
+    """Track user actions for real-time analytics"""
+
+    __tablename__ = "user_activity"  # type: ignore
+    __table_args__ = (
+        Index("idx_activity_user", "user_id"),
+        Index("idx_activity_timestamp", "timestamp"),
+        Index("idx_activity_action", "action_type"),
+        Index("idx_activity_session", "session_id"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id")
+    session_id: str = Field(max_length=255)  # Track user session
+    action_type: str = Field(max_length=100)  # e.g., "file_upload", "checklist_view", "login"
+    action_details: Optional[str] = Field(default=None, sa_type=Text)  # JSON details
+    resource_id: Optional[int] = Field(default=None)  # ID of resource (checklist, file, etc.)
+    resource_type: Optional[str] = Field(default=None, max_length=50)  # Type of resource
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    duration_ms: Optional[int] = Field(default=None)  # Action duration in milliseconds
+    ip_address: Optional[str] = Field(default=None, max_length=45)
+    user_agent: Optional[str] = Field(default=None, max_length=500)
+
+
+class SystemMetrics(SQLModel, table=True):
+    """Real-time system performance metrics"""
+
+    __tablename__ = "system_metrics"  # type: ignore
+    __table_args__ = (
+        Index("idx_metrics_timestamp", "timestamp"),
+        Index("idx_metrics_metric_name", "metric_name"),
+        Index("idx_metrics_category", "category"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    metric_name: str = Field(
+        max_length=100
+    )  # e.g., "active_users", "upload_count", "ai_processing_time"
+    metric_value: float = Field()
+    metric_unit: Optional[str] = Field(
+        default=None, max_length=20
+    )  # e.g., "seconds", "count", "percentage"
+    category: str = Field(max_length=50)  # e.g., "performance", "usage", "ai", "compliance"
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    additional_data: Optional[str] = Field(default=None, sa_type=Text)  # JSON for extra context
+
+
+class AnalyticsSnapshot(SQLModel, table=True):
+    """Periodic snapshots for analytics trending"""
+
+    __tablename__ = "analytics_snapshot"  # type: ignore
+    __table_args__ = (
+        Index("idx_snapshot_timestamp", "snapshot_timestamp"),
+        Index("idx_snapshot_type", "snapshot_type"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    snapshot_type: str = Field(max_length=50)  # e.g., "daily", "hourly", "real_time"
+    snapshot_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    total_users: int = Field(default=0)
+    active_users_24h: int = Field(default=0)
+    total_uploads: int = Field(default=0)
+    uploads_24h: int = Field(default=0)
+    total_checklists: int = Field(default=0)
+    avg_ai_score: Optional[float] = Field(default=None)
+    ai_processing_count_24h: int = Field(default=0)
+    avg_processing_time_ms: Optional[float] = Field(default=None)
+    system_health_score: Optional[float] = Field(default=None)
+    additional_metrics: Optional[str] = Field(default=None, sa_type=Text)  # JSON
+
+
+class RealtimeEvent(SQLModel, table=True):
+    """Events for real-time dashboard updates"""
+
+    __tablename__ = "realtime_event"  # type: ignore
+    __table_args__ = (
+        Index("idx_event_timestamp", "event_timestamp"),
+        Index("idx_event_type", "event_type"),
+        Index("idx_event_processed", "processed"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    event_type: str = Field(
+        max_length=100
+    )  # e.g., "upload_completed", "ai_score_updated", "user_login"
+    event_data: str = Field(sa_type=Text)  # JSON event payload
+    event_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    processed: bool = Field(default=False)
+    broadcast_channels: Optional[str] = Field(
+        default=None, max_length=500
+    )  # Comma-separated channels
+
+
+class ComplianceTracking(SQLModel, table=True):
+    """Track compliance metrics over time"""
+
+    __tablename__ = "compliance_tracking"  # type: ignore
+    __table_args__ = (
+        Index("idx_compliance_checklist", "checklist_id"),
+        Index("idx_compliance_timestamp", "timestamp"),
+        Index("idx_compliance_score", "compliance_score"),
+    )
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    checklist_id: int = Field(foreign_key="checklist.id")
+    file_upload_id: Optional[int] = Field(default=None, foreign_key="fileupload.id")
+    compliance_score: float = Field()  # 0.0 to 1.0
+    environmental_score: Optional[float] = Field(default=None)
+    social_score: Optional[float] = Field(default=None)
+    governance_score: Optional[float] = Field(default=None)
+    risk_level: str = Field(max_length=20)  # "Low", "Medium", "High", "Critical"
+    compliance_gaps: Optional[str] = Field(default=None, sa_type=Text)  # JSON array of gaps
+    recommendations: Optional[str] = Field(default=None, sa_type=Text)  # JSON array
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    auditor_notes: Optional[str] = Field(default=None, sa_type=Text)

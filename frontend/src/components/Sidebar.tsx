@@ -41,11 +41,11 @@ interface SidebarProps {
   onToggleCollapse?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ 
-  isOpen, 
-  onClose, 
-  isCollapsed = false, 
-  onToggleCollapse 
+export const Sidebar: React.FC<SidebarProps> = ({
+  isOpen,
+  onClose,
+  isCollapsed = false,
+  onToggleCollapse,
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -128,9 +128,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const filteredMenuItems = menuItems.filter(item =>
-    item.roles.includes(user?.role || '')
-  );
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(user?.role || ''));
 
   const handleNavigation = (path: string) => {
     navigate(path);
@@ -151,12 +149,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <Toolbar>
         {!isMobile && (
           <Box display="flex" justifyContent="flex-end" width="100%" pr={1}>
-            <IconButton 
-              onClick={onToggleCollapse} 
+            <IconButton
+              onClick={onToggleCollapse}
               size="small"
               sx={{
                 color: 'text.secondary',
-                '&:hover': { bgcolor: 'grey.100' }
+                '&:hover': { bgcolor: 'grey.100' },
               }}
             >
               {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -164,22 +162,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </Box>
         )}
       </Toolbar>
-      
+
       <List sx={{ px: 1 }}>
-        {filteredMenuItems.map((item) => {
+        {filteredMenuItems.map(item => {
           const isActive = location.pathname === item.path;
-          
+
           return (
-            <ListItem 
-              key={item.text} 
-              disablePadding 
-              sx={{ mb: 0.5 }}
-            >
-              <Tooltip 
-                title={isCollapsed ? item.text : ''} 
-                placement="right"
-                arrow
-              >
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <Tooltip title={isCollapsed ? item.text : ''} placement="right" arrow>
                 <ListItemButton
                   selected={isActive}
                   onClick={() => handleNavigation(item.path)}
@@ -206,8 +196,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     },
                   }}
                 >
-                  <ListItemIcon 
-                    sx={{ 
+                  <ListItemIcon
+                    sx={{
                       minWidth: isCollapsed ? 'auto' : 40,
                       color: 'inherit',
                       mr: isCollapsed ? 0 : 1,
@@ -216,13 +206,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {item.icon}
                   </ListItemIcon>
                   {!isCollapsed && (
-                    <ListItemText 
+                    <ListItemText
                       primary={item.text}
                       sx={{
                         '& .MuiListItemText-primary': {
                           fontSize: 14,
                           fontWeight: 500,
-                        }
+                        },
                       }}
                     />
                   )}
@@ -232,16 +222,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </List>
-      
+
       <Box sx={{ flexGrow: 1 }} />
-      
+
       <List sx={{ px: 1, pb: 2 }}>
         <ListItem disablePadding>
-          <Tooltip 
-            title={isCollapsed ? 'Logout' : ''} 
-            placement="right"
-            arrow
-          >
+          <Tooltip title={isCollapsed ? 'Logout' : ''} placement="right" arrow>
             <ListItemButton
               onClick={handleLogout}
               sx={{
@@ -256,8 +242,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 },
               }}
             >
-              <ListItemIcon 
-                sx={{ 
+              <ListItemIcon
+                sx={{
                   minWidth: isCollapsed ? 'auto' : 40,
                   color: 'inherit',
                   mr: isCollapsed ? 0 : 1,
@@ -266,13 +252,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Logout />
               </ListItemIcon>
               {!isCollapsed && (
-                <ListItemText 
+                <ListItemText
                   primary="Logout"
                   sx={{
                     '& .MuiListItemText-primary': {
                       fontSize: 14,
                       fontWeight: 500,
-                    }
+                    },
                   }}
                 />
               )}
@@ -289,11 +275,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       open={isOpen}
       onClose={onClose}
       sx={{
-        width: isMobile ? drawerWidth : (isCollapsed ? collapsedWidth : drawerWidth),
+        width: isMobile ? drawerWidth : isCollapsed ? collapsedWidth : drawerWidth,
         flexShrink: 0,
         transition: 'width 0.3s ease',
         '& .MuiDrawer-paper': {
-          width: isMobile ? drawerWidth : (isCollapsed ? collapsedWidth : drawerWidth),
+          width: isMobile ? drawerWidth : isCollapsed ? collapsedWidth : drawerWidth,
           boxSizing: 'border-box',
           borderRight: '1px solid',
           borderColor: 'divider',

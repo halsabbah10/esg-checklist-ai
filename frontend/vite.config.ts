@@ -1,5 +1,5 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,12 +15,12 @@ export default defineConfig({
           forms: ['react-hook-form'],
           routing: ['react-router-dom'],
           api: ['axios', '@tanstack/react-query'],
-          datagrid: ['@mui/x-data-grid']
-        }
-      }
+          datagrid: ['@mui/x-data-grid'],
+        },
+      },
     },
     chunkSizeWarningLimit: 1000, // Increase limit to 1000kb to reduce warnings
-    target: 'es2015' // Ensure compatibility while optimizing
+    target: 'es2015', // Ensure compatibility while optimizing
   },
   optimizeDeps: {
     include: [
@@ -30,7 +30,7 @@ export default defineConfig({
       '@mui/icons-material',
       'recharts',
       'axios',
-      '@tanstack/react-query'
-    ]
-  }
-})
+      '@tanstack/react-query',
+    ],
+  },
+});

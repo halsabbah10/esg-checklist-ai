@@ -1,14 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import {
-  TextField,
-  Button,
-  Typography,
-  Box,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { TextField, Button, Typography, Box, Alert, CircularProgress } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginForm {
@@ -28,26 +21,41 @@ export const Login: React.FC = () => {
     formState: { errors },
   } = useForm<LoginForm>();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated (on page load)
   useEffect(() => {
-    if (isAuthenticated) {
-      const from = (location.state as any)?.from?.pathname || '/dashboard';
+    if (isAuthenticated && !isSubmitting) {
+      console.log('Already authenticated, redirecting...');
+      const from =
+        (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate, location]);
+  }, [isAuthenticated, navigate, location, isSubmitting]);
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      console.log('Attempting login with:', { email: data.email, password: data.password.length + ' chars' });
+      console.log('Attempting login with:', {
+        email: data.email,
+        password: data.password.length + ' chars',
+      });
       console.log('API Base URL:', import.meta.env.VITE_API_BASE_URL);
-      
+
       setIsSubmitting(true);
+
+      // Attempt login
       await login(data.email, data.password);
-      console.log('Login successful');
-      // Navigation will happen via useEffect when isAuthenticated changes
+      console.log('Login successful - waiting for auth state to settle');
+
+      // Wait for auth state to settle before navigation
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      console.log('Auth state settled - redirecting to dashboard');
+      const from =
+        (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login failed:', error);
-      // Error is handled by AuthContext
+      // Error is handled by AuthContext and will be displayed
+      // Don't rethrow to prevent potential form reset or page reload
     } finally {
       setIsSubmitting(false);
     }
@@ -60,7 +68,7 @@ export const Login: React.FC = () => {
       // Store mock data
       localStorage.setItem('authToken', 'demo-token');
       localStorage.setItem('userRole', 'admin');
-      
+
       // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     } catch (error) {
@@ -72,12 +80,7 @@ export const Login: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="100vh"
-      >
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
       </Box>
     );
@@ -147,7 +150,7 @@ export const Login: React.FC = () => {
           >
             ESG Checklist AI
           </Typography>
-          
+
           <Typography
             variant="body1"
             sx={{
@@ -160,19 +163,24 @@ export const Login: React.FC = () => {
           </Typography>
 
           {/* Demo Credentials */}
-          <Alert 
-            severity="info" 
-            sx={{ 
+          <Alert
+            severity="info"
+            sx={{
               marginBottom: 3,
               '& .MuiAlert-message': {
                 fontSize: '0.875rem',
               },
             }}
           >
-            <strong>Demo Mode Available:</strong><br />
-            Use the demo button below or:<br />
-            Admin: test@admin.com / admin123<br />
-            User: test@user.com / user123
+            <strong>Demo Mode Available:</strong>
+            <br />
+            Use the demo button below or:
+            <br />
+            Admin: admin@test.com / admin123
+            <br />
+            Auditor: test@user.com / test123
+            <br />
+            Reviewer: reviewer@test.com / reviewer123
           </Alert>
 
           {/* Error */}
@@ -183,7 +191,7 @@ export const Login: React.FC = () => {
           )}
 
           {/* Form */}
-          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
             <TextField
               {...register('email', {
                 required: 'Email is required',
@@ -201,7 +209,7 @@ export const Login: React.FC = () => {
               helperText={errors.email?.message}
               sx={{ marginBottom: 2 }}
             />
-            
+
             <TextField
               {...register('password', {
                 required: 'Password is required',
@@ -218,7 +226,7 @@ export const Login: React.FC = () => {
               helperText={errors.password?.message}
               sx={{ marginBottom: 3 }}
             />
-            
+
             <Button
               type="submit"
               fullWidth
@@ -278,7 +286,8 @@ export const Login: React.FC = () => {
         sx={{
           width: '50%',
           display: { xs: 'none', md: 'block' },
-          backgroundImage: 'url(https://www.eand.com/content/dam/eand/assets/images/main1440_850.jpg)',
+          backgroundImage:
+            'url(https://www.eand.com/content/dam/eand/assets/images/main1440_850.jpg)',
           backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',

@@ -5,7 +5,7 @@ import { ErrorOutline, Refresh } from '@mui/icons-material';
 interface ErrorBoundaryState {
   hasError: boolean;
   error?: Error;
-  errorInfo?: any;
+  errorInfo?: unknown;
 }
 
 interface ErrorBoundaryProps {
@@ -23,7 +23,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     this.setState({ error, errorInfo });
     console.error('Error caught by ErrorBoundary:', error, errorInfo);
   }
@@ -54,11 +54,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <Typography variant="body2" color="text.secondary" textAlign="center" mb={3}>
             {this.state.error?.message || 'An unexpected error occurred'}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Refresh />}
-            onClick={this.handleRetry}
-          >
+          <Button variant="contained" startIcon={<Refresh />} onClick={this.handleRetry}>
             Try Again
           </Button>
           {import.meta.env.DEV && this.state.error && (

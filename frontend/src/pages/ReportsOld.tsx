@@ -6,11 +6,12 @@ export const Reports = () => {
       <Typography variant="h4" component="h1" gutterBottom>
         ESG Reports
       </Typography>
-      
+
       <Card>
         <CardContent>
           <Alert severity="info">
-            The Reports page is under development. This will show and allow generation of ESG compliance reports.
+            The Reports page is under development. This will show and allow generation of ESG
+            compliance reports.
           </Alert>
         </CardContent>
       </Card>

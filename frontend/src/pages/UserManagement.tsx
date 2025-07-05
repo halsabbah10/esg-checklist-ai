@@ -28,12 +28,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
-import {
-  Edit,
-  Delete,
-  PersonAdd,
-  Download,
-} from '@mui/icons-material';
+import { Edit, Delete, PersonAdd, Download } from '@mui/icons-material';
 import { adminAPI, exportAPI } from '../services/api';
 
 interface User {
@@ -52,7 +47,7 @@ export const UserManagement: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [newRole, setNewRole] = useState('');
-  
+
   const queryClient = useQueryClient();
 
   // Fetch users
@@ -105,7 +100,7 @@ export const UserManagement: React.FC = () => {
   const getUserList = users?.data || [];
   const paginatedUsers = getUserList.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role: string): 'error' | 'warning' | 'info' | 'default' => {
     switch (role) {
       case 'super_admin':
         return 'error';
@@ -140,18 +135,10 @@ export const UserManagement: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={() => handleExport('csv')}
-          >
+          <Button variant="outlined" startIcon={<Download />} onClick={() => handleExport('csv')}>
             Export CSV
           </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={() => handleExport('xlsx')}
-          >
+          <Button variant="outlined" startIcon={<Download />} onClick={() => handleExport('xlsx')}>
             Export Excel
           </Button>
           <Button variant="contained" startIcon={<PersonAdd />}>
@@ -182,7 +169,7 @@ export const UserManagement: React.FC = () => {
                     <TableCell>
                       <Chip
                         label={user.role.replace('_', ' ').toUpperCase()}
-                        color={getRoleColor(user.role) as any}
+                        color={getRoleColor(user.role)}
                         size="small"
                       />
                     </TableCell>
@@ -194,16 +181,10 @@ export const UserManagement: React.FC = () => {
                       />
                     </TableCell>
                     <TableCell>
-                      {user.last_login
-                        ? new Date(user.last_login).toLocaleDateString()
-                        : 'Never'}
+                      {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                     </TableCell>
                     <TableCell>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleEditUser(user)}
-                        color="primary"
-                      >
+                      <IconButton size="small" onClick={() => handleEditUser(user)} color="primary">
                         <Edit />
                       </IconButton>
                       <IconButton size="small" color="error">
@@ -222,7 +203,7 @@ export const UserManagement: React.FC = () => {
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(event) => {
+            onRowsPerPageChange={event => {
               setRowsPerPage(parseInt(event.target.value, 10));
               setPage(0);
             }}
@@ -231,7 +212,12 @@ export const UserManagement: React.FC = () => {
       </Card>
 
       {/* Edit Role Dialog */}
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit User Role</DialogTitle>
         <DialogContent>
           {selectedUser && (
@@ -252,11 +238,7 @@ export const UserManagement: React.FC = () => {
               />
               <FormControl fullWidth>
                 <InputLabel>Role</InputLabel>
-                <Select
-                  value={newRole}
-                  label="Role"
-                  onChange={(e) => setNewRole(e.target.value)}
-                >
+                <Select value={newRole} label="Role" onChange={e => setNewRole(e.target.value)}>
                   <MenuItem value="auditor">Auditor</MenuItem>
                   <MenuItem value="reviewer">Reviewer</MenuItem>
                   <MenuItem value="admin">Admin</MenuItem>

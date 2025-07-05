@@ -105,7 +105,11 @@ export const ChecklistSubmit: React.FC = () => {
     if (!answer) return 0;
     // Simple scoring logic - can be enhanced
     const lowerAnswer = answer.toLowerCase();
-    if (lowerAnswer.includes('yes') || lowerAnswer.includes('implemented') || lowerAnswer.includes('compliant')) {
+    if (
+      lowerAnswer.includes('yes') ||
+      lowerAnswer.includes('implemented') ||
+      lowerAnswer.includes('compliant')
+    ) {
       return 100;
     } else if (lowerAnswer.includes('partial') || lowerAnswer.includes('in progress')) {
       return 50;
@@ -120,9 +124,10 @@ export const ChecklistSubmit: React.FC = () => {
     const currentAnswer = answers[item.id] || '';
 
     // Determine question type based on question text
-    const isYesNo = item.question_text.toLowerCase().includes('do you') || 
-                    item.question_text.toLowerCase().includes('does the') ||
-                    item.question_text.toLowerCase().includes('is there');
+    const isYesNo =
+      item.question_text.toLowerCase().includes('do you') ||
+      item.question_text.toLowerCase().includes('does the') ||
+      item.question_text.toLowerCase().includes('is there');
 
     return (
       <Card key={item.id} sx={{ mb: 3 }}>
@@ -131,7 +136,7 @@ export const ChecklistSubmit: React.FC = () => {
             {item.question_text}
             {isRequired && <span style={{ color: 'red' }}> *</span>}
           </Typography>
-          
+
           {item.category && (
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Category: {item.category}
@@ -142,7 +147,7 @@ export const ChecklistSubmit: React.FC = () => {
             <FormControl component="fieldset">
               <RadioGroup
                 value={currentAnswer}
-                onChange={(e) => handleAnswerChange(item.id, e.target.value)}
+                onChange={e => handleAnswerChange(item.id, e.target.value)}
               >
                 <FormControlLabel
                   value="Yes - Fully Implemented"
@@ -172,7 +177,7 @@ export const ChecklistSubmit: React.FC = () => {
               multiline
               rows={4}
               value={currentAnswer}
-              onChange={(e) => handleAnswerChange(item.id, e.target.value)}
+              onChange={e => handleAnswerChange(item.id, e.target.value)}
               placeholder="Provide your detailed response..."
               required={isRequired}
             />
@@ -195,9 +200,7 @@ export const ChecklistSubmit: React.FC = () => {
   if (error || !checklist) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Alert severity="error">
-          Failed to load checklist. Please try again later.
-        </Alert>
+        <Alert severity="error">Failed to load checklist. Please try again later.</Alert>
       </Container>
     );
   }
@@ -218,18 +221,14 @@ export const ChecklistSubmit: React.FC = () => {
       {/* Header */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box display="flex" alignItems="center" mb={2}>
-          <Button
-            startIcon={<ArrowBack />}
-            onClick={() => navigate('/checklists')}
-            sx={{ mr: 2 }}
-          >
+          <Button startIcon={<ArrowBack />} onClick={() => navigate('/checklists')} sx={{ mr: 2 }}>
             Back to Checklists
           </Button>
           <Typography variant="h4" component="h1" sx={{ flexGrow: 1 }}>
             {checklist.title}
           </Typography>
         </Box>
-        
+
         <Typography variant="body1" color="text.secondary" paragraph>
           {checklist.description}
         </Typography>
@@ -247,9 +246,7 @@ export const ChecklistSubmit: React.FC = () => {
       </Paper>
 
       {/* Questions */}
-      <Box>
-        {currentItems.map(renderQuestion)}
-      </Box>
+      <Box>{currentItems.map(renderQuestion)}</Box>
 
       {/* Navigation */}
       <Paper sx={{ p: 3, mt: 3 }}>

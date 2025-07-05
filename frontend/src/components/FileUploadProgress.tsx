@@ -12,13 +12,7 @@ import {
   IconButton,
   Alert,
 } from '@mui/material';
-import {
-  Description,
-  CheckCircle,
-  Error,
-  Cancel,
-  CloudUpload,
-} from '@mui/icons-material';
+import { Description, CheckCircle, Error, Cancel, CloudUpload } from '@mui/icons-material';
 
 export interface UploadFile {
   id: string;
@@ -31,7 +25,7 @@ export interface UploadFile {
   aiAnalysis?: {
     status: 'pending' | 'processing' | 'completed' | 'error';
     progress?: number;
-    results?: any;
+    results?: Record<string, unknown>;
   };
 }
 
@@ -54,7 +48,7 @@ export const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string): 'success' | 'error' | 'primary' | 'default' => {
     switch (status) {
       case 'completed':
         return 'success';
@@ -119,7 +113,7 @@ export const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
         File Upload Progress
       </Typography>
       <List>
-        {files.map((file) => (
+        {files.map(file => (
           <ListItem key={file.id} divider>
             <ListItemIcon>{getStatusIcon(file)}</ListItemIcon>
             <ListItemText
@@ -131,7 +125,7 @@ export const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
                   <Chip
                     label={file.status.toUpperCase()}
                     size="small"
-                    color={getStatusColor(file.status) as any}
+                    color={getStatusColor(file.status)}
                   />
                 </Box>
               }
@@ -152,8 +146,8 @@ export const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
                       file.status === 'error'
                         ? 'error'
                         : file.status === 'completed'
-                        ? 'success'
-                        : 'primary'
+                          ? 'success'
+                          : 'primary'
                     }
                   />
                   {file.error && (
@@ -161,32 +155,27 @@ export const FileUploadProgress: React.FC<FileUploadProgressProps> = ({
                       {file.error}
                     </Alert>
                   )}
-                  {file.aiAnalysis?.results && (
-                    <Box sx={{ mt: 1 }}>
-                      <Typography variant="caption" color="success.main">
-                        ✓ AI Analysis completed - {Object.keys(file.aiAnalysis.results).length} insights found
-                      </Typography>
-                    </Box>
-                  )}
+                  {file.aiAnalysis?.results &&
+                    typeof file.aiAnalysis.results === 'object' &&
+                    file.aiAnalysis.results !== null && (
+                      <Box sx={{ mt: 1 }}>
+                        <Typography variant="caption" color="success.main">
+                          ✓ AI Analysis completed - {Object.keys(file.aiAnalysis.results).length}{' '}
+                          insights found
+                        </Typography>
+                      </Box>
+                    )}
                 </Box>
               }
             />
             <ListItemSecondaryAction>
               {file.status === 'error' && onRetry && (
-                <IconButton
-                  onClick={() => onRetry(file.id)}
-                  size="small"
-                  color="primary"
-                >
+                <IconButton onClick={() => onRetry(file.id)} size="small" color="primary">
                   <CloudUpload />
                 </IconButton>
               )}
               {onRemove && (
-                <IconButton
-                  onClick={() => onRemove(file.id)}
-                  size="small"
-                  color="error"
-                >
+                <IconButton onClick={() => onRemove(file.id)} size="small" color="error">
                   <Cancel />
                 </IconButton>
               )}

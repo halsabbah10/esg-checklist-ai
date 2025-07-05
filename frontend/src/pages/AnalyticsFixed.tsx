@@ -63,16 +63,14 @@ export const Analytics: React.FC = () => {
   if (analyticsError) {
     return (
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Alert severity="error">
-          Failed to load analytics data. Please try again later.
-        </Alert>
+        <Alert severity="error">Failed to load analytics data. Please try again later.</Alert>
       </Container>
     );
   }
 
   // Prepare data for charts
   const overallData = analyticsData?.data;
-  
+
   // Mock data for demonstration - replace with real data from API
   const scoreDistributionData = [
     { name: '90-100%', value: 15, color: '#4CAF50' },
@@ -120,14 +118,14 @@ export const Analytics: React.FC = () => {
             Comprehensive analysis of ESG compliance performance and trends
           </Typography>
         </Box>
-        
+
         <Box display="flex" gap={2}>
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel>Time Range</InputLabel>
             <Select
               value={timeRange}
               label="Time Range"
-              onChange={(e) => setTimeRange(e.target.value)}
+              onChange={e => setTimeRange(e.target.value)}
             >
               <MenuItem value="7">Last 7 days</MenuItem>
               <MenuItem value="30">Last 30 days</MenuItem>
@@ -135,13 +133,13 @@ export const Analytics: React.FC = () => {
               <MenuItem value="365">Last year</MenuItem>
             </Select>
           </FormControl>
-          
+
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Checklist</InputLabel>
             <Select
               value={selectedChecklist}
               label="Checklist"
-              onChange={(e) => setSelectedChecklist(e.target.value)}
+              onChange={e => setSelectedChecklist(e.target.value)}
             >
               <MenuItem value="all">All Checklists</MenuItem>
               <MenuItem value="1">ESG Compliance</MenuItem>
@@ -153,14 +151,14 @@ export const Analytics: React.FC = () => {
       </Box>
 
       {/* Summary Metrics */}
-      <Box 
-        display="grid" 
+      <Box
+        display="grid"
         gridTemplateColumns={{
           xs: '1fr',
           sm: '1fr 1fr',
           md: 'repeat(4, 1fr)',
         }}
-        gap={3} 
+        gap={3}
         sx={{ mb: 4 }}
       >
         <Card>
@@ -174,39 +172,33 @@ export const Analytics: React.FC = () => {
             <Chip label="+5% vs last month" color="success" size="small" />
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent>
             <Typography color="text.secondary" gutterBottom>
               Total Assessments
             </Typography>
-            <Typography variant="h4">
-              {overallData?.total_uploads || 142}
-            </Typography>
+            <Typography variant="h4">{overallData?.total_uploads || 142}</Typography>
             <Chip label="+12 this month" color="info" size="small" />
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent>
             <Typography color="text.secondary" gutterBottom>
               Active Checklists
             </Typography>
-            <Typography variant="h4">
-              {overallData?.total_checklists || 24}
-            </Typography>
+            <Typography variant="h4">{overallData?.total_checklists || 24}</Typography>
             <Chip label="3 new" color="secondary" size="small" />
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent>
             <Typography color="text.secondary" gutterBottom>
               Users
             </Typography>
-            <Typography variant="h4">
-              {overallData?.total_users || 48}
-            </Typography>
+            <Typography variant="h4">{overallData?.total_users || 48}</Typography>
             <Chip label="+8 this week" color="warning" size="small" />
           </CardContent>
         </Card>
@@ -228,10 +220,10 @@ export const Analytics: React.FC = () => {
                   <YAxis domain={[0, 100]} />
                   <Tooltip />
                   <Legend />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#8884d8" 
+                  <Line
+                    type="monotone"
+                    dataKey="score"
+                    stroke="#8884d8"
                     strokeWidth={3}
                     name="Average Score (%)"
                   />
@@ -344,11 +336,11 @@ export const Analytics: React.FC = () => {
                 <Tooltip />
                 <Legend />
                 <Bar yAxisId="left" dataKey="submissions" fill="#8884d8" name="Submissions" />
-                <Line 
-                  yAxisId="right" 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="#ff7300" 
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="score"
+                  stroke="#ff7300"
                   strokeWidth={3}
                   name="Avg Score"
                 />

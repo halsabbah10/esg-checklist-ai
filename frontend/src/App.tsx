@@ -16,21 +16,47 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Lazy load pages for code splitting
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
-const Dashboard = lazy(() => import('./pages/Dashboard').then(module => ({ default: module.Dashboard })));
-const Checklists = lazy(() => import('./pages/Checklists').then(module => ({ default: module.Checklists })));
-const ChecklistDetail = lazy(() => import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail })));
-const ChecklistSubmit = lazy(() => import('./pages/ChecklistSubmit').then(module => ({ default: module.ChecklistSubmit })));
-const ChecklistUpload = lazy(() => import('./pages/ChecklistUpload').then(module => ({ default: module.ChecklistUpload })));
+const Dashboard = lazy(() =>
+  import('./pages/Dashboard').then(module => ({ default: module.Dashboard }))
+);
+const Checklists = lazy(() =>
+  import('./pages/Checklists').then(module => ({ default: module.Checklists }))
+);
+const ChecklistDetail = lazy(() =>
+  import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail }))
+);
+const ChecklistSubmit = lazy(() =>
+  import('./pages/ChecklistSubmit').then(module => ({ default: module.ChecklistSubmit }))
+);
+const ChecklistUpload = lazy(() =>
+  import('./pages/ChecklistUpload').then(module => ({ default: module.ChecklistUpload }))
+);
 const Reviews = lazy(() => import('./pages/Reviews').then(module => ({ default: module.Reviews })));
-const Analytics = lazy(() => import('./pages/Analytics').then(module => ({ default: module.Analytics })));
+const Analytics = lazy(() =>
+  import('./pages/Analytics').then(module => ({ default: module.Analytics }))
+);
 const Reports = lazy(() => import('./pages/Reports').then(module => ({ default: module.Reports })));
-const Settings = lazy(() => import('./pages/Settings').then(module => ({ default: module.default })));
-const UserManagement = lazy(() => import('./pages/UserManagement').then(module => ({ default: module.UserManagement })));
-const SystemAdministration = lazy(() => import('./pages/SystemAdministration').then(module => ({ default: module.SystemAdministration })));
-const ChecklistManagement = lazy(() => import('./pages/ChecklistManagement').then(module => ({ default: module.ChecklistManagement })));
-const AdvancedAnalytics = lazy(() => import('./pages/AdvancedAnalytics').then(module => ({ default: module.AdvancedAnalytics })));
-const SystemConfiguration = lazy(() => import('./pages/SystemConfiguration').then(module => ({ default: module.SystemConfiguration })));
-const AdvancedFileUpload = lazy(() => import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload })));
+const Settings = lazy(() =>
+  import('./pages/Settings').then(module => ({ default: module.default }))
+);
+const UserManagement = lazy(() =>
+  import('./pages/UserManagement').then(module => ({ default: module.UserManagement }))
+);
+const SystemAdministration = lazy(() =>
+  import('./pages/SystemAdministration').then(module => ({ default: module.SystemAdministration }))
+);
+const ChecklistManagement = lazy(() =>
+  import('./pages/ChecklistManagement').then(module => ({ default: module.ChecklistManagement }))
+);
+const AdvancedAnalytics = lazy(() =>
+  import('./pages/AdvancedAnalytics').then(module => ({ default: module.AdvancedAnalytics }))
+);
+const SystemConfiguration = lazy(() =>
+  import('./pages/SystemConfiguration').then(module => ({ default: module.SystemConfiguration }))
+);
+const AdvancedFileUpload = lazy(() =>
+  import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload }))
+);
 
 // Loading component
 const LoadingSpinner = () => (
@@ -96,39 +122,165 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           bgcolor: 'background.default',
           minHeight: '100vh',
           width: '100%',
-          ml: { 
-            xs: 0, 
-            md: isMobile ? 0 : (sidebarCollapsed ? '64px' : '240px')
+          ml: {
+            xs: 0,
+            md: isMobile ? 0 : sidebarCollapsed ? '64px' : '240px',
           },
           transition: 'margin 0.3s ease',
+          display: 'flex',
+          flexDirection: 'column',
         }}
       >
         <Toolbar />
-        <Box sx={{ p: { xs: 2, sm: 3 } }}>
-          <Suspense fallback={<LoadingSpinner />}>
-            {children}
-          </Suspense>
+        <Box
+          sx={{
+            flex: 1,
+            p: { xs: 2, sm: 3 },
+            maxWidth: '100%',
+            margin: '0 auto',
+            width: '100%',
+          }}
+        >
+          <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
         </Box>
       </Box>
     </Box>
   );
 }
 
-// Create a Home component that handles initial routing
+// Create a Home component that shows a landing page instead of redirecting
 function Home() {
   const { isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) {
     return <LoadingSpinner />;
   }
-  
-  // Always redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // If authenticated, redirect to dashboard
-  return <Navigate to="/dashboard" replace />;
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 3,
+        background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+        color: 'white',
+      }}
+    >
+      <Box sx={{ textAlign: 'center', maxWidth: 600 }}>
+        <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+          🌍 ESG Checklist AI
+        </Typography>
+        <Typography variant="h5" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
+          Enterprise-Grade ESG Compliance Platform
+        </Typography>
+        <Typography variant="body1" sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}>
+          AI-powered ESG compliance automation system with advanced analytics,
+          multi-user management, and comprehensive audit trails.
+        </Typography>
+        
+        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+          {isAuthenticated ? (
+            <>
+              <Box
+                component="a"
+                href="/dashboard"
+                sx={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Go to Dashboard
+              </Box>
+              <Box
+                component="a"
+                href="/v1/docs"
+                target="_blank"
+                sx={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.5)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                API Documentation
+              </Box>
+            </>
+          ) : (
+            <>
+              <Box
+                component="a"
+                href="/login"
+                sx={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                Login
+              </Box>
+              <Box
+                component="a"
+                href="/v1/docs"
+                target="_blank"
+                sx={{
+                  display: 'inline-block',
+                  padding: '12px 24px',
+                  backgroundColor: 'transparent',
+                  color: 'white',
+                  textDecoration: 'none',
+                  borderRadius: 2,
+                  border: '1px solid rgba(255, 255, 255, 0.5)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    transform: 'translateY(-2px)',
+                  },
+                }}
+              >
+                API Documentation
+              </Box>
+            </>
+          )}
+        </Box>
+
+        <Box sx={{ mt: 4, opacity: 0.8 }}>
+          <Typography variant="body2">
+            🚀 FastAPI Backend • ⚛️ React Frontend • 🤖 AI-Powered Analysis
+          </Typography>
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
 function AppContent() {
@@ -159,17 +311,17 @@ function AppContent() {
           <Routes>
             {/* Root route - shows login if not authenticated, dashboard if authenticated */}
             <Route path="/" element={<Home />} />
-            
+
             {/* Login route - accessible without authentication */}
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
                 <Suspense fallback={<LoadingSpinner />}>
                   <Login />
                 </Suspense>
-              } 
+              }
             />
-            
+
             {/* All protected routes */}
             <Route
               path="/dashboard"

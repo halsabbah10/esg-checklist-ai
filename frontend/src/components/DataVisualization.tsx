@@ -19,7 +19,7 @@ import {
 import { Box, Typography, useTheme } from '@mui/material';
 
 interface ChartData {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface DataVisualizationProps {
@@ -50,7 +50,7 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({
   showTooltip = true,
 }) => {
   const theme = useTheme();
-  
+
   const defaultColor = color || theme.palette.primary.main;
   const defaultColors = colors || [
     theme.palette.primary.main,
@@ -130,13 +130,12 @@ export const DataVisualization: React.FC<DataVisualizationProps> = ({
               outerRadius={height / 3}
               fill={defaultColor}
               dataKey={dataKey}
-              label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}
+              label={({ name, percent }: { name?: string; percent?: number }) =>
+                `${name || 'Unknown'} ${((percent || 0) * 100).toFixed(0)}%`
+              }
             >
               {data.map((_, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={defaultColors[index % defaultColors.length]}
-                />
+                <Cell key={`cell-${index}`} fill={defaultColors[index % defaultColors.length]} />
               ))}
             </Pie>
           </PieChart>

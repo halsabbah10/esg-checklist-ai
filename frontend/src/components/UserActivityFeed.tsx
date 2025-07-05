@@ -40,7 +40,7 @@ interface ActivityEvent {
   resource_id: string;
   resource_name?: string;
   timestamp: string;
-  details?: Record<string, any>;
+  details?: Record<string, string | number | boolean>;
   ip_address?: string;
   user_agent?: string;
 }
@@ -56,11 +56,16 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
   limit = 10,
   showUserInfo = true,
 }) => {
-  const { data: activities, isLoading, error, refetch } = useQuery({
+  const {
+    data: activities,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['auditLogs', { userId, limit }],
     queryFn: () => auditAPI.getAuditLogs({ user_id: userId, limit }),
     refetchInterval: 60000, // Refresh every minute
-    select: (response) => response.data.results as ActivityEvent[],
+    select: response => response.data.results as ActivityEvent[],
   });
 
   const getActionIcon = (action: string, resourceType: string) => {
@@ -88,7 +93,9 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
     }
   };
 
-  const getActionColor = (action: string) => {
+  const getActionColor = (
+    action: string
+  ): 'primary' | 'warning' | 'error' | 'success' | 'info' | 'default' => {
     switch (action) {
       case 'create':
         return 'primary';
@@ -111,7 +118,7 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
   const formatAction = (activity: ActivityEvent) => {
     const { action, resource_type, resource_name } = activity;
     const resourceDisplay = resource_name || `${resource_type} #${activity.resource_id}`;
-    
+
     switch (action) {
       case 'create':
         return `created ${resource_type} "${resourceDisplay}"`;
@@ -176,9 +183,7 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
     <Card>
       <CardContent>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Typography variant="h6">
-            {userId ? 'User Activity' : 'Recent Activity'}
-          </Typography>
+          <Typography variant="h6">{userId ? 'User Activity' : 'Recent Activity'}</Typography>
           <Tooltip title="Refresh">
             <IconButton onClick={() => refetch()} size="small">
               <Refresh />
@@ -188,7 +193,7 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
 
         {activities && activities.length > 0 ? (
           <List>
-            {activities.map((activity) => (
+            {activities.map(activity => (
               <ListItem key={activity.id} alignItems="flex-start">
                 <ListItemAvatar>
                   <Avatar sx={{ bgcolor: 'grey.100' }}>
@@ -203,13 +208,11 @@ export const UserActivityFeed: React.FC<UserActivityFeedProps> = ({
                           {activity.user_name}
                         </Typography>
                       )}
-                      <Typography variant="body2">
-                        {formatAction(activity)}
-                      </Typography>
+                      <Typography variant="body2">{formatAction(activity)}</Typography>
                       <Chip
                         label={activity.action}
                         size="small"
-                        color={getActionColor(activity.action) as any}
+                        color={getActionColor(activity.action)}
                       />
                     </Box>
                   }

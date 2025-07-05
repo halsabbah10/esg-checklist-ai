@@ -30,6 +30,29 @@ import { analyticsAPI, uploadsAPI, searchAPI } from '../../services/api';
 import { SystemStatusCard } from '../SystemStatusCard';
 import { UserActivityFeed } from '../UserActivityFeed';
 
+interface Upload {
+  id: number;
+  filename: string;
+  user_id: number;
+  uploaded_at: string;
+  status: 'approved' | 'rejected' | 'pending' | 'processing';
+  file_size?: number;
+  ai_score?: number;
+}
+
+interface Analytics {
+  total_uploads: number;
+  total_users: number;
+  total_checklists: number;
+  avg_score: number;
+  recent_activity: number;
+  completion_rate: number;
+  totalUsers?: number;
+  totalChecklists?: number;
+  totalUploads?: number;
+  averageScore?: number;
+}
+
 interface StatsCardProps {
   title: string;
   value: number;
@@ -51,23 +74,19 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend 
           </Typography>
           {trend && (
             <Box display="flex" alignItems="center" mt={0.5}>
-              <TrendingUp 
-                fontSize="small" 
-                color={trend > 0 ? 'success' : 'error'} 
-              />
-              <Typography 
-                variant="caption" 
+              <TrendingUp fontSize="small" color={trend > 0 ? 'success' : 'error'} />
+              <Typography
+                variant="caption"
                 color={trend > 0 ? 'success.main' : 'error.main'}
                 sx={{ ml: 0.5 }}
               >
-                {trend > 0 ? '+' : ''}{trend}%
+                {trend > 0 ? '+' : ''}
+                {trend}%
               </Typography>
             </Box>
           )}
         </Box>
-        <Box color={`${color}.main`}>
-          {icon}
-        </Box>
+        <Box color={`${color}.main`}>{icon}</Box>
       </Box>
     </CardContent>
   </Card>
@@ -75,9 +94,9 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend 
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Re-enable analytics query - test 1
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+  const { data: analytics, isLoading: analyticsLoading } = useQuery<{ data: Analytics }>({
     queryKey: ['analytics', 'admin'],
     queryFn: () => analyticsAPI.getSummary(),
     staleTime: 5 * 60 * 1000,
@@ -87,7 +106,9 @@ export const AdminDashboard: React.FC = () => {
   });
 
   // Re-enable uploads query - test 2
-  const { data: recentUploads, isLoading: uploadsLoading } = useQuery({
+  const { data: recentUploads, isLoading: uploadsLoading } = useQuery<{
+    data: { results: Upload[] };
+  }>({
     queryKey: ['uploads', 'recent'],
     queryFn: () => uploadsAPI.search({ limit: 5 }),
     staleTime: 2 * 60 * 1000,
@@ -114,7 +135,7 @@ export const AdminDashboard: React.FC = () => {
     );
   }
 
-  const stats = analytics?.data || {};
+  const stats: Partial<Analytics> = analytics?.data || {};
   const uploads = recentUploads?.data?.results || [];
 
   return (
@@ -129,7 +150,14 @@ export const AdminDashboard: React.FC = () => {
       </Box>
 
       {/* Key Metrics */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
         <StatsCard
           title="Total Users"
           value={stats.totalUsers || 0}
@@ -160,7 +188,9 @@ export const AdminDashboard: React.FC = () => {
         />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mb: 4 }}>
+      <Box
+        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mb: 4 }}
+      >
         {/* User Activity Feed */}
         <UserActivityFeed limit={5} showUserInfo={true} />
 
@@ -178,7 +208,7 @@ export const AdminDashboard: React.FC = () => {
             <Alert severity="info">No recent uploads found</Alert>
           ) : (
             <List>
-              {uploads.map((upload: any, index: number) => (
+              {uploads.map((upload: Upload, index: number) => (
                 <React.Fragment key={upload.id}>
                   <ListItem>
                     <ListItemIcon>
@@ -191,13 +221,21 @@ export const AdminDashboard: React.FC = () => {
                     <Chip
                       label={upload.status}
                       color={
-                        upload.status === 'approved' ? 'success' :
-                        upload.status === 'rejected' ? 'error' : 'warning'
+                        upload.status === 'approved'
+                          ? 'success'
+                          : upload.status === 'rejected'
+                            ? 'error'
+                            : 'warning'
                       }
                       size="small"
                     />
                   </ListItem>
-                  {index < uploads.length - 1 && <Box component="hr" sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }} />}
+                  {index < uploads.length - 1 && (
+                    <Box
+                      component="hr"
+                      sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
+                    />
+                  )}
                 </React.Fragment>
               ))}
             </List>
@@ -210,50 +248,56 @@ export const AdminDashboard: React.FC = () => {
         <Typography variant="h6" gutterBottom>
           Quick Actions
         </Typography>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr 1fr 1fr' }, gap: 2 }}>
-          <Button 
-            variant="contained" 
-            fullWidth 
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr 1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          <Button
+            variant="contained"
+            fullWidth
             startIcon={<People />}
             onClick={() => navigate('/admin/users')}
           >
             Manage Users
           </Button>
-          <Button 
-            variant="contained" 
-            fullWidth 
+          <Button
+            variant="contained"
+            fullWidth
             startIcon={<Assignment />}
             onClick={() => navigate('/admin/checklists')}
           >
             Manage Checklists
           </Button>
-          <Button 
-            variant="outlined" 
-            fullWidth 
+          <Button
+            variant="outlined"
+            fullWidth
             startIcon={<Assessment />}
             onClick={() => navigate('/analytics')}
           >
             Basic Analytics
           </Button>
-          <Button 
-            variant="outlined" 
-            fullWidth 
+          <Button
+            variant="outlined"
+            fullWidth
             startIcon={<TrendingUp />}
             onClick={() => navigate('/analytics/advanced')}
           >
             Advanced Analytics
           </Button>
-          <Button 
-            variant="outlined" 
-            fullWidth 
+          <Button
+            variant="outlined"
+            fullWidth
             startIcon={<Security />}
             onClick={() => navigate('/admin/system')}
           >
             System Admin
           </Button>
-          <Button 
-            variant="outlined" 
-            fullWidth 
+          <Button
+            variant="outlined"
+            fullWidth
             startIcon={<Settings />}
             onClick={() => navigate('/settings')}
           >
