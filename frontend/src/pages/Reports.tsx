@@ -22,7 +22,7 @@ import {
   Assessment,
   CheckCircle,
   Warning,
-  Error,
+  Error as ErrorIcon,
   Visibility,
 } from '@mui/icons-material';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -85,7 +85,7 @@ export const Reports: React.FC = () => {
       value: dashboardData?.active_users || 0,
       change: dashboardData?.active_users_change || 0,
       trend: (dashboardData?.active_users_change || 0) > 0 ? 'up' : (dashboardData?.active_users_change || 0) < 0 ? 'down' : 'neutral',
-      icon: <Error sx={{ fontSize: 20 }} />,
+      icon: <ErrorIcon sx={{ fontSize: 20 }} />,
     },
   ];
 
@@ -143,7 +143,7 @@ export const Reports: React.FC = () => {
       // Map report types to appropriate export endpoints
       const report = mockReports.find(r => r.id === reportId);
       if (!report) {
-        throw new Error('Report not found');
+        throw new globalThis.Error('Report not found');
       }
       
       switch (report.type) {

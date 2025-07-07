@@ -19,9 +19,8 @@ import {
 } from '@mui/material';
 import {
   ExpandMore,
-  Help,
+  HelpOutline,
   Email,
-  Phone,
   Description,
   VideoLibrary,
   Chat,
@@ -30,7 +29,7 @@ import {
   QuestionAnswer,
 } from '@mui/icons-material';
 
-export const Help: React.FC = () => {
+export const HelpPage: React.FC = () => {
   const handleContactSupport = () => {
     window.open('mailto:support@esg-checklist.com?subject=ESG Checklist AI Support Request', '_blank');
   };
@@ -50,6 +49,7 @@ export const Help: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
         <Typography variant="h3" component="h1" fontWeight={700} gutterBottom>
+          <HelpOutline sx={{ mr: 1, verticalAlign: 'middle' }} />
           Help & Support
         </Typography>
         <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
@@ -317,4 +317,4 @@ export const Help: React.FC = () => {
   );
 };
 
-export default Help;
+export default HelpPage;

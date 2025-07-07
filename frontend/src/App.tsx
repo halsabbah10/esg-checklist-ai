@@ -60,7 +60,7 @@ const SystemConfiguration = lazy(() =>
 const AdvancedFileUpload = lazy(() =>
   import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload }))
 );
-const Help = lazy(() => import('./pages/Help').then(module => ({ default: module.Help })));
+const Help = lazy(() => import('./pages/Help'));
 
 // Loading component
 const LoadingSpinner = () => (
