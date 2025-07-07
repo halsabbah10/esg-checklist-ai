@@ -81,6 +81,7 @@ interface ActivityItem {
 
 export const RealTimeDashboard: React.FC = () => {
   const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [hasPendingUploads, setHasPendingUploads] = useState(false);
   const queryClient = useQueryClient();
 
   // WebSocket connection for real-time updates
@@ -137,15 +138,38 @@ export const RealTimeDashboard: React.FC = () => {
     refetchInterval: 15000, // Update every 15 seconds
   });
 
-  // Recent uploads
+  // Recent uploads with intelligent polling
   const { data: recentUploads } = useQuery({
     queryKey: ['recent-uploads'],
     queryFn: () =>
       uploadsAPI
         .search({ limit: 5 })
         .then((res: ApiResponse<{ results: UploadResult[] }>) => res.data),
-    refetchInterval: 15000, // Update every 15 seconds
+    refetchInterval: (data) => {
+      // Check if any uploads are still processing or pending
+      const uploadData = data as { results: UploadResult[] } | undefined;
+      const hasPendingUploads = uploadData?.results?.some((upload: UploadResult) => 
+        upload.status === 'pending' || 
+        upload.status === 'processing' || 
+        upload.status === 'analyzing'
+      );
+      
+      // Poll every 3 seconds if there are pending uploads, otherwise every 30 seconds
+      return hasPendingUploads ? 3000 : 30000;
+    },
   });
+
+  // Track pending uploads for UI indicators
+  useEffect(() => {
+    const uploadData = recentUploads as { results: UploadResult[] } | undefined;
+    const pendingExists = uploadData?.results?.some((upload: UploadResult) => 
+      upload.status === 'pending' || 
+      upload.status === 'processing' || 
+      upload.status === 'analyzing'
+    ) || false;
+    
+    setHasPendingUploads(pendingExists);
+  }, [recentUploads]);
 
   // Notifications
   const { data: notifications } = useQuery({
@@ -295,18 +319,24 @@ export const RealTimeDashboard: React.FC = () => {
             : ('info' as const),
       user: activity.user_name || 'Unknown',
     })),
-    // File uploads
+    // File uploads with enhanced AI analysis status
     ...(recentUploads?.results || []).map((upload: UploadResult) => ({
       id: upload.id,
       type: 'upload' as const,
       title: `File uploaded: ${upload.filename}`,
-      subtitle: `by ${upload.user_name || 'Unknown User'}`,
+      subtitle: upload.status === 'processing' || upload.status === 'analyzing'
+        ? `AI Analysis in progress... • by ${upload.user_name || 'Unknown User'}`
+        : upload.status === 'pending'
+        ? `Waiting for analysis • by ${upload.user_name || 'Unknown User'}`
+        : `by ${upload.user_name || 'Unknown User'}`,
       timestamp: upload.uploaded_at,
       status:
-        upload.status === 'approved'
+        upload.status === 'approved' || upload.status === 'completed'
           ? 'success'
-          : upload.status === 'rejected'
+          : upload.status === 'rejected' || upload.status === 'failed'
             ? 'error'
+            : upload.status === 'processing' || upload.status === 'analyzing'
+            ? 'info'
             : ('warning' as const),
       user: upload.user_name || 'Unknown',
     })),
