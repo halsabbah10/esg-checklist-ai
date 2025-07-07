@@ -147,7 +147,7 @@ export const RealTimeDashboard: React.FC = () => {
         .then((res: ApiResponse<{ results: UploadResult[] }>) => res.data),
     refetchInterval: (data) => {
       // Check if any uploads are still processing or pending
-      const uploadData = data as { results: UploadResult[] } | undefined;
+      const uploadData = data as unknown as { results: UploadResult[] } | undefined;
       const hasPendingUploads = uploadData?.results?.some((upload: UploadResult) => 
         upload.status === 'pending' || 
         upload.status === 'processing' || 
@@ -161,7 +161,7 @@ export const RealTimeDashboard: React.FC = () => {
 
   // Track pending uploads for UI indicators
   useEffect(() => {
-    const uploadData = recentUploads as { results: UploadResult[] } | undefined;
+    const uploadData = recentUploads as unknown as { results: UploadResult[] } | undefined;
     const pendingExists = uploadData?.results?.some((upload: UploadResult) => 
       upload.status === 'pending' || 
       upload.status === 'processing' || 
@@ -372,6 +372,15 @@ export const RealTimeDashboard: React.FC = () => {
               color={isConnected ? 'success' : 'error'}
               sx={{ ml: 2 }}
             />
+            {hasPendingUploads && (
+              <Chip
+                size="small"
+                label="AI Analysis Active"
+                color="info"
+                sx={{ ml: 1 }}
+                icon={<Badge color="primary" variant="dot" />}
+              />
+            )}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Last updated: {lastUpdate.toLocaleTimeString()}
