@@ -435,7 +435,8 @@ e& Risk and Assurance Department
 
 ## 📄 **License**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is proprietary and confidential. All rights reserved.
+No part of this project may be copied, modified, distributed, or used in any form without explicit, written permission from the copyright holder.
 
 ## 🙏 **Acknowledgments**
 

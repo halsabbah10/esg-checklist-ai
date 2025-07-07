@@ -137,27 +137,28 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           flexGrow: 1,
           bgcolor: 'background.default',
           minHeight: '100vh',
-          width: '100%',
-          ml: {
-            xs: 0,
-            md: isMobile ? 0 : sidebarCollapsed ? '64px' : '240px',
-          },
-          transition: 'margin 0.3s ease',
           display: 'flex',
           flexDirection: 'column',
+          // Remove margin-left and let flex handle the positioning
+          width: `calc(100% - ${
+            isMobile ? 0 : sidebarCollapsed ? 64 : 240
+          }px)`,
+          transition: 'width 0.3s ease',
         }}
       >
         <Toolbar />
+        {/* Use Container for consistent content width and padding */}
         <Box
           sx={{
             flex: 1,
-            p: { xs: 2, sm: 3 },
-            maxWidth: '100%',
-            margin: '0 auto',
             width: '100%',
+            maxWidth: 'none', // Remove maxWidth constraint for full-width layout
+            px: 0, // Remove default padding to let Container handle it
           }}
         >
-          {children}
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+            {children}
+          </Box>
         </Box>
       </Box>
     </Box>
