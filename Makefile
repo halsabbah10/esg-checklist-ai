@@ -103,6 +103,15 @@ test:
 test-fast:
 	cd backend && pytest -v
 
+test-backend:
+	cd backend && pytest -v
+
+test-frontend:
+	cd frontend && npm run test:run
+
+frontend-install:
+	cd frontend && npm install
+
 # Advanced Testing Commands
 test-integration:
 	@echo "Running integration tests..."
@@ -139,10 +148,25 @@ test-all-comprehensive:
 lint: ruff-check bandit mypy
 	@echo "All linting checks completed!"
 
-format:
+lint-backend:
+	ruff check backend/ --show-source
+	bandit -r backend/ -ll -f text
+	mypy backend/app/
+
+lint-frontend:
+	cd frontend && npm run lint
+
+format-backend:
 	black backend/
 	ruff format backend/
 	ruff check backend/ --fix
+
+format-frontend:
+	cd frontend && npm run format
+
+format:
+	make format-backend
+	make format-frontend
 	@echo "Code formatting completed!"
 
 ruff-check:
