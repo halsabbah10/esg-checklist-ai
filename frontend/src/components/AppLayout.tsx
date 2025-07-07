@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Toolbar, Container, useTheme, useMediaQuery } from '@mui/material';
+import { Box, Toolbar, useTheme, useMediaQuery } from '@mui/material';
 import { Sidebar } from './Sidebar';
 
 interface AppLayoutProps {
@@ -14,11 +14,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <Box display="flex" minHeight="100vh">
       <Sidebar isOpen={isMobile ? sidebarOpen : true} onClose={() => setSidebarOpen(false)} />
-      <Box component="main" flexGrow={1}>
+      <Box component="main" flexGrow={1} sx={{ p: 3 }}>
         <Toolbar />
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-          {children}
-        </Container>
+        {children}
       </Box>
     </Box>
   );

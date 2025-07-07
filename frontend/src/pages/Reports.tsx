@@ -13,6 +13,7 @@ import {
   CircularProgress,
   Stack,
   Chip,
+  Alert,
 } from '@mui/material';
 import {
   Download,
@@ -24,6 +25,8 @@ import {
   Error,
   Visibility,
 } from '@mui/icons-material';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { exportAPI, realtimeAnalyticsAPI } from '../services/api';
 
 interface Report {
   id: string;
@@ -47,39 +50,46 @@ export const Reports: React.FC = () => {
   const [reportType, setReportType] = useState('all');
   const [timeRange, setTimeRange] = useState('30');
 
-  // Mock KPI data
+  // Fetch real-time analytics for KPI data
+  const { data: dashboardData } = useQuery({
+    queryKey: ['realtime-dashboard'],
+    queryFn: () => realtimeAnalyticsAPI.getDashboard().then(res => res.data),
+    refetchInterval: 30000,
+  });
+
+  // KPI data from real analytics
   const kpiData: KPIData[] = [
     {
-      label: 'Total Items',
-      value: 1247,
-      change: 12,
-      trend: 'up',
+      label: 'Total Submissions',
+      value: dashboardData?.total_submissions || 0,
+      change: dashboardData?.submissions_change || 0,
+      trend: (dashboardData?.submissions_change || 0) > 0 ? 'up' : (dashboardData?.submissions_change || 0) < 0 ? 'down' : 'neutral',
       icon: <Assessment sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Completed %',
-      value: '87.3%',
-      change: 5.2,
-      trend: 'up',
+      label: 'Completion Rate',
+      value: dashboardData?.completion_rate ? `${Math.round(dashboardData.completion_rate * 100)}%` : '0%',
+      change: dashboardData?.completion_rate_change || 0,
+      trend: (dashboardData?.completion_rate_change || 0) > 0 ? 'up' : (dashboardData?.completion_rate_change || 0) < 0 ? 'down' : 'neutral',
       icon: <CheckCircle sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Overdue Items',
-      value: 23,
-      change: -8,
-      trend: 'down',
+      label: 'Pending Reviews',
+      value: dashboardData?.pending_reviews || 0,
+      change: dashboardData?.pending_reviews_change || 0,
+      trend: (dashboardData?.pending_reviews_change || 0) > 0 ? 'up' : (dashboardData?.pending_reviews_change || 0) < 0 ? 'down' : 'neutral',
       icon: <Warning sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Critical Issues',
-      value: 5,
-      change: 0,
-      trend: 'neutral',
+      label: 'Active Users',
+      value: dashboardData?.active_users || 0,
+      change: dashboardData?.active_users_change || 0,
+      trend: (dashboardData?.active_users_change || 0) > 0 ? 'up' : (dashboardData?.active_users_change || 0) < 0 ? 'down' : 'neutral',
       icon: <Error sx={{ fontSize: 20 }} />,
     },
   ];
 
-  // Mock reports data - replace with real API calls
+  // Mock reports data for demo - in real implementation this would come from an API
   const mockReports: Report[] = [
     {
       id: '1',
@@ -105,14 +115,67 @@ export const Reports: React.FC = () => {
       type: 'summary',
       format: 'csv',
       generated_at: '2025-07-04T08:00:00Z',
-      status: 'generating',
-      size: '-',
+      status: 'ready',
+      size: '850 KB',
     },
   ];
 
   const filteredReports = mockReports.filter(
     report => reportType === 'all' || report.type === reportType
   );
+
+  // Export mutations
+  const exportDashboardMutation = useMutation({
+    mutationFn: (format: 'csv' | 'xlsx') => exportAPI.exportSubmissions(format),
+    onSuccess: (response, format) => {
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `esg-dashboard-${new Date().toISOString().split('T')[0]}.${format}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+  });
+
+  const downloadReportMutation = useMutation({
+    mutationFn: (reportId: string) => {
+      // Map report types to appropriate export endpoints
+      const report = mockReports.find(r => r.id === reportId);
+      if (!report) {
+        throw new Error('Report not found');
+      }
+      
+      switch (report.type) {
+        case 'compliance':
+          return exportAPI.exportChecklists('xlsx');
+        case 'performance':
+          return exportAPI.exportAIResults('xlsx');
+        case 'summary':
+          return exportAPI.exportUsers('xlsx');
+        default:
+          return exportAPI.exportSubmissions('xlsx');
+      }
+    },
+    onSuccess: (response, reportId) => {
+      const report = mockReports.find(r => r.id === reportId);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${report?.name || 'report'}.${report?.format || 'xlsx'}`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    },
+  });
+
+  const handleExportDashboard = () => {
+    exportDashboardMutation.mutate('xlsx');
+  };
+
+  const handleDownloadReport = (reportId: string) => {
+    downloadReportMutation.mutate(reportId);
+  };
 
   const KPICard: React.FC<{ data: KPIData }> = ({ data }) => {
     const getTrendIcon = () => {
@@ -226,6 +289,23 @@ export const Reports: React.FC = () => {
 
   return (
     <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+      {/* Error/Success Messages */}
+      {exportDashboardMutation.isError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to export dashboard. Please try again.
+        </Alert>
+      )}
+      {downloadReportMutation.isError && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          Failed to download report. Please try again.
+        </Alert>
+      )}
+      {exportDashboardMutation.isSuccess && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          Dashboard exported successfully!
+        </Alert>
+      )}
+
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Typography variant="h4" sx={{ fontWeight: 600, color: 'text.primary' }}>
@@ -234,13 +314,15 @@ export const Reports: React.FC = () => {
         <Button
           variant="contained"
           startIcon={<Download />}
+          onClick={handleExportDashboard}
+          disabled={exportDashboardMutation.isPending}
           sx={{
             bgcolor: 'primary.main',
             '&:hover': { bgcolor: 'primary.dark' },
             borderRadius: '0.25rem',
           }}
         >
-          Export Dashboard
+          {exportDashboardMutation.isPending ? 'Exporting...' : 'Export Dashboard'}
         </Button>
       </Box>
 
@@ -357,9 +439,11 @@ export const Reports: React.FC = () => {
                             size="small"
                             startIcon={<Download />}
                             variant="contained"
+                            onClick={() => handleDownloadReport(report.id)}
+                            disabled={downloadReportMutation.isPending}
                             sx={{ borderRadius: '0.25rem' }}
                           >
-                            Download
+                            {downloadReportMutation.isPending ? 'Downloading...' : 'Download'}
                           </Button>
                         </>
                       )}

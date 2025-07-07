@@ -8,6 +8,8 @@ interface User {
   email: string;
   role: string;
   name?: string;
+  department?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -16,6 +18,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
+  updateUser: (userData: Partial<User>) => void;
   error: string | null;
 }
 
@@ -156,6 +159,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const updateUser = (userData: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...userData };
+      setUser(updatedUser);
+      console.log('User updated in context:', updatedUser);
+    }
+  };
+
   const logout = () => {
     try {
       authAPI.logout();
@@ -178,6 +189,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         isLoading,
         login,
         logout,
+        updateUser,
         error,
       }}
     >

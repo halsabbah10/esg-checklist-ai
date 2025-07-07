@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -18,9 +18,15 @@ import {
   FormControl,
   InputLabel,
   Select,
+  useTheme,
+  ThemeProvider,
+  createTheme,
 } from '@mui/material';
 import { Person, Security, Notifications, Palette, Save, Restore } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { authAPI } from '../services/api';
+import { theme as lightTheme, darkTheme } from '../theme';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -45,9 +51,15 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export const Settings: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
+  const currentTheme = useTheme();
+  const queryClient = useQueryClient();
   const [tabValue, setTabValue] = useState(0);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
 
   // Profile settings
   const [profile, setProfile] = useState({
@@ -69,7 +81,7 @@ export const Settings: React.FC = () => {
 
   // Appearance settings
   const [appearance, setAppearance] = useState({
-    theme: 'light',
+    theme: isDarkMode ? 'dark' : 'light',
     language: 'en',
     dateFormat: 'MM/DD/YYYY',
     timezone: 'UTC',
@@ -82,21 +94,111 @@ export const Settings: React.FC = () => {
     passwordExpiry: 90,
   });
 
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: (profileData: Partial<typeof profile>) => {
+      // For now, we'll use the admin endpoint. In a real app, you'd have a /users/me PATCH endpoint
+      return authAPI.getCurrentUser().then(() => profileData); // Simulate API call
+    },
+    onSuccess: (updatedProfile) => {
+      // Update user context
+      if (updateUser) {
+        updateUser({
+          ...user,
+          name: updatedProfile.name || user?.name,
+          department: updatedProfile.department,
+          phone: updatedProfile.phone,
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    },
+    onError: () => {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    },
+  });
+
+  // Save settings mutation
+  const saveSettingsMutation = useMutation({
+    mutationFn: async (settings: {
+      profile: typeof profile;
+      notifications: typeof notifications;
+      appearance: typeof appearance;
+      security: typeof security;
+    }) => {
+      // Save to localStorage and simulate API call
+      localStorage.setItem('userSettings', JSON.stringify(settings));
+      localStorage.setItem('darkMode', JSON.stringify(settings.appearance.theme === 'dark'));
+      
+      // Apply dark mode immediately
+      if (settings.appearance.theme === 'dark' && !isDarkMode) {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+      } else if (settings.appearance.theme === 'light' && isDarkMode) {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove('dark');
+      }
+      
+      return settings;
+    },
+    onSuccess: () => {
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    },
+    onError: () => {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    },
+  });
+
+  // Load saved settings on mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('userSettings');
+    if (savedSettings) {
+      try {
+        const parsed = JSON.parse(savedSettings);
+        setNotifications(parsed.notifications || notifications);
+        setAppearance(parsed.appearance || appearance);
+        setSecurity(parsed.security || security);
+      } catch (error) {
+        console.error('Failed to load saved settings:', error);
+      }
+    }
+  }, []);
+
+  // Create dynamic theme based on dark mode setting
+  const theme = createTheme(isDarkMode ? darkTheme : lightTheme);
+
+  // Apply dark mode on theme change
+  useEffect(() => {
+    if (appearance.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      setIsDarkMode(true);
+    } else {
+      document.documentElement.classList.remove('dark');
+      setIsDarkMode(false);
+    }
+  }, [appearance.theme]);
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  const handleSaveSettings = async () => {
+  const handleSaveSettings = () => {
     setSaveStatus('saving');
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    } catch {
-      setSaveStatus('error');
-      setTimeout(() => setSaveStatus('idle'), 3000);
-    }
+    saveSettingsMutation.mutate({
+      profile,
+      notifications,
+      appearance,
+      security,
+    });
+  };
+
+  const handleSaveProfile = () => {
+    setSaveStatus('saving');
+    updateProfileMutation.mutate(profile);
   };
 
   const handleResetSettings = () => {
@@ -122,23 +224,24 @@ export const Settings: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-          Settings
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Manage your account preferences and system configuration
-        </Typography>
-      </Box>
+    <ThemeProvider theme={theme}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ mb: 4, textAlign: 'center' }}>
+          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+            Settings
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage your account preferences and system configuration
+          </Typography>
+        </Box>
 
-      {saveStatus === 'saved' && (
+      {(saveStatus === 'saved' || saveSettingsMutation.isSuccess || updateProfileMutation.isSuccess) && (
         <Alert severity="success" sx={{ mb: 3 }}>
           Settings saved successfully!
         </Alert>
       )}
 
-      {saveStatus === 'error' && (
+      {(saveStatus === 'error' || saveSettingsMutation.isError || updateProfileMutation.isError) && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Failed to save settings. Please try again.
         </Alert>
@@ -217,6 +320,17 @@ export const Settings: React.FC = () => {
                   </Typography>
                 </CardContent>
               </Card>
+            </Box>
+            <Box sx={{ width: '100%', pt: 2 }}>
+              <Button
+                variant="contained"
+                startIcon={<Save />}
+                onClick={handleSaveProfile}
+                disabled={updateProfileMutation.isPending}
+                sx={{ minWidth: 120 }}
+              >
+                {updateProfileMutation.isPending ? 'Saving...' : 'Save Profile'}
+              </Button>
             </Box>
           </Box>
         </TabPanel>
@@ -369,6 +483,36 @@ export const Settings: React.FC = () => {
             Appearance & Language
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+            <Box sx={{ width: '100%' }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={appearance.theme === 'dark'}
+                    onChange={e => {
+                      const newTheme = e.target.checked ? 'dark' : 'light';
+                      setAppearance({ ...appearance, theme: newTheme });
+                      setIsDarkMode(e.target.checked);
+                      localStorage.setItem('darkMode', JSON.stringify(e.target.checked));
+                      
+                      // Apply theme change immediately
+                      if (e.target.checked) {
+                        document.documentElement.classList.add('dark');
+                      } else {
+                        document.documentElement.classList.remove('dark');
+                      }
+                    }}
+                  />
+                }
+                label="Dark Mode"
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ ml: 4 }}>
+                Switch between light and dark theme
+                <br />
+                <Typography variant="caption" sx={{ color: currentTheme.palette.mode === 'dark' ? 'success.main' : 'primary.main' }}>
+                  Current: {currentTheme.palette.mode === 'dark' ? 'Dark Mode' : 'Light Mode'}
+                </Typography>
+              </Typography>
+            </Box>
             <Box sx={{ flex: '1 1 300px' }}>
               <FormControl fullWidth>
                 <InputLabel>Theme</InputLabel>
@@ -444,15 +588,16 @@ export const Settings: React.FC = () => {
               variant="contained"
               startIcon={<Save />}
               onClick={handleSaveSettings}
-              disabled={saveStatus === 'saving'}
+              disabled={saveSettingsMutation.isPending || updateProfileMutation.isPending}
               sx={{ minWidth: 120 }}
             >
-              {saveStatus === 'saving' ? 'Saving...' : 'Save Changes'}
+              {(saveSettingsMutation.isPending || updateProfileMutation.isPending) ? 'Saving...' : 'Save Changes'}
             </Button>
           </Box>
         </Box>
       </Paper>
-    </Container>
+      </Container>
+    </ThemeProvider>
   );
 };
 

@@ -1,0 +1,3 @@
+# ESG Checklists Overview
+
+The **Checklists component** serves as the central hub for ESG (Environmental, Social, and Governance) compliance assessment within the ESG Checklist AI platform. This component enables organizations to systematically evaluate their ESG practices by providing structured compliance frameworks that guide users through comprehensive sustainability assessments, facilitate document uploads for AI-powered analysis, and generate actionable insights to improve ESG performance and regulatory compliance across all business operations.
