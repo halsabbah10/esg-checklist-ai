@@ -424,9 +424,8 @@ grep MAX_FILE_SIZE .env
 
 ### **Project Team**
 
-- **Lead Developer**: Husam AlSabbah
-- **AI Specialist**: Zakkaria
-- **Organization**: e& Risk and Assurance Department
+This project is a collaborative effort by Husam AlSabbah and Zakkaria  
+e& Risk and Assurance Department
 
 ### **Getting Help**
 
