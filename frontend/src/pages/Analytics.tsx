@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Container,
@@ -13,6 +13,12 @@ import {
   Select,
   MenuItem,
   Chip,
+  Switch,
+  FormControlLabel,
+  Button,
+  IconButton,
+  Tooltip as MuiTooltip,
+  Badge,
 } from '@mui/material';
 import {
   BarChart,
@@ -34,21 +40,62 @@ import {
   PolarRadiusAxis,
   Radar,
 } from 'recharts';
+import { Download, Refresh, SignalWifi4Bar, SignalWifiOff } from '@mui/icons-material';
 import { analyticsAPI } from '../services/api';
 
 export const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30');
   const [selectedChecklist, setSelectedChecklist] = useState('all');
+  const [realTimeEnabled, setRealTimeEnabled] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   // Fetch analytics data
   const {
     data: analyticsData,
     isLoading: loadingAnalytics,
     error: analyticsError,
+    refetch,
   } = useQuery({
     queryKey: ['analytics', 'overall'],
     queryFn: () => analyticsAPI.getSummary(),
+    refetchInterval: realTimeEnabled ? 30000 : false,
   });
+
+  // WebSocket for real-time updates
+  useEffect(() => {
+    if (realTimeEnabled) {
+      const ws = new WebSocket('ws://localhost:8000/ws/analytics');
+
+      ws.onopen = () => setIsConnected(true);
+      ws.onclose = () => setIsConnected(false);
+      ws.onmessage = () => {
+        setLastUpdate(new Date());
+        refetch();
+      };
+
+      return () => ws.close();
+    }
+  }, [realTimeEnabled, refetch]);
+
+  const exportData = () => {
+    const data = {
+      summary: analyticsData?.data,
+      trends: trendDataPoints,
+      categories: categoryScoresData,
+      distribution: scoreDistributionData,
+      compliance: complianceRadarData,
+      timestamp: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `analytics-export-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   if (loadingAnalytics) {
     return (
@@ -119,7 +166,51 @@ export const Analytics: React.FC = () => {
           </Typography>
         </Box>
 
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={2} alignItems="center">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={realTimeEnabled}
+                onChange={e => setRealTimeEnabled(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Real-time"
+          />
+
+          <Badge
+            color={isConnected ? 'success' : 'error'}
+            variant="dot"
+            invisible={!realTimeEnabled}
+          >
+            <MuiTooltip title={isConnected ? 'Connected' : 'Disconnected'}>
+              <IconButton size="small">
+                {isConnected ? <SignalWifi4Bar /> : <SignalWifiOff />}
+              </IconButton>
+            </MuiTooltip>
+          </Badge>
+
+          <MuiTooltip title="Export Data">
+            <Button
+              variant="outlined"
+              startIcon={<Download />}
+              onClick={() => exportData()}
+              size="small"
+            >
+              Export
+            </Button>
+          </MuiTooltip>
+
+          <Typography variant="caption" color="text.secondary">
+            Last: {lastUpdate.toLocaleTimeString()}
+          </Typography>
+
+          <MuiTooltip title="Refresh">
+            <IconButton onClick={() => refetch()} size="small">
+              <Refresh />
+            </IconButton>
+          </MuiTooltip>
+
           <FormControl size="small" sx={{ minWidth: 120 }}>
             <InputLabel>Time Range</InputLabel>
             <Select

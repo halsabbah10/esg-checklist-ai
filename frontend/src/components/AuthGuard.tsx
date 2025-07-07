@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContextNew';
+import { useAuth } from '../contexts/AuthContext';
 import { clearAllAuthData, validateAuthState } from '../utils/authUtils';
 import { Box, CircularProgress, Typography } from '@mui/material';
 

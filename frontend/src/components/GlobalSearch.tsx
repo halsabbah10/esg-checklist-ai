@@ -39,7 +39,7 @@ interface SearchResult {
   created_at?: string;
 }
 
-export const GlobalSearch: React.FC = () => {
+export const GlobalSearch: React.FC = React.memo(() => {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -259,6 +259,8 @@ export const GlobalSearch: React.FC = () => {
       )}
     </Box>
   );
-};
+});
+
+GlobalSearch.displayName = 'GlobalSearch';
 
 export default GlobalSearch;

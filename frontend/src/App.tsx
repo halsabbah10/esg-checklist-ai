@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Toolbar, useMediaQuery, useTheme, CircularProgress, Typography } from '@mui/material';
@@ -13,6 +13,8 @@ import { Navbar } from './components/Navbar';
 import { Sidebar } from './components/Sidebar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { AuthGuard } from './components/AuthGuard';
+import { RouteSuspenseBoundary } from './components/SuspenseBoundary';
 
 // Lazy load pages for code splitting
 const Login = lazy(() => import('./pages/Login').then(module => ({ default: module.Login })));
@@ -32,6 +34,7 @@ const ChecklistUpload = lazy(() =>
   import('./pages/ChecklistUpload').then(module => ({ default: module.ChecklistUpload }))
 );
 const Reviews = lazy(() => import('./pages/Reviews').then(module => ({ default: module.Reviews })));
+const Search = lazy(() => import('./pages/Search').then(module => ({ default: module.Search })));
 const Analytics = lazy(() =>
   import('./pages/Analytics').then(module => ({ default: module.Analytics }))
 );
@@ -79,17 +82,30 @@ const LoadingSpinner = () => (
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       staleTime: 5 * 60 * 1000, // 5 minutes
       gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
     },
     mutations: {
-      retry: 1,
+      retry: 2,
     },
   },
 });
+
+// Helper component for protected routes with suspense
+const ProtectedRouteWithSuspense: React.FC<{
+  children: React.ReactNode;
+  routeName: string;
+}> = ({ children, routeName }) => (
+  <ProtectedRoute>
+    <AppLayout>
+      <RouteSuspenseBoundary routeName={routeName}>{children}</RouteSuspenseBoundary>
+    </AppLayout>
+  </ProtectedRoute>
+);
 
 // Layout component for authenticated pages
 function AppLayout({ children }: { children: React.ReactNode }) {
@@ -141,146 +157,108 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             width: '100%',
           }}
         >
-          <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+          {children}
         </Box>
       </Box>
     </Box>
   );
 }
 
-// Create a Home component that shows a landing page instead of redirecting
+// Create a Home component that handles initial routing with enhanced authentication
 function Home() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 3,
-        background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
-        color: 'white',
-      }}
-    >
-      <Box sx={{ textAlign: 'center', maxWidth: 600 }}>
-        <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-          🌍 ESG Checklist AI
-        </Typography>
-        <Typography variant="h5" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
-          Enterprise-Grade ESG Compliance Platform
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}>
-          AI-powered ESG compliance automation system with advanced analytics, multi-user
-          management, and comprehensive audit trails.
-        </Typography>
+  // Enhanced authentication check
+  const hasValidToken = !!localStorage.getItem('authToken');
+  const hasValidUser = !!(user && user.id && user.email);
+  const isFullyAuthenticated = isAuthenticated && hasValidToken && hasValidUser;
 
-        <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {isAuthenticated ? (
-            <>
-              <Box
-                component="a"
-                href="/dashboard"
-                sx={{
-                  display: 'inline-block',
-                  padding: '12px 24px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                Go to Dashboard
-              </Box>
-              <Box
-                component="a"
-                href="/v1/docs"
-                target="_blank"
-                sx={{
-                  display: 'inline-block',
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                API Documentation
-              </Box>
-            </>
-          ) : (
-            <>
-              <Box
-                component="a"
-                href="/login"
-                sx={{
-                  display: 'inline-block',
-                  padding: '12px 24px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                Login
-              </Box>
-              <Box
-                component="a"
-                href="/v1/docs"
-                target="_blank"
-                sx={{
-                  display: 'inline-block',
-                  padding: '12px 24px',
-                  backgroundColor: 'transparent',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.5)',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    transform: 'translateY(-2px)',
-                  },
-                }}
-              >
-                API Documentation
-              </Box>
-            </>
-          )}
-        </Box>
-
-        <Box sx={{ mt: 4, opacity: 0.8 }}>
-          <Typography variant="body2">
-            🚀 FastAPI Backend • ⚛️ React Frontend • 🤖 AI-Powered Analysis
+  if (!isFullyAuthenticated) {
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 3,
+          background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)',
+          color: 'white',
+        }}
+      >
+        <Box sx={{ textAlign: 'center', maxWidth: 600 }}>
+          <Typography variant="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
+            🌍 ESG Checklist AI
           </Typography>
+          <Typography variant="h5" gutterBottom sx={{ mb: 4, opacity: 0.9 }}>
+            Enterprise-Grade ESG Compliance Platform
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 4, fontSize: '1.1rem', lineHeight: 1.6 }}>
+            AI-powered ESG compliance automation system with advanced analytics, multi-user
+            management, and comprehensive audit trails.
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Box
+              component="a"
+              href="/login"
+              sx={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: 2,
+                border: '1px solid rgba(255, 255, 255, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              Login
+            </Box>
+            <Box
+              component="a"
+              href="/v1/docs"
+              target="_blank"
+              sx={{
+                display: 'inline-block',
+                padding: '12px 24px',
+                backgroundColor: 'transparent',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: 2,
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  transform: 'translateY(-2px)',
+                },
+              }}
+            >
+              API Documentation
+            </Box>
+          </Box>
+
+          <Box sx={{ mt: 4, opacity: 0.8 }}>
+            <Typography variant="body2">
+              🚀 FastAPI Backend • ⚛️ React Frontend • 🤖 AI-Powered Analysis
+            </Typography>
+          </Box>
         </Box>
       </Box>
-    </Box>
-  );
+    );
+  }
+
+  // If fully authenticated, redirect to dashboard
+  return <Navigate to="/dashboard" replace />;
 }
 
 function AppContent() {
@@ -306,178 +284,158 @@ function AppContent() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: globalStylesReset }} />
-      <ErrorBoundary>
-        <Router>
-          <Routes>
-            {/* Root route - shows login if not authenticated, dashboard if authenticated */}
-            <Route path="/" element={<Home />} />
+      <AuthGuard>
+        <ErrorBoundary>
+          <Router>
+            <Routes>
+              {/* Root route - shows login if not authenticated, dashboard if authenticated */}
+              <Route path="/" element={<Home />} />
 
-            {/* Login route - accessible without authentication */}
-            <Route
-              path="/login"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <Login />
-                </Suspense>
-              }
-            />
+              {/* Login route - accessible without authentication */}
+              <Route
+                path="/login"
+                element={
+                  <RouteSuspenseBoundary routeName="Login">
+                    <Login />
+                  </RouteSuspenseBoundary>
+                }
+              />
 
-            {/* All protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+              {/* All protected routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Dashboard">
                     <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checklists"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/checklists"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Checklists">
                     <Checklists />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checklists/:id"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/checklists/:id"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Checklist Details">
                     <ChecklistDetail />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checklists/:id/submit"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/checklists/:id/submit"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Submit Checklist">
                     <ChecklistSubmit />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/checklists/:id/upload"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/checklists/:id/upload"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Upload Files">
                     <ChecklistUpload />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reviews"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/reviews"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Reviews">
                     <Reviews />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/search"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Search">
+                    <Search />
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Analytics">
                     <Analytics />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/analytics/advanced"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/analytics/advanced"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Advanced Analytics">
                     <AdvancedAnalytics />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/reports"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Reports">
                     <Reports />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Settings">
                     <Settings />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/admin/users"
+                element={
+                  <ProtectedRouteWithSuspense routeName="User Management">
                     <UserManagement />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/checklists"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/admin/checklists"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Checklist Management">
                     <ChecklistManagement />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/system"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/admin/system"
+                element={
+                  <ProtectedRouteWithSuspense routeName="System Administration">
                     <SystemAdministration />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/config"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/admin/config"
+                element={
+                  <ProtectedRouteWithSuspense routeName="System Configuration">
                     <SystemConfiguration />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/uploads/advanced"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/uploads/advanced"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Advanced File Upload">
                     <AdvancedFileUpload />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            {/* Catch-all route - redirect to home */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Router>
-      </ErrorBoundary>
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              {/* Catch-all route - redirect to home */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Router>
+        </ErrorBoundary>
+      </AuthGuard>
     </>
   );
 }

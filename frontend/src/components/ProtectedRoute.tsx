@@ -16,14 +16,19 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requir
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
         <CircularProgress />
       </Box>
     );
   }
 
+  // Enhanced authentication check - require both token and user data
+  const hasValidToken = !!localStorage.getItem('authToken');
+  const hasValidUser = !!(user && user.id && user.email);
+  const isFullyAuthenticated = isAuthenticated && hasValidToken && hasValidUser;
+
   // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  if (!isFullyAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +16,8 @@ import {
   ListItemText,
   ListItemIcon,
   Paper,
+  Badge,
+  IconButton,
 } from '@mui/material';
 import {
   People,
@@ -25,6 +27,10 @@ import {
   TrendingUp,
   Settings,
   Security,
+  Refresh,
+  NotificationsActive,
+  CheckCircle,
+  Warning,
 } from '@mui/icons-material';
 import { analyticsAPI, uploadsAPI, searchAPI } from '../../services/api';
 import { SystemStatusCard } from '../SystemStatusCard';
@@ -94,6 +100,31 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend 
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [isConnected, setIsConnected] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [pendingTasks, setPendingTasks] = useState(7);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdate(new Date());
+    }, 30000);
+
+    // Simulate connection status changes
+    const connectionCheck = setInterval(() => {
+      setIsConnected(Math.random() > 0.1); // 90% uptime simulation
+    }, 60000);
+
+    // Simulate pending tasks updates
+    const taskCheck = setInterval(() => {
+      setPendingTasks(Math.floor(Math.random() * 10) + 1);
+    }, 45000);
+
+    return () => {
+      clearInterval(interval);
+      clearInterval(connectionCheck);
+      clearInterval(taskCheck);
+    };
+  }, []);
 
   // Re-enable analytics query - test 1
   const { data: analytics, isLoading: analyticsLoading } = useQuery<{ data: Analytics }>({
@@ -140,13 +171,31 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-          Administrator Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Comprehensive system overview and management console
-        </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+            Administrator Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Comprehensive system overview and management console
+          </Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Badge badgeContent={pendingTasks} color="error">
+            <IconButton>
+              <NotificationsActive />
+            </IconButton>
+          </Badge>
+          <Chip
+            icon={isConnected ? <CheckCircle /> : <Warning />}
+            label={`${isConnected ? 'Online' : 'Offline'} • ${lastUpdate.toLocaleTimeString()}`}
+            color={isConnected ? 'success' : 'warning'}
+            size="small"
+          />
+          <IconButton onClick={() => setLastUpdate(new Date())}>
+            <Refresh />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* Key Metrics */}

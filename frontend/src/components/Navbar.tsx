@@ -9,8 +9,11 @@ import {
   Box,
   Avatar,
   Button,
+  Tooltip,
+  Chip,
+  useTheme,
 } from '@mui/material';
-import { Menu as MenuIcon, AccountCircle } from '@mui/icons-material';
+import { Menu as MenuIcon, AccountCircle, Settings, Help, ExitToApp } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NotificationDropdown } from './Notifications';
@@ -20,10 +23,11 @@ interface NavbarProps {
   onMenuClick: () => void;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
+export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -39,12 +43,31 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
     handleMenuClose();
   };
 
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard' },
-    { label: 'Checklists', path: '/checklists' },
-    { label: 'Reports', path: '/reports' },
-    { label: 'Settings', path: '/settings' },
-  ];
+  // Role-based navigation items
+  const getNavItems = () => {
+    const baseItems = [
+      {
+        label: 'Dashboard',
+        path: '/dashboard',
+        roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
+      },
+      {
+        label: 'Checklists',
+        path: '/checklists',
+        roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
+      },
+      { label: 'Analytics', path: '/analytics', roles: ['admin', 'super_admin', 'reviewer'] },
+      { label: 'Reports', path: '/reports', roles: ['admin', 'super_admin', 'reviewer'] },
+    ];
+
+    if (user?.role === 'admin' || user?.role === 'super_admin') {
+      baseItems.push({ label: 'Admin', path: '/admin', roles: ['admin', 'super_admin'] });
+    }
+
+    return baseItems.filter(item => item.roles.includes(user?.role || ''));
+  };
+
+  const navItems = getNavItems();
 
   return (
     <AppBar position="fixed" sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
@@ -57,7 +80,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
         </Box>
 
         {/* Logo */}
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Typography
             variant="h5"
             noWrap
@@ -66,39 +89,69 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
               fontWeight: 700,
               color: 'primary.main',
               textDecoration: 'none',
+              cursor: 'pointer',
             }}
+            onClick={() => navigate('/dashboard')}
           >
-            e& ESG
+            🌍 ESG AI
           </Typography>
+
+          {/* Role indicator */}
+          <Chip
+            label={user?.role?.toUpperCase() || 'USER'}
+            size="small"
+            color="secondary"
+            variant="outlined"
+            sx={{
+              fontWeight: 'bold',
+              fontSize: '0.7rem',
+              display: { xs: 'none', sm: 'flex' },
+            }}
+          />
         </Box>
 
         {/* Desktop Navigation */}
-        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4, alignItems: 'center', flex: 1 }}>
+        <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2, alignItems: 'center', flex: 1 }}>
           {navItems.map(item => (
-            <Button
-              key={item.path}
-              onClick={() => navigate(item.path)}
-              sx={{
-                color: 'text.primary',
-                fontWeight: 600,
-                fontSize: '1rem',
-                textDecoration: location.pathname === item.path ? 'underline' : 'none',
-                textDecorationColor: 'primary.main',
-                textUnderlineOffset: '4px',
-                '&:hover': {
-                  textDecoration: 'underline',
-                  textDecorationColor: 'primary.main',
-                  textUnderlineOffset: '4px',
-                  backgroundColor: 'transparent',
-                },
-              }}
-            >
-              {item.label}
-            </Button>
+            <Tooltip key={item.path} title={`Navigate to ${item.label}`} arrow>
+              <Button
+                onClick={() => navigate(item.path)}
+                sx={{
+                  color: location.pathname.startsWith(item.path) ? 'primary.main' : 'text.primary',
+                  fontWeight: location.pathname.startsWith(item.path) ? 700 : 500,
+                  fontSize: '0.95rem',
+                  textTransform: 'none',
+                  borderRadius: '8px',
+                  px: 2,
+                  py: 1,
+                  minWidth: 'auto',
+                  position: 'relative',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&:after': location.pathname.startsWith(item.path)
+                    ? {
+                        content: '""',
+                        position: 'absolute',
+                        bottom: -2,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: '80%',
+                        height: 2,
+                        backgroundColor: 'primary.main',
+                        borderRadius: 1,
+                      }
+                    : {},
+                }}
+              >
+                {item.label}
+              </Button>
+            </Tooltip>
           ))}
 
           {/* Global Search */}
-          <Box sx={{ ml: 'auto', mr: 2 }}>
+          <Box sx={{ ml: 'auto', mr: 2, maxWidth: 300, minWidth: 200 }}>
             <GlobalSearch />
           </Box>
         </Box>
@@ -108,15 +161,38 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
           {/* Notifications */}
           <NotificationDropdown />
 
-          <IconButton onClick={handleMenuOpen} sx={{ p: 0 }} aria-label="account menu">
-            {user?.name ? (
-              <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                {user.name.charAt(0).toUpperCase()}
-              </Avatar>
-            ) : (
-              <AccountCircle sx={{ fontSize: 32 }} />
-            )}
-          </IconButton>
+          {/* User Avatar with enhanced styling */}
+          <Tooltip title={`${user?.name || 'User'} (${user?.role || 'role'})`} arrow>
+            <IconButton
+              onClick={handleMenuOpen}
+              sx={{
+                p: 0.5,
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                  transition: 'transform 0.2s ease-in-out',
+                },
+              }}
+              aria-label="account menu"
+            >
+              {user?.name ? (
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: 'primary.main',
+                    border: '2px solid',
+                    borderColor: 'primary.light',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {user.name.charAt(0).toUpperCase()}
+                </Avatar>
+              ) : (
+                <AccountCircle sx={{ fontSize: 36, color: 'primary.main' }} />
+              )}
+            </IconButton>
+          </Tooltip>
 
           <Menu
             anchorEl={anchorEl}
@@ -132,38 +208,82 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
             }}
             PaperProps={{
               sx: {
-                mt: 1,
-                minWidth: 200,
+                mt: 1.5,
+                minWidth: 220,
                 border: '1px solid',
                 borderColor: 'divider',
+                borderRadius: 2,
+                boxShadow: theme.shadows[8],
+                '& .MuiMenuItem-root': {
+                  px: 2,
+                  py: 1.5,
+                  gap: 1,
+                  borderRadius: 1,
+                  mx: 1,
+                  my: 0.5,
+                  '&:hover': {
+                    backgroundColor: 'action.hover',
+                  },
+                },
               },
             }}
           >
-            <MenuItem disabled sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-              <Typography variant="body1" fontWeight="medium">
+            <MenuItem
+              disabled
+              sx={{
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+                bgcolor: 'grey.50',
+                borderRadius: 1,
+                mx: 1,
+                my: 1,
+              }}
+            >
+              <Typography variant="body1" fontWeight="bold">
                 {user?.name || 'User'}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 {user?.email}
               </Typography>
+              <Chip
+                label={user?.role?.toUpperCase() || 'USER'}
+                size="small"
+                color="primary"
+                sx={{ mt: 0.5, fontSize: '0.7rem' }}
+              />
             </MenuItem>
+
             <MenuItem
               onClick={() => {
                 handleMenuClose();
-                navigate('/profile');
+                navigate('/settings');
               }}
             >
-              Profile
+              <Settings fontSize="small" />
+              Settings
             </MenuItem>
+
             <MenuItem
               onClick={() => {
                 handleMenuClose();
                 navigate('/help');
               }}
             >
-              Help
+              <Help fontSize="small" />
+              Help & Support
             </MenuItem>
-            <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+
+            <MenuItem
+              onClick={handleLogout}
+              sx={{
+                color: 'error.main',
+                '&:hover': {
+                  backgroundColor: 'error.light',
+                  color: 'error.contrastText',
+                },
+              }}
+            >
+              <ExitToApp fontSize="small" />
               Logout
             </MenuItem>
           </Menu>
@@ -171,4 +291,4 @@ export const Navbar: React.FC<NavbarProps> = ({ onMenuClick }) => {
       </Toolbar>
     </AppBar>
   );
-};
+});
