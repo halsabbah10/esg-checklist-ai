@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Container,
   Typography,
@@ -17,7 +17,6 @@ import {
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Divider,
 } from '@mui/material';
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
@@ -54,23 +53,47 @@ export const Reviews: React.FC = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['reviews'],
+    queryKey: ['reviews', statusFilter, searchTerm],
     queryFn: async () => {
-      // Since reviews endpoint might not be fully implemented, simulate with uploads
-      const response = await uploadsAPI.search({});
-      return response.data.map((upload: unknown) => {
-        // Type guard for upload data
+      try {
+        // First try to get actual reviews
+        const reviewsResponse = await reviewsAPI.getAll();
+        if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
+          return reviewsResponse.data.map((review: unknown) => {
+            const reviewData = review as UploadData;
+            return {
+              id: reviewData.id,
+              filename: reviewData.filename || `Document ${reviewData.id}`,
+              status: (reviewData.status || 'pending') as 'pending' | 'approved' | 'rejected',
+              uploaded_at: reviewData.created_at || new Date().toISOString(),
+              ai_score: reviewData.ai_score,
+              comments: [],
+            };
+          });
+        }
+      } catch (reviewError) {
+        console.warn('Reviews API not available, falling back to uploads:', reviewError);
+      }
+      
+      // Fallback to uploads API for review items
+      const uploadsResponse = await uploadsAPI.search({
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        filename: searchTerm || undefined,
+      });
+      
+      return (uploadsResponse.data || []).map((upload: unknown) => {
         const uploadData = upload as UploadData;
         return {
           id: uploadData.id,
           filename: uploadData.filename || `Document ${uploadData.id}`,
           status: (uploadData.status || 'pending') as 'pending' | 'approved' | 'rejected',
           uploaded_at: uploadData.created_at || new Date().toISOString(),
-          ai_score: uploadData.ai_score || Math.floor(Math.random() * 100),
+          ai_score: uploadData.ai_score,
           comments: [],
         };
       });
     },
+    refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const filteredReviews = reviews.filter((review: ReviewItem) => {
@@ -101,22 +124,46 @@ export const Reviews: React.FC = () => {
     }
   };
 
-  const handleApprove = async (reviewId: string) => {
-    try {
-      await reviewsAPI.approve(reviewId, 'Document approved for compliance');
+  const queryClient = useQueryClient();
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: ({ reviewId, comment }: { reviewId: string; comment?: string }) =>
+      reviewsAPI.approve(reviewId, comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
       refetch();
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Failed to approve:', error);
-    }
+    },
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: ({ reviewId, comment }: { reviewId: string; comment: string }) =>
+      reviewsAPI.reject(reviewId, comment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+      refetch();
+    },
+    onError: (error) => {
+      console.error('Failed to reject:', error);
+    },
+  });
+
+  const handleApprove = (reviewId: string) => {
+    approveMutation.mutate({
+      reviewId,
+      comment: 'Document approved for compliance',
+    });
   };
 
-  const handleReject = async (reviewId: string) => {
-    try {
-      await reviewsAPI.reject(reviewId, 'Document requires additional information');
-      refetch();
-    } catch (error) {
-      console.error('Failed to reject:', error);
-    }
+  const handleReject = (reviewId: string) => {
+    rejectMutation.mutate({
+      reviewId,
+      comment: 'Document requires additional information',
+    });
   };
 
   if (isLoading) {
@@ -272,46 +319,47 @@ export const Reviews: React.FC = () => {
                       }
                     />
 
-                    <ListItemSecondaryAction>
-                      <Box display="flex" gap={1}>
-                        <Button
-                          size="small"
-                          startIcon={<Visibility />}
-                          onClick={() => console.log('View details:', review.id)}
-                        >
-                          View
-                        </Button>
+                    
+                    <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        startIcon={<Visibility />}
+                        onClick={() => console.log('View details:', review.id)}
+                      >
+                        View
+                      </Button>
 
-                        {review.status === 'pending' && (
-                          <>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="success"
-                              onClick={() => handleApprove(review.id)}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleReject(review.id)}
-                            >
-                              Reject
-                            </Button>
-                          </>
-                        )}
+                      {review.status === 'pending' && (
+                        <>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="success"
+                            onClick={() => handleApprove(review.id)}
+                            disabled={approveMutation.isPending}
+                          >
+                            {approveMutation.isPending ? 'Approving...' : 'Approve'}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            color="error"
+                            onClick={() => handleReject(review.id)}
+                            disabled={rejectMutation.isPending}
+                          >
+                            {rejectMutation.isPending ? 'Rejecting...' : 'Reject'}
+                          </Button>
+                        </>
+                      )}
 
-                        <Button
-                          size="small"
-                          startIcon={<Comment />}
-                          onClick={() => console.log('Add comment:', review.id)}
-                        >
-                          Comment
-                        </Button>
-                      </Box>
-                    </ListItemSecondaryAction>
+                      <Button
+                        size="small"
+                        startIcon={<Comment />}
+                        onClick={() => console.log('Add comment:', review.id)}
+                      >
+                        Comment
+                      </Button>
+                    </Box>
                   </ListItem>
                   {index < filteredReviews.length - 1 && <Divider />}
                 </React.Fragment>
