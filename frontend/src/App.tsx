@@ -1,5 +1,5 @@
 import React, { useState, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Toolbar, useMediaQuery, useTheme, CircularProgress, Typography } from '@mui/material';
 
@@ -286,8 +286,8 @@ function AppContent() {
     <>
       <style dangerouslySetInnerHTML={{ __html: globalStylesReset }} />
       <AuthGuard>
-        <ErrorBoundary>
-          <Router>
+        <Router>
+          <ErrorBoundaryWithReset>
             <Routes>
               {/* Root route - shows login if not authenticated, dashboard if authenticated */}
               <Route path="/" element={<Home />} />
@@ -434,10 +434,24 @@ function AppContent() {
               {/* Catch-all route - redirect to home */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </Router>
-        </ErrorBoundary>
+          </ErrorBoundaryWithReset>
+        </Router>
       </AuthGuard>
     </>
+  );
+}
+
+// ErrorBoundary wrapper that resets on route changes
+function ErrorBoundaryWithReset({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  
+  return (
+    <ErrorBoundary 
+      resetOnPropsChange={true}
+      resetKeys={[location.pathname]}
+    >
+      {children}
+    </ErrorBoundary>
   );
 }
 

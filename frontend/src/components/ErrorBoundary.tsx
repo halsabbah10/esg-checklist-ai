@@ -11,16 +11,42 @@ interface ErrorBoundaryState {
 interface ErrorBoundaryProps {
   children: ReactNode;
   fallback?: ReactNode;
+  resetOnPropsChange?: boolean;
+  resetKeys?: Array<string | number>;
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  private prevResetKeys: Array<string | number> = [];
+
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
+    this.prevResetKeys = props.resetKeys || [];
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
     return { hasError: true, error };
+  }
+
+  componentDidUpdate(prevProps: ErrorBoundaryProps) {
+    const { resetKeys, resetOnPropsChange } = this.props;
+    const { hasError } = this.state;
+    
+    if (hasError && resetOnPropsChange && prevProps.children !== this.props.children) {
+      // Reset error boundary when navigation occurs (children change)
+      this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+    }
+    
+    if (hasError && resetKeys) {
+      const hasResetKeyChanged = resetKeys.some((key, index) => 
+        this.prevResetKeys[index] !== key
+      ) || resetKeys.length !== this.prevResetKeys.length;
+      
+      if (hasResetKeyChanged) {
+        this.setState({ hasError: false, error: undefined, errorInfo: undefined });
+        this.prevResetKeys = resetKeys;
+      }
+    }
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
