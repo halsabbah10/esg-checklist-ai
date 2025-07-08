@@ -301,7 +301,7 @@ export const Login: React.FC = () => {
         <Typography
           variant="body2"
           sx={{
-            color: '#666',
+            color: 'text.secondary',
             textAlign: 'center',
             marginTop: 3,
             fontSize: '0.875rem',

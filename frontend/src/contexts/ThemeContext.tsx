@@ -222,16 +222,35 @@ const darkTheme = createTheme({
               borderColor: '#9CA3AF',
             },
             '&.Mui-focused fieldset': {
-              borderColor: '#EF4444',
+              borderColor: '#EF4444', // Same red as Sign In button
             },
             '& input': {
               color: '#1F2937', // Ensure input text is dark
             },
+            '& input::placeholder': {
+              color: '#6B7280', // Darker placeholder for better contrast
+              opacity: 1,
+            },
           },
           '& .MuiInputLabel-root': {
-            color: '#D1D5DB', // Light label text
+            color: '#374151', // Darker label for better contrast against white fields
+            fontWeight: 500,
             '&.Mui-focused': {
-              color: '#EF4444',
+              color: '#EF4444', // Same red as Sign In button
+            },
+            '&.MuiInputLabel-shrink': {
+              color: '#374151', // Dark color for contrast against white background
+              backgroundColor: '#FFFFFF', // White rounded background
+              padding: '2px 6px', // Padding around the text
+              borderRadius: '4px', // Rounded corners
+              border: 'none', // No border
+            },
+            '&.Mui-focused.MuiInputLabel-shrink': {
+              color: '#EF4444', // Same red as Sign In button
+              backgroundColor: '#FFFFFF', // Same white background
+              padding: '2px 6px',
+              borderRadius: '4px',
+              border: 'none', // No border even when focused
             },
           },
         },
@@ -294,6 +313,18 @@ const darkTheme = createTheme({
           color: '#D1D5DB',
           '&:hover': {
             backgroundColor: 'rgba(255, 255, 255, 0.08)',
+          },
+        },
+      },
+    },
+    MuiAlert: {
+      styleOverrides: {
+        standardInfo: {
+          backgroundColor: '#1E293B', // Darker blue-gray background
+          border: '1px solid #334155',
+          color: '#E2E8F0', // Light text
+          '& .MuiAlert-icon': {
+            color: '#60A5FA', // Light blue icon
           },
         },
       },
