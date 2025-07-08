@@ -6,7 +6,7 @@ Enhanced analytics with real-time capabilities, action tracking, and live dashbo
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sqlmodel import Session, desc, select
@@ -118,7 +118,7 @@ async def get_live_metrics(
 ):
     """Get live system metrics"""
     try:
-        query = select(SystemMetrics).order_by(desc(SystemMetrics.timestamp)).limit(50)
+        query: Any = select(SystemMetrics).order_by(desc(SystemMetrics.timestamp)).limit(50)
 
         if category:
             query = query.where(SystemMetrics.category == category)
@@ -159,7 +159,7 @@ async def get_user_activity(
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
 
-        query = select(UserActivity).where(UserActivity.timestamp >= cutoff)
+        query: Any = select(UserActivity).where(UserActivity.timestamp >= cutoff)
 
         if user_id:
             query = query.where(UserActivity.user_id == user_id)
@@ -204,7 +204,7 @@ async def get_compliance_trends(
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(days=days)
 
-        query = select(ComplianceTracking).where(ComplianceTracking.timestamp >= cutoff)
+        query: Any = select(ComplianceTracking).where(ComplianceTracking.timestamp >= cutoff)
 
         if checklist_id:
             query = query.where(ComplianceTracking.checklist_id == checklist_id)
@@ -244,7 +244,11 @@ async def get_realtime_events(
 ):
     """Get recent real-time events"""
     try:
-        query = select(RealtimeEvent).order_by(desc(RealtimeEvent.event_timestamp)).limit(limit)
+        query: Any = (
+            select(RealtimeEvent)
+            .order_by(desc(RealtimeEvent.event_timestamp))
+            .limit(limit)
+        )
 
         if event_type:
             query = query.where(RealtimeEvent.event_type == event_type)

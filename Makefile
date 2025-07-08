@@ -104,7 +104,7 @@ test-fast:
 	cd backend && pytest -v
 
 test-backend:
-	cd backend && pytest -v
+	PYTHONPATH=backend pytest backend -v
 
 test-frontend:
 	cd frontend && npm run test:run

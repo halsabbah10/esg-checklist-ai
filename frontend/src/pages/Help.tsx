@@ -31,7 +31,10 @@ import {
 
 export const HelpPage: React.FC = () => {
   const handleContactSupport = () => {
-    window.open('mailto:support@esg-checklist.com?subject=ESG Checklist AI Support Request', '_blank');
+    window.open(
+      'mailto:support@esg-checklist.com?subject=ESG Checklist AI Support Request',
+      '_blank'
+    );
   };
 
   const handleScheduleDemo = () => {
@@ -78,12 +81,7 @@ export const HelpPage: React.FC = () => {
         >
           Schedule Demo
         </Button>
-        <Button
-          variant="outlined"
-          size="large"
-          startIcon={<Chat />}
-          onClick={handleOpenChat}
-        >
+        <Button variant="outlined" size="large" startIcon={<Chat />} onClick={handleOpenChat}>
           Live Chat
         </Button>
       </Box>
@@ -102,9 +100,7 @@ export const HelpPage: React.FC = () => {
                 <Typography variant="h6">How do I upload and analyze ESG documents?</Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <Typography paragraph>
-                  To upload and analyze ESG documents:
-                </Typography>
+                <Typography paragraph>To upload and analyze ESG documents:</Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText primary="1. Navigate to any checklist from the Checklists page" />
@@ -134,12 +130,13 @@ export const HelpPage: React.FC = () => {
                   ESG Checklist AI supports the following file formats:
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-                  {['PDF', 'DOC', 'DOCX', 'XLS', 'XLSX', 'TXT', 'CSV'].map((format) => (
+                  {['PDF', 'DOC', 'DOCX', 'XLS', 'XLSX', 'TXT', 'CSV'].map(format => (
                     <Chip key={format} label={format} color="primary" variant="outlined" />
                   ))}
                 </Box>
                 <Typography>
-                  Maximum file size is 25MB. For larger files, please contact support for assistance.
+                  Maximum file size is 25MB. For larger files, please contact support for
+                  assistance.
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -150,8 +147,8 @@ export const HelpPage: React.FC = () => {
               </AccordionSummary>
               <AccordionDetails>
                 <Typography paragraph>
-                  Our AI analysis is trained on comprehensive ESG frameworks including GRI, SASB, TCFD, and more. 
-                  The system provides:
+                  Our AI analysis is trained on comprehensive ESG frameworks including GRI, SASB,
+                  TCFD, and more. The system provides:
                 </Typography>
                 <List dense>
                   <ListItem>
@@ -168,7 +165,8 @@ export const HelpPage: React.FC = () => {
                   </ListItem>
                 </List>
                 <Typography>
-                  Remember that AI analysis should supplement, not replace, professional ESG expertise.
+                  Remember that AI analysis should supplement, not replace, professional ESG
+                  expertise.
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -218,7 +216,8 @@ export const HelpPage: React.FC = () => {
                   </ListItem>
                 </List>
                 <Typography>
-                  Export options are available in the analysis results section after upload completion.
+                  Export options are available in the analysis results section after upload
+                  completion.
                 </Typography>
               </AccordionDetails>
             </Accordion>
@@ -276,7 +275,13 @@ export const HelpPage: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Link href="#" onClick={(e) => { e.preventDefault(); alert('Video tutorials coming soon!'); }}>
+                    <Link
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        alert('Video tutorials coming soon!');
+                      }}
+                    >
                       Video Tutorials
                     </Link>
                   }
@@ -289,7 +294,13 @@ export const HelpPage: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Link href="#" onClick={(e) => { e.preventDefault(); alert('Documentation coming soon!'); }}>
+                    <Link
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        alert('Documentation coming soon!');
+                      }}
+                    >
                       User Documentation
                     </Link>
                   }
@@ -302,7 +313,13 @@ export const HelpPage: React.FC = () => {
                 </ListItemIcon>
                 <ListItemText
                   primary={
-                    <Link href="#" onClick={(e) => { e.preventDefault(); handleContactSupport(); }}>
+                    <Link
+                      href="#"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleContactSupport();
+                      }}
+                    >
                       Submit Feedback
                     </Link>
                   }

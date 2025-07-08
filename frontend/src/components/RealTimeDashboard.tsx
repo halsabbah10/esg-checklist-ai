@@ -145,15 +145,16 @@ export const RealTimeDashboard: React.FC = () => {
       uploadsAPI
         .search({ limit: 5 })
         .then((res: ApiResponse<{ results: UploadResult[] }>) => res.data),
-    refetchInterval: (data) => {
+    refetchInterval: data => {
       // Check if any uploads are still processing or pending
       const uploadData = data as unknown as { results: UploadResult[] } | undefined;
-      const hasPendingUploads = uploadData?.results?.some((upload: UploadResult) => 
-        upload.status === 'pending' || 
-        upload.status === 'processing' || 
-        upload.status === 'analyzing'
+      const hasPendingUploads = uploadData?.results?.some(
+        (upload: UploadResult) =>
+          upload.status === 'pending' ||
+          upload.status === 'processing' ||
+          upload.status === 'analyzing'
       );
-      
+
       // Poll every 3 seconds if there are pending uploads, otherwise every 30 seconds
       return hasPendingUploads ? 3000 : 30000;
     },
@@ -162,12 +163,14 @@ export const RealTimeDashboard: React.FC = () => {
   // Track pending uploads for UI indicators
   useEffect(() => {
     const uploadData = recentUploads as unknown as { results: UploadResult[] } | undefined;
-    const pendingExists = uploadData?.results?.some((upload: UploadResult) => 
-      upload.status === 'pending' || 
-      upload.status === 'processing' || 
-      upload.status === 'analyzing'
-    ) || false;
-    
+    const pendingExists =
+      uploadData?.results?.some(
+        (upload: UploadResult) =>
+          upload.status === 'pending' ||
+          upload.status === 'processing' ||
+          upload.status === 'analyzing'
+      ) || false;
+
     setHasPendingUploads(pendingExists);
   }, [recentUploads]);
 
@@ -324,11 +327,12 @@ export const RealTimeDashboard: React.FC = () => {
       id: upload.id,
       type: 'upload' as const,
       title: `File uploaded: ${upload.filename}`,
-      subtitle: upload.status === 'processing' || upload.status === 'analyzing'
-        ? `AI Analysis in progress... • by ${upload.user_name || 'Unknown User'}`
-        : upload.status === 'pending'
-        ? `Waiting for analysis • by ${upload.user_name || 'Unknown User'}`
-        : `by ${upload.user_name || 'Unknown User'}`,
+      subtitle:
+        upload.status === 'processing' || upload.status === 'analyzing'
+          ? `AI Analysis in progress... • by ${upload.user_name || 'Unknown User'}`
+          : upload.status === 'pending'
+            ? `Waiting for analysis • by ${upload.user_name || 'Unknown User'}`
+            : `by ${upload.user_name || 'Unknown User'}`,
       timestamp: upload.uploaded_at,
       status:
         upload.status === 'approved' || upload.status === 'completed'
@@ -336,8 +340,8 @@ export const RealTimeDashboard: React.FC = () => {
           : upload.status === 'rejected' || upload.status === 'failed'
             ? 'error'
             : upload.status === 'processing' || upload.status === 'analyzing'
-            ? 'info'
-            : ('warning' as const),
+              ? 'info'
+              : ('warning' as const),
       user: upload.user_name || 'Unknown',
     })),
     // Notifications

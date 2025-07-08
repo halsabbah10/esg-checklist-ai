@@ -68,7 +68,10 @@ class AIScorer:
 
     def _score_gemini(self, text: str) -> Tuple[float, str]:
         """Score text using Google's Gemini AI model."""
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.gemini_model}:generateContent"
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.gemini_model}:generateContent"
+        )
 
         # Enhanced prompt for ESG scoring with balanced evaluation criteria
         esg_prompt = f"""

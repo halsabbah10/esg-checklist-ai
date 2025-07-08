@@ -1,7 +1,7 @@
 import React, { useState, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Box, Toolbar, useMediaQuery, useTheme, CircularProgress, Typography } from '@mui/material';
+import { Box, Toolbar, useMediaQuery, useTheme as useMuiTheme, CircularProgress, Typography } from '@mui/material';
 
 // Contexts
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -112,8 +112,8 @@ const ProtectedRouteWithSuspense: React.FC<{
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const muiTheme = useMuiTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);

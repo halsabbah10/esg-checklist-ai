@@ -109,7 +109,8 @@ ESG Checklist AI System
 
     <p>Hello,</p>
 
-    <p>Your uploaded file "<strong>{{ filename }}</strong>" for checklist "<strong>{{ checklist_title }}</strong>" has been analyzed.</p>
+    <p>Your uploaded file "<strong>{{ filename }}</strong>" for checklist
+    "<strong>{{ checklist_title }}</strong>" has been analyzed.</p>
 
     <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
         <h3>ESG Compliance Score: {{ score }}/1.0 ({{ score_percentage }}%)</h3>
@@ -117,9 +118,11 @@ ESG Checklist AI System
         {% if score >= 0.8 %}
         <div style="color: #28a745; font-weight: bold;">✅ Excellent ESG compliance detected!</div>
         {% elif score >= 0.6 %}
-        <div style="color: #ffc107; font-weight: bold;">⚠️ Good ESG compliance with room for improvement.</div>
+        <div style="color: #ffc107; font-weight: bold;">
+        ⚠️ Good ESG compliance with room for improvement.</div>
         {% else %}
-        <div style="color: #dc3545; font-weight: bold;">❌ Low ESG compliance - review recommended.</div>
+        <div style="color: #dc3545; font-weight: bold;">
+        ❌ Low ESG compliance - review recommended.</div>
         {% endif %}
     </div>
 

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { TextField, Button, Typography, Box, Alert, CircularProgress } from '@mui/material';
+import { TextField, Button, Typography, Box, Alert, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import { LightMode, DarkMode } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface LoginForm {
   email: string;
@@ -11,6 +13,7 @@ interface LoginForm {
 
 export const Login: React.FC = () => {
   const { login, isAuthenticated, isLoading, error } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,6 +104,32 @@ export const Login: React.FC = () => {
         bottom: 0,
       }}
     >
+      {/* Dark Mode Toggle - Top Right */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          zIndex: 1000,
+        }}
+      >
+        <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
+          <IconButton
+            onClick={toggleTheme}
+            sx={{
+              color: 'text.primary',
+              backgroundColor: 'background.paper',
+              boxShadow: 2,
+              '&:hover': {
+                backgroundColor: 'background.paper',
+                transform: 'scale(1.1)',
+              },
+            }}
+          >
+            {isDarkMode ? <LightMode /> : <DarkMode />}
+          </IconButton>
+        </Tooltip>
+      </Box>
       {/* Login Section - Left Half */}
       <Box
         sx={{
@@ -110,7 +139,7 @@ export const Login: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           padding: 4,
-          backgroundColor: '#f8f9fa',
+          backgroundColor: 'background.default',
         }}
       >
         {/* Logo */}
@@ -132,9 +161,10 @@ export const Login: React.FC = () => {
             maxWidth: 420,
             padding: 4,
             borderRadius: 3,
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
-            backgroundColor: 'white',
-            border: '1px solid rgba(0, 0, 0, 0.05)',
+            boxShadow: 3,
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'divider',
           }}
         >
           {/* Title */}
@@ -143,7 +173,7 @@ export const Login: React.FC = () => {
             component="h1"
             sx={{
               fontWeight: 700,
-              color: '#1a1a1a',
+              color: 'text.primary',
               textAlign: 'center',
               marginBottom: 1,
             }}
@@ -154,7 +184,7 @@ export const Login: React.FC = () => {
           <Typography
             variant="body1"
             sx={{
-              color: '#666',
+              color: 'text.secondary',
               textAlign: 'center',
               marginBottom: 4,
             }}

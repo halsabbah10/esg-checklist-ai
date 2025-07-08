@@ -3,7 +3,7 @@ import warnings
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -53,16 +53,38 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     )
 
 
-def get_current_user(
-    token: str = Depends(oauth2_scheme), db: Session = Depends(get_session)
-) -> User:
-    """Get current user from JWT token using centralized configuration"""
+def get_token_from_request(request: Request) -> str:
+    """Get token from httpOnly cookie first, fall back to Authorization header"""
+    # First try to get token from httpOnly cookie
+    cookie_token = request.cookies.get("access_token")
+    if cookie_token:
+        return cookie_token
+
+    # Fall back to Authorization header token
+    authorization = request.headers.get("Authorization")
+    if authorization and authorization.startswith("Bearer "):
+        return authorization.split(" ")[1]
+
+    # No token found
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="No authentication token found",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+
+def get_current_user(request: Request, db: Session = Depends(get_session)) -> User:
+    """Get current user from JWT token (cookie or header) using centralized configuration"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials.",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
     try:
+        # Get token from cookie or header
+        token = get_token_from_request(request)
+
         payload = jwt.decode(
             token, security_config["secret_key"], algorithms=[security_config["algorithm"]]
         )
@@ -71,6 +93,7 @@ def get_current_user(
             raise credentials_exception
     except JWTError:
         raise credentials_exception
+
     user = db.exec(select(User).where(User.email == email)).first()
     if user is None:
         raise credentials_exception
@@ -110,7 +133,10 @@ def require_role(role: str):
     - auditor: Personal work only
     """
 
-    def role_checker(current_user: User = Depends(get_current_user)):
+    def role_checker(request: Request, db: Session = Depends(get_session)):
+        # Get current user using updated authentication
+        current_user = get_current_user(request, db)
+
         # Get role hierarchy from UserRoles class
         role_hierarchy = UserRoles.get_role_hierarchy()
 

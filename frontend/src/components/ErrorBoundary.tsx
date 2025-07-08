@@ -31,17 +31,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidUpdate(prevProps: ErrorBoundaryProps) {
     const { resetKeys, resetOnPropsChange } = this.props;
     const { hasError } = this.state;
-    
+
     if (hasError && resetOnPropsChange && prevProps.children !== this.props.children) {
       // Reset error boundary when navigation occurs (children change)
       this.setState({ hasError: false, error: undefined, errorInfo: undefined });
     }
-    
+
     if (hasError && resetKeys) {
-      const hasResetKeyChanged = resetKeys.some((key, index) => 
-        this.prevResetKeys[index] !== key
-      ) || resetKeys.length !== this.prevResetKeys.length;
-      
+      const hasResetKeyChanged =
+        resetKeys.some((key, index) => this.prevResetKeys[index] !== key) ||
+        resetKeys.length !== this.prevResetKeys.length;
+
       if (hasResetKeyChanged) {
         this.setState({ hasError: false, error: undefined, errorInfo: undefined });
         this.prevResetKeys = resetKeys;

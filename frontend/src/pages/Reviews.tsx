@@ -74,13 +74,13 @@ export const Reviews: React.FC = () => {
       } catch (reviewError) {
         console.warn('Reviews API not available, falling back to uploads:', reviewError);
       }
-      
+
       // Fallback to uploads API for review items
       const uploadsResponse = await uploadsAPI.search({
         status: statusFilter !== 'all' ? statusFilter : undefined,
         filename: searchTerm || undefined,
       });
-      
+
       return (uploadsResponse.data || []).map((upload: unknown) => {
         const uploadData = upload as UploadData;
         return {
@@ -134,7 +134,7 @@ export const Reviews: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
       refetch();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to approve:', error);
     },
   });
@@ -147,7 +147,7 @@ export const Reviews: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
       refetch();
     },
-    onError: (error) => {
+    onError: error => {
       console.error('Failed to reject:', error);
     },
   });
@@ -319,7 +319,6 @@ export const Reviews: React.FC = () => {
                       }
                     />
 
-                    
                     <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
                       <Button
                         size="small"

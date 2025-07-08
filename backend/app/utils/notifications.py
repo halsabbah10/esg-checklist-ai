@@ -96,7 +96,10 @@ def notify_file_status_change(
         },
         "rejected": {
             "title": "File Rejected ❌",
-            "message": f"Your file '{file_upload.filename}' has been rejected by {reviewer_name}. Please check the comments for feedback.",
+            "message": (
+                f"Your file '{file_upload.filename}' has been rejected by {reviewer_name}. "
+                "Please check the comments for feedback."
+            ),
             "type": "error",
         },
         "pending": {

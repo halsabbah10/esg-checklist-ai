@@ -10,6 +10,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
+from slowapi.errors import RateLimitExceeded
 
 from app.routers.analytics import router as analytics_router
 from app.routers.export import router as export_router
@@ -26,6 +27,7 @@ from .config import (
     validate_required_settings,
 )
 from .database import get_db_health, init_database
+from .rate_limiting import limiter, rate_limit_exceeded_handler
 from .routers import checklists, notifications, reviews, submissions, users
 from .routers.admin_checklists import router as admin_checklists_router
 from .routers.admin_users import router as admin_users_router
@@ -250,6 +252,10 @@ app.add_middleware(
     CORSMiddleware,
     **cors_settings,
 )
+
+# Rate limiting middleware and error handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
 # Include routers with API versioning
 app.include_router(users.router, prefix=api_prefix)

@@ -11,10 +11,18 @@ import {
   Button,
   Tooltip,
   Chip,
-  useTheme,
 } from '@mui/material';
-import { Menu as MenuIcon, AccountCircle, Settings, Help, ExitToApp } from '@mui/icons-material';
+import { 
+  Menu as MenuIcon, 
+  AccountCircle, 
+  Settings, 
+  Help, 
+  ExitToApp,
+  LightMode,
+  DarkMode 
+} from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NotificationDropdown } from './Notifications';
 import { GlobalSearch } from './GlobalSearch';
@@ -25,9 +33,9 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -38,9 +46,17 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    logout();
-    handleMenuClose();
+  const handleLogout = async () => {
+    try {
+      await logout();
+      handleMenuClose();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+      // Still close menu and redirect even if logout fails
+      handleMenuClose();
+      navigate('/login');
+    }
   };
 
   // Role-based navigation items
@@ -70,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
   const navItems = getNavItems();
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
       <Toolbar sx={{ height: '64px', justifyContent: 'space-between' }}>
         {/* Mobile menu button */}
         <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
@@ -158,6 +174,24 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
 
         {/* Profile Menu */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {/* Dark Mode Toggle */}
+          <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
+            <IconButton
+              onClick={toggleTheme}
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  color: 'primary.main',
+                  transform: 'scale(1.1)',
+                },
+                transition: 'all 0.2s ease-in-out',
+              }}
+              aria-label="toggle dark mode"
+            >
+              {isDarkMode ? <LightMode /> : <DarkMode />}
+            </IconButton>
+          </Tooltip>
+
           {/* Notifications */}
           <NotificationDropdown />
 
@@ -213,7 +247,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
                 border: '1px solid',
                 borderColor: 'divider',
                 borderRadius: 2,
-                boxShadow: theme.shadows[8],
+                boxShadow: (theme) => theme.shadows[8],
                 '& .MuiMenuItem-root': {
                   px: 2,
                   py: 1.5,

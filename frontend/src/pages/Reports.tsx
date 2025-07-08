@@ -63,28 +63,50 @@ export const Reports: React.FC = () => {
       label: 'Total Submissions',
       value: dashboardData?.total_submissions || 0,
       change: dashboardData?.submissions_change || 0,
-      trend: (dashboardData?.submissions_change || 0) > 0 ? 'up' : (dashboardData?.submissions_change || 0) < 0 ? 'down' : 'neutral',
+      trend:
+        (dashboardData?.submissions_change || 0) > 0
+          ? 'up'
+          : (dashboardData?.submissions_change || 0) < 0
+            ? 'down'
+            : 'neutral',
       icon: <Assessment sx={{ fontSize: 20 }} />,
     },
     {
       label: 'Completion Rate',
-      value: dashboardData?.completion_rate ? `${Math.round(dashboardData.completion_rate * 100)}%` : '0%',
+      value: dashboardData?.completion_rate
+        ? `${Math.round(dashboardData.completion_rate * 100)}%`
+        : '0%',
       change: dashboardData?.completion_rate_change || 0,
-      trend: (dashboardData?.completion_rate_change || 0) > 0 ? 'up' : (dashboardData?.completion_rate_change || 0) < 0 ? 'down' : 'neutral',
+      trend:
+        (dashboardData?.completion_rate_change || 0) > 0
+          ? 'up'
+          : (dashboardData?.completion_rate_change || 0) < 0
+            ? 'down'
+            : 'neutral',
       icon: <CheckCircle sx={{ fontSize: 20 }} />,
     },
     {
       label: 'Pending Reviews',
       value: dashboardData?.pending_reviews || 0,
       change: dashboardData?.pending_reviews_change || 0,
-      trend: (dashboardData?.pending_reviews_change || 0) > 0 ? 'up' : (dashboardData?.pending_reviews_change || 0) < 0 ? 'down' : 'neutral',
+      trend:
+        (dashboardData?.pending_reviews_change || 0) > 0
+          ? 'up'
+          : (dashboardData?.pending_reviews_change || 0) < 0
+            ? 'down'
+            : 'neutral',
       icon: <Warning sx={{ fontSize: 20 }} />,
     },
     {
       label: 'Active Users',
       value: dashboardData?.active_users || 0,
       change: dashboardData?.active_users_change || 0,
-      trend: (dashboardData?.active_users_change || 0) > 0 ? 'up' : (dashboardData?.active_users_change || 0) < 0 ? 'down' : 'neutral',
+      trend:
+        (dashboardData?.active_users_change || 0) > 0
+          ? 'up'
+          : (dashboardData?.active_users_change || 0) < 0
+            ? 'down'
+            : 'neutral',
       icon: <ErrorIcon sx={{ fontSize: 20 }} />,
     },
   ];
@@ -131,7 +153,10 @@ export const Reports: React.FC = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `esg-dashboard-${new Date().toISOString().split('T')[0]}.${format}`);
+      link.setAttribute(
+        'download',
+        `esg-dashboard-${new Date().toISOString().split('T')[0]}.${format}`
+      );
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -145,7 +170,7 @@ export const Reports: React.FC = () => {
       if (!report) {
         throw new globalThis.Error('Report not found');
       }
-      
+
       switch (report.type) {
         case 'compliance':
           return exportAPI.exportChecklists('xlsx');

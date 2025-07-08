@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import type { FileUploadData } from '../services/api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
@@ -73,15 +74,14 @@ export const ChecklistUpload: React.FC = () => {
     queryKey: ['uploaded-files', checklistId],
     queryFn: () => uploadsAPI.search({ checklist_id: checklistId }),
     enabled: !!checklistId,
-    select: (response) => response.data || [],
+    select: response => response.data || [],
   });
 
   // File deduplication check
   const isDuplicateFile = (file: File) => {
     return uploadedFiles?.some(
-      (uploaded: any) => 
-        uploaded.filename === file.name && 
-        Math.abs(uploaded.size - file.size) < 1000 // Allow small size differences
+      (uploaded: FileUploadData) =>
+        uploaded.filename === file.name && Math.abs(uploaded.size - file.size) < 1000 // Allow small size differences
     );
   };
 
@@ -94,7 +94,9 @@ export const ChecklistUpload: React.FC = () => {
 
       // Check for duplicate files
       if (isDuplicateFile(file)) {
-        throw new Error('A file with the same name and size has already been uploaded. Please choose a different file or rename this one.');
+        throw new Error(
+          'A file with the same name and size has already been uploaded. Please choose a different file or rename this one.'
+        );
       }
 
       // Validate file size (max 25MB)
@@ -192,7 +194,7 @@ export const ChecklistUpload: React.FC = () => {
     onSuccess: data => {
       setUploadId(data.upload_id || data.id);
       setIsAnalyzing(true);
-      
+
       // Refresh uploaded files list
       refetchUploadedFiles();
 
@@ -467,7 +469,7 @@ export const ChecklistUpload: React.FC = () => {
               📁 Uploaded Files ({uploadedFiles.length})
             </Typography>
             <List>
-              {uploadedFiles.map((file: any, index: number) => (
+              {uploadedFiles.map((file: FileUploadData, index: number) => (
                 <React.Fragment key={file.id}>
                   <ListItem>
                     <ListItemIcon>
@@ -476,10 +478,18 @@ export const ChecklistUpload: React.FC = () => {
                     <ListItemText
                       primary={
                         <Box display="flex" alignItems="center" gap={1}>
-                          <Typography variant="subtitle1">{file.filename || `Document ${file.id}`}</Typography>
+                          <Typography variant="subtitle1">
+                            {file.filename || `Document ${file.id}`}
+                          </Typography>
                           <Chip
                             label={file.status || 'uploaded'}
-                            color={file.status === 'completed' ? 'success' : file.status === 'processing' ? 'warning' : 'default'}
+                            color={
+                              file.status === 'completed'
+                                ? 'success'
+                                : file.status === 'processing'
+                                  ? 'warning'
+                                  : 'default'
+                            }
                             size="small"
                           />
                           {file.ai_score && (
@@ -493,7 +503,10 @@ export const ChecklistUpload: React.FC = () => {
                       }
                       secondary={
                         <Typography variant="body2" color="text.secondary">
-                          Uploaded: {file.created_at ? new Date(file.created_at).toLocaleDateString() : 'Unknown'}
+                          Uploaded:{' '}
+                          {file.created_at
+                            ? new Date(file.created_at).toLocaleDateString()
+                            : 'Unknown'}
                           {file.size && ` • Size: ${formatFileSize(file.size)}`}
                         </Typography>
                       }
@@ -502,7 +515,7 @@ export const ChecklistUpload: React.FC = () => {
                       <Button
                         size="small"
                         onClick={() => {
-                          setUploadId(file.id);
+                          setUploadId(file.id.toString());
                           refetchAIResults();
                         }}
                       >

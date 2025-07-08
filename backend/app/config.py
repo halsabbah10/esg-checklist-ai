@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 # Check for optional imports
 try:
-    import pythonjsonlogger.jsonlogger  # type: ignore[import-untyped]
+    import pythonjsonlogger.jsonlogger  # type: ignore[import-untyped]  # noqa: F401
 
     JSONLOGGER_AVAILABLE = True
 except ImportError:

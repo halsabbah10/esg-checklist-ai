@@ -154,10 +154,19 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
       }
     };
 
-    const handleLogout = () => {
-      logout();
-      if (isMobile) {
-        onClose();
+    const handleLogout = async () => {
+      try {
+        await logout();
+        if (isMobile) {
+          onClose();
+        }
+        navigate('/login');
+      } catch (error) {
+        console.error('Logout failed:', error);
+        if (isMobile) {
+          onClose();
+        }
+        navigate('/login');
       }
     };
 

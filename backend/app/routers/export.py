@@ -1,22 +1,26 @@
 import logging
 from datetime import datetime
 from io import BytesIO, StringIO
+from typing import Any
 
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
 from app.auth import require_role
 from app.database import get_session
 from app.models import AIResult, Checklist, FileUpload, SubmissionAnswer, User
+from app.rate_limiting import admin_rate_limit, export_rate_limit
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/export", tags=["export"])
 
 
 @router.get("/checklists")
+@export_rate_limit
 def export_all_checklists(
+    request: Request,
     format: str = Query("csv", pattern="^(csv|excel|json)$"),
     include_inactive: bool = Query(False, description="Include inactive checklists"),
     db: Session = Depends(get_session),
@@ -25,7 +29,7 @@ def export_all_checklists(
     """Export all checklists in various formats"""
     try:
         # Build query
-        query = select(Checklist)
+        query: Any = select(Checklist)
         if not include_inactive:
             query = query.where(Checklist.is_active is True)
 
@@ -88,7 +92,9 @@ def export_all_checklists(
 
 
 @router.get("/ai-results")
+@export_rate_limit
 def export_ai_results(
+    request: Request,
     format: str = Query("csv", pattern="^(csv|excel|json)$"),
     checklist_id: int = Query(None, description="Filter by checklist ID"),
     min_score: float = Query(None, ge=0.0, le=1.0, description="Minimum AI score"),
@@ -99,7 +105,7 @@ def export_ai_results(
     """Export AI scoring results with filtering options"""
     try:
         # Build query with joins
-        query = (
+        query: Any = (
             select(AIResult, FileUpload, Checklist, User)
             .join(FileUpload, AIResult.file_upload_id == FileUpload.id)  # type: ignore[arg-type]
             .join(Checklist, AIResult.checklist_id == Checklist.id)  # type: ignore[arg-type]
@@ -185,7 +191,9 @@ def export_ai_results(
 
 
 @router.get("/users")
+@admin_rate_limit
 def export_users(
+    request: Request,
     format: str = Query("csv", pattern="^(csv|excel|json)$"),
     role: str = Query(None, description="Filter by user role"),
     include_stats: bool = Query(True, description="Include user activity statistics"),
@@ -195,7 +203,7 @@ def export_users(
     """Export user data with optional statistics"""
     try:
         # Get users
-        query = select(User)
+        query: Any = select(User)
         if role:
             query = query.where(User.role == role)
         users = db.exec(query).all()
@@ -223,8 +231,8 @@ def export_users(
                         "total_uploads": len(file_count),
                         "total_ai_analyses": len(ai_results),
                         "avg_ai_score": (
-                            sum(r.score for r in ai_results) / len(ai_results)  # type: ignore[dict-item]
-                            if ai_results
+                            sum(r.score for r in ai_results) / len(ai_results)
+                            if ai_results  # type: ignore[dict-item]
                             else 0.0
                         ),
                         "last_activity": (
@@ -274,7 +282,9 @@ def export_users(
 
 
 @router.get("/submissions")
+@export_rate_limit
 def export_submissions(
+    request: Request,
     format: str = Query("csv", pattern="^(csv|excel|json)$"),
     checklist_id: int = Query(None, description="Filter by checklist ID"),
     user_id: int = Query(None, description="Filter by user ID"),
@@ -285,9 +295,11 @@ def export_submissions(
     """Export submission answers with filtering options"""
     try:
         # Build query with joins
-        query = (
+        query: Any = (
             select(SubmissionAnswer, Checklist, User)
-            .join(Checklist, SubmissionAnswer.checklist_id == Checklist.id)  # type: ignore[arg-type]
+            .join(
+                Checklist, SubmissionAnswer.checklist_id == Checklist.id  # type: ignore[arg-type]
+            )
             .join(User, SubmissionAnswer.user_id == User.id)  # type: ignore[arg-type]
         )
 

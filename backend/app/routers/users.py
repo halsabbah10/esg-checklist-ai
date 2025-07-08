@@ -1,8 +1,15 @@
 from datetime import timedelta
+from typing import TYPE_CHECKING
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlmodel import Session, select
+from fastapi import (  # type: ignore[import-untyped]
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+    Response,
+)
+from fastapi.security import OAuth2PasswordRequestForm  # type: ignore[import-untyped]
+from sqlmodel import Session, select  # type: ignore[import-untyped]
 
 from ..auth import (
     create_access_token,
@@ -13,13 +20,18 @@ from ..auth import (
 )
 from ..database import get_session
 from ..models import User
+from ..rate_limiting import api_write_rate_limit
 from ..schemas import Token, UserCreate, UserRead
+
+if TYPE_CHECKING:
+    pass
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("/register", response_model=UserRead)
-def register(user: UserCreate, db: Session = Depends(get_session)):
+@api_write_rate_limit
+def register(user: UserCreate, request: Request, db: Session = Depends(get_session)):
     existing = db.exec(select(User).where(User.email == user.email)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered.")
@@ -36,7 +48,11 @@ def register(user: UserCreate, db: Session = Depends(get_session)):
 
 
 @router.post("/login", response_model=Token)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
+def login(
+    response: Response,
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_session),
+):
     # Try to find user by email first, then by username
     user = db.exec(select(User).where(User.email == form_data.username)).first()
     if not user:
@@ -49,7 +65,30 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         {"sub": user.email, "role": user.role, "user_id": user.id},
         expires_delta=timedelta(hours=24),
     )
+
+    # Set secure httpOnly cookie
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        max_age=24 * 60 * 60,  # 24 hours in seconds
+        httponly=True,
+        secure=True,  # Only send over HTTPS in production
+        samesite="lax",  # CSRF protection
+        path="/",
+    )
+
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.post("/logout")
+def logout(request: Request, response: Response, db: Session = Depends(get_session)):
+    """Logout endpoint that clears the authentication cookie"""
+    # Verify user is authenticated before logout
+    # Check if user is authenticated (ignore if not)
+    # Logout should clear cookies regardless of authentication status
+
+    response.delete_cookie(key="access_token", path="/", httponly=True, secure=True, samesite="lax")
+    return {"message": "Successfully logged out"}
 
 
 @router.get("/protected-admin")
@@ -58,9 +97,9 @@ def protected_admin_route(current_user: User = Depends(require_role("admin"))):
 
 
 @router.get("/me", response_model=UserRead)
-def get_current_user_info(current_user: User = Depends(get_current_user)):
+def get_current_user_info(request: Request, db: Session = Depends(get_session)):
     """Get current authenticated user information"""
-    return current_user
+    return get_current_user(request, db)
 
 
 @router.get("/", response_model=list[UserRead])
