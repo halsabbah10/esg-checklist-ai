@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
@@ -18,6 +19,12 @@ import {
   ListItem,
   ListItemText,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  Stack,
 } from '@mui/material';
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
 import { reviewsAPI, uploadsAPI } from '../services/api';
@@ -41,10 +48,15 @@ interface UploadData {
 }
 
 export const Reviews: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
     'all'
   );
+  const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(null);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+  const [newComment, setNewComment] = useState('');
 
   // Fetch review items
   const {
@@ -164,6 +176,25 @@ export const Reviews: React.FC = () => {
       reviewId,
       comment: 'Document requires additional information',
     });
+  };
+
+  const handleViewDetails = (review: ReviewItem) => {
+    setSelectedReview(review);
+    setViewDialogOpen(true);
+  };
+
+  const handleAddComment = (review: ReviewItem) => {
+    setSelectedReview(review);
+    setCommentDialogOpen(true);
+  };
+
+  const handleCommentSubmit = () => {
+    if (selectedReview && newComment.trim()) {
+      // Add comment logic here - for now just close the dialog
+      setCommentDialogOpen(false);
+      setNewComment('');
+      setSelectedReview(null);
+    }
   };
 
   if (isLoading) {
@@ -323,7 +354,7 @@ export const Reviews: React.FC = () => {
                       <Button
                         size="small"
                         startIcon={<Visibility />}
-                        onClick={() => console.log('View details:', review.id)}
+                        onClick={() => handleViewDetails(review)}
                       >
                         View
                       </Button>
@@ -354,7 +385,7 @@ export const Reviews: React.FC = () => {
                       <Button
                         size="small"
                         startIcon={<Comment />}
-                        onClick={() => console.log('Add comment:', review.id)}
+                        onClick={() => handleAddComment(review)}
                       >
                         Comment
                       </Button>
@@ -367,6 +398,92 @@ export const Reviews: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* View Details Dialog */}
+      <Dialog
+        open={viewDialogOpen}
+        onClose={() => setViewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Document Details</DialogTitle>
+        <DialogContent>
+          {selectedReview && (
+            <Stack spacing={2}>
+              <Paper elevation={1} sx={{ p: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  {selectedReview.filename}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Uploaded: {new Date(selectedReview.uploaded_at).toLocaleDateString()}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Status: <Chip label={selectedReview.status} color={getStatusColor(selectedReview.status)} size="small" />
+                </Typography>
+                {selectedReview.ai_score && (
+                  <Typography variant="body2" color="text.secondary">
+                    AI Score: {Math.round(selectedReview.ai_score * 100)}%
+                  </Typography>
+                )}
+              </Paper>
+              
+              {selectedReview.comments && selectedReview.comments.length > 0 && (
+                <Box>
+                  <Typography variant="subtitle1" gutterBottom>
+                    Comments:
+                  </Typography>
+                  {selectedReview.comments.map((comment, index) => (
+                    <Paper key={index} elevation={1} sx={{ p: 1, mb: 1 }}>
+                      <Typography variant="body2">{comment}</Typography>
+                    </Paper>
+                  ))}
+                </Box>
+              )}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Comment Dialog */}
+      <Dialog
+        open={commentDialogOpen}
+        onClose={() => setCommentDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Add Comment</DialogTitle>
+        <DialogContent>
+          {selectedReview && (
+            <Stack spacing={2}>
+              <Typography variant="body2">
+                Adding comment to: {selectedReview.filename}
+              </Typography>
+              <TextField
+                label="Comment"
+                multiline
+                rows={4}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                fullWidth
+                placeholder="Enter your comment here..."
+              />
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCommentDialogOpen(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCommentSubmit}
+            variant="contained"
+            disabled={!newComment.trim()}
+          >
+            Add Comment
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

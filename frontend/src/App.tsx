@@ -61,6 +61,9 @@ const AdvancedFileUpload = lazy(() =>
   import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload }))
 );
 const Help = lazy(() => import('./pages/Help'));
+const Documentation = lazy(() => 
+  import('./pages/Documentation').then(module => ({ default: module.Documentation }))
+);
 
 // Loading component
 const LoadingSpinner = () => (
@@ -361,6 +364,14 @@ function AppContent() {
                 element={
                   <ProtectedRouteWithSuspense routeName="Help & Support">
                     <Help />
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/documentation"
+                element={
+                  <ProtectedRouteWithSuspense routeName="Documentation">
+                    <Documentation />
                   </ProtectedRouteWithSuspense>
                 }
               />

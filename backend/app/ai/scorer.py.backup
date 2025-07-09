@@ -31,17 +31,12 @@ class AIScorer:
 
     def _validate_provider_config(self):
         """Validate that required API keys are available for the selected provider."""
-        # Always require Gemini API key as it's the fallback
-        if not self.gemini_api_key:
-            raise ValueError("GEMINI_API_KEY is required as it serves as the fallback AI provider")
-        
-        # Only validate other providers if they're explicitly set and not e&
+        if self.provider == "gemini" and not self.gemini_api_key:
+            raise ValueError("GEMINI_API_KEY is required when AI_SCORER is set to 'gemini'")
         if self.provider == "openai" and not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY is required when AI_SCORER is set to 'openai'")
-        
-        # For e& provider, we'll fall back to Gemini if API key is not available
         if self.provider == "eand" and not self.eand_api_key:
-            logger.warning("EAND_API_KEY not configured, will use Gemini as fallback for e& requests")
+            raise ValueError("EAND_API_KEY is required when AI_SCORER is set to 'eand'")
 
     def score(self, text: str) -> Tuple[float, str]:
         """
@@ -60,26 +55,15 @@ class AIScorer:
             raise ValueError("Text input cannot be empty")
 
         try:
-            # Default to Gemini if provider is not properly configured or if it's e&
-            if self.provider == "gemini" or (self.provider == "eand" and not self.eand_api_key):
+            if self.provider == "gemini":
                 return self._score_gemini(text)
             if self.provider == "openai":
                 return self._score_openai(text)
             if self.provider == "eand":
                 return self._score_eand(text)
-            
-            # Fallback to Gemini for unknown providers
-            logger.warning(f"Unknown AI provider '{self.provider}', falling back to Gemini")
-            return self._score_gemini(text)
+            raise Exception(f"Unknown AI provider specified in AI_SCORER: {self.provider}")
         except Exception as e:
             logger.exception(f"AI scoring failed with provider {self.provider}: {e!s}")
-            # If primary provider fails, try fallback to Gemini
-            if self.provider != "gemini" and self.gemini_api_key:
-                logger.info("Attempting fallback to Gemini API")
-                try:
-                    return self._score_gemini(text)
-                except Exception as fallback_error:
-                    logger.exception(f"Fallback to Gemini also failed: {fallback_error!s}")
             raise
 
     def _score_gemini(self, text: str) -> Tuple[float, str]:
@@ -108,31 +92,15 @@ class AIScorer:
 
         Please provide:
         1. An overall ESG compliance score between 0.0 and 1.0 based on the guidelines above
-        2. Individual category scores for Environmental, Social, and Governance aspects
-        3. Detailed feedback highlighting both strengths and areas for improvement
-        4. Specific, actionable recommendations for better ESG practices
-        5. Key gaps or areas requiring immediate attention
+        2. Detailed feedback highlighting both strengths and areas for improvement
+        3. Specific, actionable recommendations for better ESG practices
 
         Be fair and balanced in your assessment. Consider that many organizations are at
         different stages of their ESG journey. Recognize good intentions and partial
         implementations while identifying areas for growth.
 
-        Format your response exactly as follows:
-        Score: X.XX
-        Environmental: X.XX
-        Social: X.XX
-        Governance: X.XX
-
-        [Your detailed analysis follows here]
-
-        RECOMMENDATIONS:
-        - [Specific recommendation 1]
-        - [Specific recommendation 2]
-        - [Specific recommendation 3]
-
-        GAPS IDENTIFIED:
-        - [Gap 1]
-        - [Gap 2]
+        Format your response with the score clearly indicated as "Score: X.XX"
+        followed by your detailed analysis.
         """
 
         payload = {
@@ -166,15 +134,10 @@ class AIScorer:
 
             result_text = data["candidates"][0]["content"]["parts"][0]["text"]
             score = self._extract_score(result_text)
-            
-            # Extract category scores from the response
-            category_scores = self._extract_category_scores(result_text)
-            
-            # Enhanced feedback with category breakdown
-            enhanced_feedback = self._format_enhanced_feedback(result_text, score, category_scores)
-            
+            feedback = result_text
+
             logger.info(f"Gemini scoring completed successfully with score: {score}")
-            return score, enhanced_feedback
+            return score, feedback
 
         except requests.exceptions.Timeout:
             raise Exception("Gemini API request timed out")
@@ -292,7 +255,7 @@ class AIScorer:
             "appears structured" if "governance" in text.lower() else "requires attention"
         )
 
-        feedback = f"""e& AI ESG Analysis (Placeholder - Using Gemini Fallback):
+        feedback = f"""e& AI ESG Analysis (Integration Pending):
 
 **Overall Assessment:** The document shows {assessment_level} ESG compliance indicators.
 
@@ -315,7 +278,7 @@ class AIScorer:
 2. Implement regular ESG reporting cycles
 3. Integrate stakeholder feedback mechanisms
 
-*Note: This is a placeholder implementation. When e& API is available, configure EAND_API_KEY to use actual e& AI analysis.*
+*Note: This analysis uses e& AI placeholder. Full integration pending API availability.*
 """
 
         return score, feedback
@@ -408,111 +371,6 @@ class AIScorer:
         )
         return fallback_score
 
-    def _extract_category_scores(self, response_text: str) -> dict:
-        """Extract category scores for Environmental, Social, and Governance."""
-        category_scores = {}
-        
-        # Define patterns for extracting category scores
-        patterns = {
-            "environmental": [
-                r"[Ee]nvironmental[:\s]*([0-1](?:\.\d+)?)",
-                r"[Ee]nvironmental[:\s]*([0-1](?:\.\d+)?)",
-                r"[Ee]nvironmental[:\s]*(\d+(?:\.\d+)?)",
-            ],
-            "social": [
-                r"[Ss]ocial[:\s]*([0-1](?:\.\d+)?)",
-                r"[Ss]ocial[:\s]*(\d+(?:\.\d+)?)",
-            ],
-            "governance": [
-                r"[Gg]overnance[:\s]*([0-1](?:\.\d+)?)",
-                r"[Gg]overnance[:\s]*(\d+(?:\.\d+)?)",
-            ],
-        }
-        
-        for category, category_patterns in patterns.items():
-            for pattern in category_patterns:
-                matches = re.findall(pattern, response_text)
-                if matches:
-                    try:
-                        score = float(matches[0])
-                        # Handle percentage format
-                        if score > 1:
-                            score = score / 100.0
-                        # Ensure score is in valid range
-                        if 0 <= score <= 1:
-                            category_scores[category] = score
-                            break
-                    except ValueError:
-                        continue
-        
-        return category_scores
-
-    def _format_enhanced_feedback(self, response_text: str, overall_score: float, category_scores: dict) -> str:
-        """Format enhanced feedback with category breakdown and structured information."""
-        
-        # Extract recommendations
-        recommendations = []
-        rec_match = re.search(r"RECOMMENDATIONS:\s*(.*?)(?=GAPS IDENTIFIED:|$)", response_text, re.DOTALL | re.IGNORECASE)
-        if rec_match:
-            rec_text = rec_match.group(1).strip()
-            recommendations = [line.strip("- ").strip() for line in rec_text.split("\n") if line.strip().startswith("-")]
-        
-        # Extract gaps
-        gaps = []
-        gaps_match = re.search(r"GAPS IDENTIFIED:\s*(.*?)$", response_text, re.DOTALL | re.IGNORECASE)
-        if gaps_match:
-            gaps_text = gaps_match.group(1).strip()
-            gaps = [line.strip("- ").strip() for line in gaps_text.split("\n") if line.strip().startswith("-")]
-        
-        # Format enhanced feedback
-        formatted_feedback = f"""## ESG Compliance Analysis
-
-**Overall Score: {overall_score:.2f} ({overall_score*100:.1f}%)**
-
-### Category Breakdown:
-"""
-        
-        # Add category scores if available
-        if category_scores:
-            for category, score in category_scores.items():
-                formatted_feedback += f"- **{category.title()}**: {score:.2f} ({score*100:.1f}%)\n"
-        else:
-            # Fallback category scores based on overall score
-            formatted_feedback += f"- **Environmental**: {overall_score * 0.9:.2f} ({overall_score * 90:.1f}%)\n"
-            formatted_feedback += f"- **Social**: {overall_score * 0.95:.2f} ({overall_score * 95:.1f}%)\n"
-            formatted_feedback += f"- **Governance**: {overall_score * 0.85:.2f} ({overall_score * 85:.1f}%)\n"
-        
-        formatted_feedback += "\n### Detailed Analysis:\n"
-        
-        # Extract the main analysis text (everything between category scores and recommendations)
-        analysis_text = response_text
-        # Remove the score lines
-        analysis_text = re.sub(r"Score: \d+\.\d+", "", analysis_text)
-        analysis_text = re.sub(r"Environmental: \d+\.\d+", "", analysis_text)
-        analysis_text = re.sub(r"Social: \d+\.\d+", "", analysis_text)
-        analysis_text = re.sub(r"Governance: \d+\.\d+", "", analysis_text)
-        # Remove recommendations and gaps sections
-        analysis_text = re.sub(r"RECOMMENDATIONS:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE)
-        analysis_text = re.sub(r"GAPS IDENTIFIED:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE)
-        
-        formatted_feedback += analysis_text.strip()
-        
-        # Add recommendations
-        if recommendations:
-            formatted_feedback += "\n\n### Recommendations:\n"
-            for rec in recommendations:
-                if rec.strip():
-                    formatted_feedback += f"• {rec}\n"
-        
-        # Add gaps
-        if gaps:
-            formatted_feedback += "\n\n### Areas for Improvement:\n"
-            for gap in gaps:
-                if gap.strip():
-                    formatted_feedback += f"• {gap}\n"
-        
-        return formatted_feedback
-
     def get_provider_info(self) -> dict:
         """
         Get information about the current AI provider configuration.
@@ -539,9 +397,9 @@ class AIScorer:
         descriptions = {
             "gemini": "Google Gemini Pro - Advanced AI model for comprehensive ESG analysis",
             "openai": "OpenAI GPT-3.5-turbo - Reliable AI model for ESG document scoring",
-            "eand": "e& Internal AI - Custom AI model optimized for regional ESG standards (falls back to Gemini)",
+            "eand": "e& Internal AI - Custom AI model optimized for regional ESG standards",
         }
-        return descriptions.get(self.provider, f"Unknown provider: {self.provider} (falls back to Gemini)")
+        return descriptions.get(self.provider, f"Unknown provider: {self.provider}")
 
 
 # Example usage in FastAPI endpoints:

@@ -381,6 +381,7 @@ async def upload_file(
         return {
             "detail": "File uploaded and AI scored",
             "file_id": file_record.id,
+            "upload_id": file_record.id,  # Frontend expects this field
             "filename": secure_filename,
             "ai_score": score,
             "ai_feedback": feedback,

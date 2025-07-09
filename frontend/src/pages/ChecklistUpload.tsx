@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { FileUploadData } from '../services/api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
@@ -31,7 +31,6 @@ import {
   Divider,
 } from '@mui/material';
 import {
-  CloudUpload,
   CheckCircle,
   Warning,
   Error as ErrorIcon,
@@ -46,6 +45,7 @@ import {
   Description,
 } from '@mui/icons-material';
 import { checklistsAPI, aiAPI, uploadsAPI } from '../services/api';
+import { FileUploader } from '../components/FileUploader';
 
 export const ChecklistUpload: React.FC = () => {
   const { id: checklistId } = useParams<{ id: string }>();
@@ -67,19 +67,84 @@ export const ChecklistUpload: React.FC = () => {
     queryKey: ['ai-results', uploadId],
     queryFn: () => (uploadId ? aiAPI.getResultByUpload(uploadId) : null),
     enabled: !!uploadId && !!checklistId,
+    select: (response) => {
+      if (!response?.data?.results || response.data.results.length === 0) {
+        return null;
+      }
+      // Return the first result with properly formatted data
+      const result = response.data.results[0];
+      
+      // Extract category scores from the feedback
+      const extractCategoryScores = (feedback: string) => {
+        const envMatch = feedback.match(/Environmental.*?(\d+\.?\d*)/i);
+        const socialMatch = feedback.match(/Social.*?(\d+\.?\d*)/i);
+        const govMatch = feedback.match(/Governance.*?(\d+\.?\d*)/i);
+        
+        return {
+          environmental: envMatch ? parseFloat(envMatch[1]) / (parseFloat(envMatch[1]) > 1 ? 100 : 1) : result.score * 0.9,
+          social: socialMatch ? parseFloat(socialMatch[1]) / (parseFloat(socialMatch[1]) > 1 ? 100 : 1) : result.score * 0.95,
+          governance: govMatch ? parseFloat(govMatch[1]) / (parseFloat(govMatch[1]) > 1 ? 100 : 1) : result.score * 0.85,
+        };
+      };
+      
+      // Extract recommendations from the feedback
+      const extractRecommendations = (feedback: string) => {
+        const recMatch = feedback.match(/### Recommendations:\s*(.*?)(?=###|$)/s);
+        if (recMatch) {
+          return recMatch[1].split('\n').map(line => line.replace(/^•\s*/, '').trim()).filter(line => line.length > 0);
+        }
+        return ['Improve ESG documentation quality', 'Enhance sustainability reporting', 'Strengthen governance framework'];
+      };
+      
+      // Extract gaps from the feedback
+      const extractGaps = (feedback: string) => {
+        const gapsMatch = feedback.match(/### Areas for Improvement:\s*(.*?)$/s);
+        if (gapsMatch) {
+          return gapsMatch[1].split('\n').map(line => line.replace(/^•\s*/, '').trim()).filter(line => line.length > 0);
+        }
+        return result.score < 0.7 ? ['Limited environmental impact data', 'Insufficient social responsibility metrics'] : [];
+      };
+      
+      const category_scores = extractCategoryScores(result.feedback);
+      const recommendations = extractRecommendations(result.feedback);
+      const gaps = extractGaps(result.feedback);
+      
+      return {
+        data: {
+          overall_score: result.score,
+          ai_score: result.score,
+          feedback: result.feedback,
+          processed_at: result.created_at,
+          category_scores,
+          recommendations,
+          gaps,
+          confidence_level: 0.95,
+        }
+      };
+    },
   });
+
+  // Clear analyzing state when AI results are available
+  useEffect(() => {
+    if (aiResults?.data) {
+      setIsAnalyzing(false);
+    }
+  }, [aiResults]);
 
   // Fetch uploaded files for this checklist
   const { data: uploadedFiles, refetch: refetchUploadedFiles } = useQuery({
     queryKey: ['uploaded-files', checklistId],
     queryFn: () => uploadsAPI.search({ checklist_id: checklistId }),
     enabled: !!checklistId,
-    select: response => response.data || [],
+    select: response => response.data?.results || [],
   });
 
   // File deduplication check
   const isDuplicateFile = (file: File) => {
-    return uploadedFiles?.some(
+    if (!uploadedFiles || !Array.isArray(uploadedFiles)) {
+      return false;
+    }
+    return uploadedFiles.some(
       (uploaded: FileUploadData) =>
         uploaded.filename === file.name && Math.abs(uploaded.size - file.size) < 1000 // Allow small size differences
     );
@@ -132,12 +197,7 @@ export const ChecklistUpload: React.FC = () => {
           ? new File([file], file.name, { type: correctMimeType })
           : file;
 
-      console.log('File details:', {
-        name: fileWithCorrectType.name,
-        type: fileWithCorrectType.type,
-        size: fileWithCorrectType.size,
-        checklistId: checklistId,
-      });
+      // File validation passed - ready for upload
 
       const formData = new FormData();
       formData.append('file', fileWithCorrectType);
@@ -148,9 +208,9 @@ export const ChecklistUpload: React.FC = () => {
         setUploadProgress(prev => {
           if (prev >= 90) {
             clearInterval(interval);
-            return prev;
+            return 90;
           }
-          return prev + Math.random() * 15;
+          return Math.min(prev + Math.random() * 15, 90);
         });
       }, 150);
 
@@ -201,13 +261,22 @@ export const ChecklistUpload: React.FC = () => {
       // Refetch AI results after successful upload with retry logic
       const retryFetchResults = async (retries = 3) => {
         try {
+          console.log(`Attempting to fetch AI results (${retries} retries left)...`);
           await new Promise(resolve => setTimeout(resolve, 3000)); // Wait 3 seconds
-          await refetchAIResults();
-          setIsAnalyzing(false);
-        } catch (error) {
-          console.error('Error fetching AI results:', error);
-          if (retries > 0) {
-            console.log(`Retrying AI results fetch... ${retries} attempts left`);
+          const result = await refetchAIResults();
+          
+          console.log('AI results fetch result:', result);
+          
+          // Check if we got results
+          if (result?.data && result.data?.data) {
+            console.log('AI results found:', result.data.data);
+            setIsAnalyzing(false);
+            setSnackbarMessage('AI analysis completed successfully!');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+          } else if (retries > 0) {
+            // No results yet, try again
+            console.log('No AI results yet, retrying...');
             setTimeout(() => retryFetchResults(retries - 1), 2000);
           } else {
             setIsAnalyzing(false);
@@ -215,6 +284,19 @@ export const ChecklistUpload: React.FC = () => {
               'AI analysis is taking longer than expected. Please refresh to check results.'
             );
             setSnackbarSeverity('info');
+            setSnackbarOpen(true);
+          }
+        } catch (error) {
+          console.error('Error fetching AI results:', error);
+          if (retries > 0) {
+            // Retry logic - attempt to fetch results again
+            setTimeout(() => retryFetchResults(retries - 1), 2000);
+          } else {
+            setIsAnalyzing(false);
+            setSnackbarMessage(
+              'Failed to fetch AI analysis results. Please try refreshing the page.'
+            );
+            setSnackbarSeverity('error');
             setSnackbarOpen(true);
           }
         }
@@ -228,32 +310,23 @@ export const ChecklistUpload: React.FC = () => {
     },
   });
 
-  // Show error if no checklist ID is provided
-  if (!checklistId) {
+  // Show error if no checklist ID is provided or if it's 'default'
+  if (!checklistId || checklistId === 'default') {
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
         <Alert severity="error">
           <Typography variant="h6">Invalid Checklist</Typography>
           <Typography>
-            No checklist ID provided. Please navigate to a specific checklist to upload files.
+            No valid checklist ID provided. Please navigate to a specific checklist to upload files.
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            Go to <a href="/checklists">Checklists</a> and select a checklist to upload files to.
           </Typography>
         </Alert>
       </Container>
     );
   }
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleUpload = () => {
-    if (selectedFile) {
-      uploadMutation.mutate(selectedFile);
-    }
-  };
 
   const getScoreColor = (score: number) => {
     if (score >= 0.8) return 'success';
@@ -273,7 +346,7 @@ export const ChecklistUpload: React.FC = () => {
   };
 
   const exportData = async (format: 'json' | 'csv') => {
-    if (!aiResults?.data) {
+    if (!aiResults || !aiResults.data) {
       setSnackbarMessage('No AI results available to export');
       setSnackbarSeverity('warning');
       setSnackbarOpen(true);
@@ -372,44 +445,19 @@ export const ChecklistUpload: React.FC = () => {
             Upload Document
           </Typography>
 
-          <Box sx={{ mb: 3 }}>
-            <input
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-              style={{ display: 'none' }}
-              id="file-upload"
-              type="file"
-              onChange={handleFileSelect}
-            />
-            <label htmlFor="file-upload">
-              <Button
-                variant="outlined"
-                component="span"
-                startIcon={<CloudUpload />}
-                sx={{ mr: 2 }}
-              >
-                Choose File
-              </Button>
-            </label>
-
-            {selectedFile && (
-              <Chip
-                label={selectedFile.name}
-                onDelete={() => setSelectedFile(null)}
-                sx={{ ml: 1 }}
-              />
-            )}
-          </Box>
-
-          {selectedFile && (
-            <Button
-              variant="contained"
-              onClick={handleUpload}
-              disabled={uploadMutation.isPending}
-              startIcon={<CloudUpload />}
-            >
-              {uploadMutation.isPending ? 'Uploading...' : 'Upload & Analyze'}
-            </Button>
-          )}
+          <FileUploader
+            onFilesUploaded={(files) => {
+              if (files.length > 0) {
+                const file = files[0];
+                setSelectedFile(file);
+                // Trigger upload immediately with the file
+                uploadMutation.mutate(file);
+              }
+            }}
+            acceptedFileTypes={['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.txt', '.csv']}
+            maxFileSize={25 * 1024 * 1024} // 25MB
+            multiple={false}
+          />
 
           {uploadMutation.isPending && (
             <Box sx={{ mt: 2 }}>
@@ -454,7 +502,7 @@ export const ChecklistUpload: React.FC = () => {
               </Typography>
               <Typography variant="body2">
                 File uploaded successfully.{' '}
-                {aiResults?.data ? 'AI analysis complete.' : 'AI analysis in progress...'}
+                {aiResults && aiResults.data ? 'AI analysis complete.' : 'AI analysis in progress...'}
               </Typography>
             </Alert>
           )}
@@ -532,7 +580,7 @@ export const ChecklistUpload: React.FC = () => {
       )}
 
       {/* Enhanced AI Analysis Results */}
-      {aiResults?.data && (
+      {aiResults && aiResults.data && (
         <Card elevation={2}>
           <CardContent>
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>

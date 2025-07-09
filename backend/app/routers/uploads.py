@@ -2,15 +2,15 @@ import logging
 from datetime import datetime
 from typing import Any, Optional
 
-from fastapi import (  # type: ignore[import-untyped]
+from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
     Query,
     Request,
 )
-from sqlalchemy import func, text  # type: ignore[import-untyped]
-from sqlmodel import Session, select  # type: ignore[import-untyped]
+from sqlalchemy import func, text
+from sqlmodel import Session, select
 
 from app.auth import require_role
 from app.database import get_session
@@ -87,7 +87,7 @@ def search_uploads(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),  # or reviewer role
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search file uploads with various filters.
@@ -118,8 +118,12 @@ def search_uploads(
     # Build query using SQLModel syntax with proper database-level filtering
     query: Any = select(FileUpload)
 
-    if user_id is not None:
+    # For auditors, only show their own uploads
+    if current_user.role == "auditor":
+        query = query.where(FileUpload.user_id == current_user.id)
+    elif user_id is not None:
         query = query.where(FileUpload.user_id == user_id)
+    
     if checklist_id is not None:
         query = query.where(FileUpload.checklist_id == checklist_id)
     if status is not None:
@@ -142,8 +146,13 @@ def search_uploads(
 
     # Get total count efficiently
     count_query: Any = select(func.count()).select_from(FileUpload)
-    if user_id is not None:
+    
+    # For auditors, only show their own uploads
+    if current_user.role == "auditor":
+        count_query = count_query.where(FileUpload.user_id == current_user.id)
+    elif user_id is not None:
         count_query = count_query.where(FileUpload.user_id == user_id)
+    
     if checklist_id is not None:
         count_query = count_query.where(FileUpload.checklist_id == checklist_id)
     if status is not None:
@@ -199,7 +208,7 @@ def search_submissions(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search submissions with various filters.
@@ -306,7 +315,7 @@ def search_ai_results(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search AI results with various filters.
@@ -340,12 +349,16 @@ def search_ai_results(
     # Build query using SQLModel syntax
     query: Any = select(AIResult)
 
+    # For auditors, only show their own AI results
+    if current_user.role == "auditor":
+        query = query.where(AIResult.user_id == current_user.id)
+    elif user_id is not None:
+        query = query.where(AIResult.user_id == user_id)
+    
     if file_upload_id is not None:
         query = query.where(AIResult.file_upload_id == file_upload_id)
     if checklist_id is not None:
         query = query.where(AIResult.checklist_id == checklist_id)
-    if user_id is not None:
-        query = query.where(AIResult.user_id == user_id)
     if min_score is not None:
         query = query.where(AIResult.score >= min_score)
     if max_score is not None:
@@ -377,12 +390,17 @@ def search_ai_results(
 
     # Get total count efficiently
     count_query: Any = select(func.count()).select_from(AIResult)
+    
+    # For auditors, only show their own AI results
+    if current_user.role == "auditor":
+        count_query = count_query.where(AIResult.user_id == current_user.id)
+    elif user_id is not None:
+        count_query = count_query.where(AIResult.user_id == user_id)
+    
     if file_upload_id is not None:
         count_query = count_query.where(AIResult.file_upload_id == file_upload_id)
     if checklist_id is not None:
         count_query = count_query.where(AIResult.checklist_id == checklist_id)
-    if user_id is not None:
-        count_query = count_query.where(AIResult.user_id == user_id)
     if min_score is not None:
         count_query = count_query.where(AIResult.score >= min_score)
     if max_score is not None:
@@ -455,7 +473,7 @@ def search_users(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search users with various filters.
@@ -573,7 +591,7 @@ def search_notifications(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search notifications with various filters.
@@ -673,7 +691,7 @@ def search_submission_answers(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search submission answers with various filters.
@@ -772,7 +790,7 @@ def search_checklists(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search checklists with various filters.
@@ -890,7 +908,7 @@ def search_checklist_items(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search checklist items (questions) with various filters.
@@ -975,7 +993,7 @@ def search_comments(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search comments with various filters.
@@ -1050,7 +1068,7 @@ def search_audit_logs(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search audit logs with various filters.
@@ -1143,7 +1161,7 @@ def search_system_config(
     offset: int = Query(0, ge=0, description="Result offset for pagination"),
     limit: int = Query(20, ge=1, le=100, description="Max records per page"),
     db: Session = Depends(get_session),
-    current_user: User = Depends(require_role("admin")),
+    current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):
     """
     Search system configuration settings with various filters.

@@ -19,6 +19,17 @@ interface SystemConfig {
   [key: string]: unknown;
 }
 
+export interface FileUploadData {
+  id: string;
+  filename: string;
+  size: number;
+  status: string;
+  created_at: string;
+  ai_score?: number;
+  user_id?: string;
+  checklist_id?: string;
+}
+
 // Create Axios instance with base configuration
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
@@ -49,7 +60,7 @@ api.interceptors.response.use(
     // Only redirect to login if it's a 401 error AND not from the login endpoint
     if (error.response?.status === 401 && !error.config?.url?.includes('/login')) {
       // Token expired or invalid for authenticated requests
-      console.log('🚨 401 Unauthorized - clearing all auth data and redirecting to login');
+      console.warn('401 Unauthorized - clearing auth data and redirecting to login');
 
       // Clear all possible auth storage
       localStorage.removeItem('authToken');
@@ -146,7 +157,7 @@ export const aiAPI = {
 
   // Get results by file upload ID
   getResultByUpload: (uploadId: string) =>
-    api.get(`/v1/search/ai-results`, { params: { upload_id: uploadId } }),
+    api.get(`/v1/search/ai-results`, { params: { file_upload_id: uploadId } }),
 };
 
 // Reviews API endpoints
@@ -316,6 +327,8 @@ export const analyticsAPI = {
     api.get('/v1/analytics/leaderboard', { params }),
 
   getChecklistStats: () => api.get('/v1/analytics/checklist-stats'),
+
+  getAuditorMetrics: () => api.get('/v1/analytics/auditor-metrics'),
 };
 
 // Enhanced Search API

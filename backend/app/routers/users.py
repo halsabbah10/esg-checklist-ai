@@ -1,14 +1,15 @@
 from datetime import timedelta
+from typing import List
 
-from fastapi import (  # type: ignore[import-untyped]
+from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
     Request,
     Response,
 )
-from fastapi.security import OAuth2PasswordRequestForm  # type: ignore[import-untyped]
-from sqlmodel import Session, select  # type: ignore[import-untyped]
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlmodel import Session, select
 
 from ..auth import (
     create_access_token,
@@ -98,7 +99,7 @@ def get_current_user_info(request: Request, db: Session = Depends(get_session)):
     return get_current_user(request, db)
 
 
-@router.get("/", response_model=list[UserRead])
+@router.get("/", response_model=List[UserRead])
 def list_users(db: Session = Depends(get_session)):
     """List all users (for debugging)"""
     return db.exec(select(User)).all()

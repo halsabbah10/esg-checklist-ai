@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
       {
         text: 'File Upload',
         icon: <FileUpload />,
-        path: '/uploads/advanced',
+        path: '/checklists/1/upload',
         roles: ['admin', 'super_admin', 'auditor'],
         description: 'Upload and manage documents',
       },

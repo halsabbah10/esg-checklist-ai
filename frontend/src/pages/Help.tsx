@@ -43,8 +43,8 @@ export const HelpPage: React.FC = () => {
 
   const handleOpenChat = () => {
     // This would integrate with a chat system like Intercom, Zendesk, etc.
-    console.log('Opening chat support...');
-    alert('Chat support feature coming soon! Please email support for immediate assistance.');
+    // For now, redirect to email support
+    window.open('mailto:husam.alsabbah@gmail.com?subject=ESG Checklist AI Support Request', '_blank');
   };
 
   return (
@@ -279,7 +279,8 @@ export const HelpPage: React.FC = () => {
                       href="#"
                       onClick={e => {
                         e.preventDefault();
-                        alert('Video tutorials coming soon!');
+                        // Placeholder video tutorial link
+                        window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank');
                       }}
                     >
                       Video Tutorials
@@ -298,7 +299,7 @@ export const HelpPage: React.FC = () => {
                       href="#"
                       onClick={e => {
                         e.preventDefault();
-                        alert('Documentation coming soon!');
+                        window.open('/documentation', '_blank');
                       }}
                     >
                       User Documentation

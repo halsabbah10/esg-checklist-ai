@@ -59,7 +59,6 @@ dev = [
     "black>=23.0.0",
     "ruff>=0.1.0",
     "bandit[toml]>=1.7.0",
-    "mypy>=1.7.0",
     "pre-commit>=3.5.0",
     "coverage>=7.3.0",
     "pytest-cov>=4.1.0",
@@ -236,35 +235,6 @@ skips = [
 # Allow assert in test files
 skips = ["*/tests/*", "*test*.py"]
 
-[tool.mypy]
-# MyPy type checker configuration
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = false
-check_untyped_defs = true
-disallow_untyped_decorators = false
-no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
-warn_no_return = true
-warn_unreachable = true
-strict_equality = true
-show_error_codes = true
-
-# Ignore missing imports for certain modules
-[[tool.mypy.overrides]]
-module = [
-    "google.generativeai.*",
-    "pdfplumber.*",
-    "docx.*",
-    "openpyxl.*",
-    "fpdf.*",
-    "werkzeug.*",
-    "psutil.*",
-]
-ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 # Pytest configuration

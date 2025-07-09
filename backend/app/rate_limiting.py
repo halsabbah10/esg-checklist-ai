@@ -6,10 +6,10 @@ Implements various rate limits based on endpoint sensitivity and user roles
 import logging
 from typing import Any, Callable
 
-from fastapi import HTTPException, Request, status  # type: ignore[import-untyped]
-from slowapi import Limiter  # type: ignore[import-untyped]
-from slowapi.errors import RateLimitExceeded  # type: ignore[import-untyped]
-from slowapi.util import get_remote_address  # type: ignore[import-untyped]
+from fastapi import HTTPException, Request, status
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,9 @@ def get_rate_limit(endpoint_type: str) -> str:
     return RATE_LIMITS.get(endpoint_type, "100/minute")
 
 
-def create_rate_limiter(endpoint_type: str):
+def create_rate_limiter(
+    endpoint_type: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Create a rate limiter decorator for specific endpoint type"""
     limit = get_rate_limit(endpoint_type)
 
@@ -106,7 +108,9 @@ user_limiter = Limiter(
 )
 
 
-def create_user_rate_limiter(endpoint_type: str):
+def create_user_rate_limiter(
+    endpoint_type: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Create a user-based rate limiter for authenticated endpoints"""
     limit = get_rate_limit(endpoint_type)
 

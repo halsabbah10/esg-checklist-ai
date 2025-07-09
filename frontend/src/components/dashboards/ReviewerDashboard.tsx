@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Card,
@@ -185,6 +186,7 @@ const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onRe
 };
 
 export const ReviewerDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false);
   const [selectedUpload, setSelectedUpload] = React.useState<Upload | null>(null);
 
@@ -431,13 +433,28 @@ export const ReviewerDashboard: React.FC = () => {
             gap: 2,
           }}
         >
-          <Button variant="contained" fullWidth startIcon={<Assignment />}>
+          <Button 
+            variant="contained" 
+            fullWidth 
+            startIcon={<Assignment />}
+            onClick={() => navigate('/reviews')}
+          >
             Review Queue
           </Button>
-          <Button variant="outlined" fullWidth startIcon={<AssessmentOutlined />}>
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            startIcon={<AssessmentOutlined />}
+            onClick={() => navigate('/analytics')}
+          >
             AI Analytics
           </Button>
-          <Button variant="outlined" fullWidth startIcon={<Comment />}>
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            startIcon={<Comment />}
+            onClick={() => navigate('/reviews')}
+          >
             Comments History
           </Button>
         </Box>

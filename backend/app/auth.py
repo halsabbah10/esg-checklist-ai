@@ -1,7 +1,7 @@
 import logging
 import warnings
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Union, List
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -122,7 +122,7 @@ class UserRoles:
         }
 
 
-def require_role(role: str):
+def require_role(roles: Union[str, List[str]]):
     """
     Role-based access control with hierarchy support.
 
@@ -131,7 +131,13 @@ def require_role(role: str):
     - admin: Full control over system (manage users, checklists, settings)
     - reviewer: Review and manage submissions
     - auditor: Personal work only
+    
+    Args:
+        roles: Single role string or list of role strings
     """
+    # Convert single role to list for uniform processing
+    if isinstance(roles, str):
+        roles = [roles]
 
     def role_checker(request: Request, db: Session = Depends(get_session)):
         # Get current user using updated authentication
@@ -143,10 +149,14 @@ def require_role(role: str):
         # Check if user's role has the required permissions
         user_permissions = role_hierarchy.get(current_user.role, [])
 
-        if role not in user_permissions:
+        # Check if any of the required roles match user's permissions
+        has_permission = any(role in user_permissions for role in roles)
+        
+        if not has_permission:
+            role_names = "/".join(roles)
             raise HTTPException(
                 status_code=403,
-                detail=f"Access denied. Requires {role} role or higher.",
+                detail=f"Access denied. Requires {role_names} role or higher.",
             )
         return current_user
 

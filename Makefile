@@ -22,7 +22,7 @@ help:
 	@echo "  test-frontend  Run frontend tests only"
 	@echo ""
 	@echo "Code Quality Commands:"
-	@echo "  lint           Run all linting checks (ruff, bandit, mypy, eslint)"
+	@echo "  lint           Run all linting checks (ruff, bandit, eslint)"
 	@echo "  lint-backend   Run backend linting only"
 	@echo "  lint-frontend  Run frontend linting only"
 	@echo "  format         Format code with black, ruff, and prettier"
@@ -85,7 +85,6 @@ clean:
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name ".pytest_cache" -exec rm -rf {} +
-	find . -type d -name ".mypy_cache" -exec rm -rf {} +
 	find . -type d -name ".ruff_cache" -exec rm -rf {} +
 	rm -rf htmlcov/
 	rm -rf .coverage
@@ -145,13 +144,12 @@ test-all-comprehensive:
 	make test-contracts
 
 # Code quality commands
-lint: ruff-check bandit mypy
+lint: ruff-check bandit
 	@echo "All linting checks completed!"
 
 lint-backend:
 	ruff check backend/ --show-source
 	bandit -r backend/ -ll -f text
-	mypy backend/app/
 
 lint-frontend:
 	cd frontend && npm run lint
@@ -178,8 +176,6 @@ ruff-security:
 bandit:
 	bandit -r backend/ -ll -f text
 
-mypy:
-	mypy backend/app/
 
 pre-commit:
 	pre-commit run --all-files

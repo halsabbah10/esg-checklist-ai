@@ -112,9 +112,12 @@ export const AdminDashboard: React.FC = () => {
       setLastUpdate(new Date());
     }, 30000);
 
-    // Simulate connection status changes
+    // Check connection status periodically
     const connectionCheck = setInterval(() => {
-      setIsConnected(Math.random() > 0.1); // 90% uptime simulation
+      fetch('/health').then(
+        () => setIsConnected(true),
+        () => setIsConnected(false)
+      );
     }, 60000);
 
     return () => {

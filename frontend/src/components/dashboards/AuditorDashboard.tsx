@@ -1,5 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Card,
@@ -142,10 +143,12 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({ category, score, maxS
 };
 
 export const AuditorDashboard: React.FC = () => {
-  // Fetch auditor analytics
-  const { isLoading: analyticsLoading } = useQuery({
-    queryKey: ['analytics', 'auditor'],
-    queryFn: () => analyticsAPI.getSummary(),
+  const navigate = useNavigate();
+  
+  // Fetch auditor-specific metrics
+  const { data: auditorMetrics, isLoading: metricsLoading } = useQuery({
+    queryKey: ['analytics', 'auditor-metrics'],
+    queryFn: () => analyticsAPI.getAuditorMetrics(),
   });
 
   // Fetch score trends
@@ -166,7 +169,7 @@ export const AuditorDashboard: React.FC = () => {
     queryFn: () => submissionsAPI.getAll(),
   });
 
-  if (analyticsLoading || trendsLoading || aiLoading || submissionsLoading) {
+  if (metricsLoading || trendsLoading || aiLoading || submissionsLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
@@ -178,35 +181,21 @@ export const AuditorDashboard: React.FC = () => {
 
   const aiResultsData = aiResults?.data?.results || [];
   const submissionsData = submissions?.data || [];
+  const metrics = auditorMetrics?.data || {};
 
-  // Calculate compliance metrics
-  const overallScore =
-    aiResultsData.length > 0
-      ? aiResultsData.reduce(
-          (sum: number, result: AIResult) => sum + (result.overall_score || 0),
-          0
-        ) / aiResultsData.length
-      : 0;
+  // Use real metrics from backend
+  const overallScore = metrics.overallScore || 0;
+  const passedAudits = metrics.passedAudits || 0;
+  const failedAudits = metrics.failedAudits || 0;
+  const pendingReviews = metrics.pendingReviews || 0;
+  const avgProcessingTime = metrics.avgProcessingTime || 0;
+  const esgCategories = metrics.esgCategories || [];
 
-  const passedAudits = aiResultsData.filter(
-    (result: AIResult) => (result.overall_score || 0) >= 0.7
-  ).length;
-  const failedAudits = aiResultsData.filter(
-    (result: AIResult) => (result.overall_score || 0) < 0.5
-  ).length;
+  // Calculate warning audits (scores between 0.5 and 0.7)
   const warningAudits = aiResultsData.filter((result: AIResult) => {
     const score = result.overall_score || 0;
     return score >= 0.5 && score < 0.7;
   }).length;
-
-  // Mock ESG category scores (in a real app, this would come from the backend)
-  const esgCategories = [
-    { category: 'Environmental', score: overallScore * 85 },
-    { category: 'Social', score: overallScore * 78 },
-    { category: 'Governance', score: overallScore * 92 },
-    { category: 'Risk Management', score: overallScore * 88 },
-    { category: 'Compliance', score: overallScore * 82 },
-  ];
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -233,7 +222,6 @@ export const AuditorDashboard: React.FC = () => {
           value={`${Math.round(overallScore * 100)}%`}
           icon={<AssessmentOutlined fontSize="large" />}
           color="primary"
-          trend={3}
         />
         <StatsCard
           title="Passed Audits"
@@ -265,7 +253,7 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               ESG Compliance Scores
             </Typography>
-            {esgCategories.map(item => (
+            {esgCategories.map((item: any) => (
               <ComplianceScore key={item.category} category={item.category} score={item.score} />
             ))}
           </CardContent>
@@ -413,7 +401,7 @@ export const AuditorDashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Avg Processing Time</Typography>
                 <Typography variant="body2" fontWeight={500}>
-                  2.3 min
+                  {avgProcessingTime > 0 ? `${avgProcessingTime} min` : 'N/A'}
                 </Typography>
               </Box>
             </Box>
@@ -437,16 +425,36 @@ export const AuditorDashboard: React.FC = () => {
             gap: 2,
           }}
         >
-          <Button variant="contained" fullWidth startIcon={<FileDownload />}>
+          <Button 
+            variant="contained" 
+            fullWidth 
+            startIcon={<FileDownload />}
+            onClick={() => navigate('/analytics/reports')}
+          >
             Generate Report
           </Button>
-          <Button variant="outlined" fullWidth startIcon={<BarChart />}>
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            startIcon={<BarChart />}
+            onClick={() => navigate('/analytics')}
+          >
             View Analytics
           </Button>
-          <Button variant="outlined" fullWidth startIcon={<Timeline />}>
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            startIcon={<Timeline />}
+            onClick={() => navigate('/analytics/advanced')}
+          >
             Trend Analysis
           </Button>
-          <Button variant="outlined" fullWidth startIcon={<PieChart />}>
+          <Button 
+            variant="outlined" 
+            fullWidth 
+            startIcon={<PieChart />}
+            onClick={() => navigate('/analytics/advanced')}
+          >
             Category Breakdown
           </Button>
         </Box>
