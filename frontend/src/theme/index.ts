@@ -218,6 +218,7 @@ const createAppTheme = (mode: PaletteMode) => {
             fontFamily: brandTokens.fontFamily,
             scrollbarWidth: 'thin',
             scrollbarColor: `${colors.border} transparent`,
+            transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out',
             '&::-webkit-scrollbar': {
               width: '8px',
             },
@@ -227,6 +228,7 @@ const createAppTheme = (mode: PaletteMode) => {
             '&::-webkit-scrollbar-thumb': {
               backgroundColor: colors.border,
               borderRadius: '4px',
+              transition: 'background-color 200ms ease-in-out',
               '&:hover': {
                 backgroundColor: colors.textDisabled,
               },
@@ -235,6 +237,7 @@ const createAppTheme = (mode: PaletteMode) => {
           '*': {
             scrollbarWidth: 'thin',
             scrollbarColor: `${colors.border} transparent`,
+            transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out, box-shadow 300ms ease-in-out',
           },
           '*::-webkit-scrollbar': {
             width: '8px',
@@ -299,7 +302,7 @@ const createAppTheme = (mode: PaletteMode) => {
             border: `1px solid ${colors.border}`,
             backgroundColor: colors.surface,
             boxShadow: shadows.small,
-            transition: 'all 200ms ease-in-out',
+            transition: 'all 300ms ease-in-out',
             '&:hover': {
               boxShadow: shadows.medium,
               borderColor: isDark ? colors.border : colors.borderLight,
@@ -312,6 +315,7 @@ const createAppTheme = (mode: PaletteMode) => {
           root: {
             backgroundColor: colors.surface,
             backgroundImage: 'none',
+            transition: 'background-color 300ms ease-in-out, box-shadow 300ms ease-in-out',
           },
           elevation1: {
             boxShadow: shadows.small,
@@ -417,6 +421,7 @@ const createAppTheme = (mode: PaletteMode) => {
             boxShadow: `0 1px 0 ${colors.border}`,
             borderBottom: `1px solid ${colors.border}`,
             height: '64px',
+            transition: 'background-color 300ms ease-in-out, color 300ms ease-in-out, border-color 300ms ease-in-out, box-shadow 300ms ease-in-out',
           },
         },
       },
@@ -426,6 +431,7 @@ const createAppTheme = (mode: PaletteMode) => {
             width: '240px',
             borderRight: `1px solid ${colors.border}`,
             backgroundColor: colors.surface,
+            transition: 'background-color 300ms ease-in-out, border-color 300ms ease-in-out',
           },
         },
       },

@@ -180,6 +180,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
               onClick={toggleTheme}
               sx={{
                 color: 'text.secondary',
+                position: 'relative',
                 '&:hover': {
                   color: 'primary.main',
                   transform: 'scale(1.1)',
@@ -188,7 +189,33 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
               }}
               aria-label="toggle dark mode"
             >
-              {isDarkMode ? <LightMode /> : <DarkMode />}
+              <Box
+                sx={{
+                  position: 'relative',
+                  width: 24,
+                  height: 24,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <LightMode
+                  sx={{
+                    position: 'absolute',
+                    opacity: isDarkMode ? 1 : 0,
+                    transform: isDarkMode ? 'rotate(0deg) scale(1)' : 'rotate(180deg) scale(0.8)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+                <DarkMode
+                  sx={{
+                    position: 'absolute',
+                    opacity: isDarkMode ? 0 : 1,
+                    transform: isDarkMode ? 'rotate(-180deg) scale(0.8)' : 'rotate(0deg) scale(1)',
+                    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                />
+              </Box>
             </IconButton>
           </Tooltip>
 

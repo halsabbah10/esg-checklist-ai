@@ -1,5 +1,4 @@
 from datetime import timedelta
-from typing import TYPE_CHECKING
 
 from fastapi import (  # type: ignore[import-untyped]
     APIRouter,
@@ -22,9 +21,6 @@ from ..database import get_session
 from ..models import User
 from ..rate_limiting import api_write_rate_limit
 from ..schemas import Token, UserCreate, UserRead
-
-if TYPE_CHECKING:
-    pass
 
 router = APIRouter(prefix="/users", tags=["users"])
 
