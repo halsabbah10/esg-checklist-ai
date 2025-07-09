@@ -16,7 +16,6 @@ import {
   ListItemText,
   ListItemIcon,
   Paper,
-  Badge,
   IconButton,
 } from '@mui/material';
 import {
@@ -28,7 +27,6 @@ import {
   Settings,
   Security,
   Refresh,
-  NotificationsActive,
   CheckCircle,
   Warning,
 } from '@mui/icons-material';
@@ -108,7 +106,6 @@ export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
-  const [pendingTasks, setPendingTasks] = useState(7);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -120,15 +117,9 @@ export const AdminDashboard: React.FC = () => {
       setIsConnected(Math.random() > 0.1); // 90% uptime simulation
     }, 60000);
 
-    // Simulate pending tasks updates
-    const taskCheck = setInterval(() => {
-      setPendingTasks(Math.floor(Math.random() * 10) + 1);
-    }, 45000);
-
     return () => {
       clearInterval(interval);
       clearInterval(connectionCheck);
-      clearInterval(taskCheck);
     };
   }, []);
 
@@ -187,11 +178,6 @@ export const AdminDashboard: React.FC = () => {
           </Typography>
         </Box>
         <Box display="flex" alignItems="center" gap={2}>
-          <Badge badgeContent={pendingTasks} color="error">
-            <IconButton>
-              <NotificationsActive />
-            </IconButton>
-          </Badge>
           <Chip
             icon={isConnected ? <CheckCircle /> : <Warning />}
             label={`${isConnected ? 'Online' : 'Offline'} • ${lastUpdate.toLocaleTimeString()}`}
