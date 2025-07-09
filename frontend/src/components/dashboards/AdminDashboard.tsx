@@ -57,6 +57,12 @@ interface Analytics {
   totalChecklists?: number;
   totalUploads?: number;
   averageScore?: number;
+  trends?: {
+    users: number;
+    checklists: number;
+    uploads: number;
+    score: number;
+  };
 }
 
 interface StatsCardProps {
@@ -212,28 +218,28 @@ export const AdminDashboard: React.FC = () => {
           value={stats.totalUsers || 0}
           icon={<People fontSize="large" />}
           color="primary"
-          trend={5}
+          trend={stats.trends?.users || 0}
         />
         <StatsCard
           title="Active Checklists"
           value={stats.totalChecklists || 0}
           icon={<Assignment fontSize="large" />}
           color="secondary"
-          trend={2}
+          trend={stats.trends?.checklists || 0}
         />
         <StatsCard
           title="Files Uploaded"
           value={stats.totalUploads || 0}
           icon={<CloudUpload fontSize="large" />}
           color="success"
-          trend={12}
+          trend={stats.trends?.uploads || 0}
         />
         <StatsCard
           title="Avg AI Score"
           value={Math.round((stats.averageScore || 0) * 100)}
           icon={<Assessment fontSize="large" />}
           color="warning"
-          trend={-1}
+          trend={stats.trends?.score || 0}
         />
       </Box>
 
