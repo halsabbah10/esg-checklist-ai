@@ -109,7 +109,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
             }}
             onClick={() => navigate('/dashboard')}
           >
-            ESG AI
+            🌍 ESG AI
           </Typography>
 
           {/* Role indicator */}
@@ -167,13 +167,7 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
           ))}
 
           {/* Global Search */}
-          <Box sx={{ 
-            ml: 'auto',
-            mr: 2,
-            width: 320,
-            maxWidth: 320,
-            minWidth: 280
-          }}>
+          <Box sx={{ ml: 'auto', mr: 2, maxWidth: 300, minWidth: 200 }}>
             <GlobalSearch />
           </Box>
         </Box>

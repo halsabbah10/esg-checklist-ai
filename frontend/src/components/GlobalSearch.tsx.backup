@@ -124,7 +124,7 @@ export const GlobalSearch: React.FC = React.memo(() => {
   ];
 
   return (
-    <Box sx={{ position: 'relative', width: '100%' }}>
+    <Box sx={{ position: 'relative', maxWidth: 400 }}>
       <TextField
         fullWidth
         placeholder="Search checklists, uploads, users..."
@@ -134,13 +134,13 @@ export const GlobalSearch: React.FC = React.memo(() => {
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: 'text.secondary' }} />
+              <SearchIcon />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton onClick={handleFilterClick} size="small">
-                <FilterList sx={{ color: 'text.secondary' }} />
+                <FilterList />
               </IconButton>
               {query && (
                 <IconButton
@@ -150,63 +150,18 @@ export const GlobalSearch: React.FC = React.memo(() => {
                   }}
                   size="small"
                 >
-                  <Clear sx={{ color: 'text.secondary' }} />
+                  <Clear />
                 </IconButton>
               )}
             </InputAdornment>
           ),
         }}
-        sx={(theme) => ({ 
-          mb: 0,
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: 'background.paper',
-            color: theme.palette.text.primary,
-            '& fieldset': {
-              borderColor: 'divider',
-            },
-            '&:hover fieldset': {
-              borderColor: 'text.secondary',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: 'primary.main',
-            },
-          },
-          '& .MuiOutlinedInput-input': {
-            color: `${theme.palette.text.primary} !important`,
-            caretColor: `${theme.palette.text.primary} !important`,
-            '&::placeholder': {
-              color: `${theme.palette.text.secondary} !important`,
-              opacity: '1 !important',
-            },
-            '&:focus': {
-              color: `${theme.palette.text.primary} !important`,
-              caretColor: `${theme.palette.text.primary} !important`,
-            },
-          },
-          '& input': {
-            color: `${theme.palette.text.primary} !important`,
-            caretColor: `${theme.palette.text.primary} !important`,
-          },
-        })}
+        sx={{ mb: 1 }}
       />
 
       {/* Active Filters */}
       {filters.length > 0 && (
-        <Box sx={{ 
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          mt: 0.5,
-          mb: 0,
-          zIndex: 1000,
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'divider',
-          borderRadius: 1,
-          p: 1,
-          boxShadow: 1
-        }}>
+        <Box sx={{ mb: 1 }}>
           {filters.map(filter => (
             <Chip
               key={filter}
@@ -227,31 +182,7 @@ export const GlobalSearch: React.FC = React.memo(() => {
       )}
 
       {/* Filter Menu */}
-      <Menu 
-        anchorEl={anchorEl} 
-        open={Boolean(anchorEl)} 
-        onClose={handleFilterClose}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
-        }}
-        slotProps={{
-          paper: {
-            sx: {
-              mt: 1,
-              minWidth: 200,
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 2,
-              boxShadow: (theme) => theme.shadows[8],
-            }
-          }
-        }}
-      >
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleFilterClose}>
         {filterOptions.map(option => (
           <MenuItem
             key={option.value}
