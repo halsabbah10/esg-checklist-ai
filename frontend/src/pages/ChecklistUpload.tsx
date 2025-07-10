@@ -95,6 +95,16 @@ export const ChecklistUpload: React.FC = () => {
       // Return the first result with properly formatted data
       const result = response.data.results[0];
       
+      // Parse analysis metadata if available for persistent detailed reporting
+      let parsedMetadata: any = {};
+      if (result.analysis_metadata) {
+        try {
+          parsedMetadata = JSON.parse(result.analysis_metadata);
+        } catch (e) {
+          console.warn('Failed to parse analysis_metadata:', e);
+        }
+      }
+      
       // Extract category scores from the feedback with improved parsing
       const extractCategoryScores = (feedback: string) => {
         // Try to find structured category scores first
@@ -183,6 +193,12 @@ export const ChecklistUpload: React.FC = () => {
           recommendations,
           gaps,
           confidence_level: 0.95,
+          // Include persistent detailed reporting data from analysis_metadata
+          analysis_metadata: parsedMetadata,
+          department_context: parsedMetadata.audit_context || null,
+          checklist_completeness: parsedMetadata.checklist_completeness || null,
+          analysis_type: parsedMetadata.analysis_type || 'general',
+          department: parsedMetadata.department || 'general',
         }
       };
     },
@@ -1163,6 +1179,93 @@ export const ChecklistUpload: React.FC = () => {
                 </Accordion>
               ) : null;
             })()}
+
+            {/* Persistent Department Context from Analysis Metadata */}
+            {aiResults.data.department_context && (
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary' }}>
+                    🏢 {aiResults.data.department || 'Department'} Analysis Context
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Paper elevation={1} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                        Stored Department-Specific Context
+                      </Typography>
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        <Typography variant="body2">
+                          This analysis was performed with <strong>{aiResults.data.department}</strong> department context. 
+                          Data persists across server restarts.
+                        </Typography>
+                      </Alert>
+                    </Box>
+
+                    {/* Display department context details */}
+                    {aiResults.data.department_context.focus_areas && (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                          📋 Focus Areas:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                          {aiResults.data.department_context.focus_areas.map((area: string, index: number) => (
+                            <Chip key={index} label={area.replace(/_/g, ' ').toUpperCase()} variant="outlined" size="small" />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+
+                    {aiResults.data.department_context.compliance_frameworks && (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                          📜 Compliance Frameworks:
+                        </Typography>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+                          {aiResults.data.department_context.compliance_frameworks.map((framework: string, index: number) => (
+                            <Chip key={index} label={framework} variant="filled" color="secondary" size="small" />
+                          ))}
+                        </Box>
+                      </Box>
+                    )}
+
+                    {aiResults.data.department_context.key_metrics && (
+                      <Box sx={{ mb: 3 }}>
+                        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>
+                          📊 Key Metrics Evaluated:
+                        </Typography>
+                        <List dense>
+                          {aiResults.data.department_context.key_metrics.map((metric: string, index: number) => (
+                            <ListItem key={index} sx={{ py: 0.5 }}>
+                              <ListItemIcon sx={{ minWidth: 24 }}>
+                                <TrendingUp fontSize="small" color="primary" />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={
+                                  <Typography variant="body2">
+                                    {metric.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  </Typography>
+                                } 
+                              />
+                            </ListItem>
+                          ))}
+                        </List>
+                      </Box>
+                    )}
+
+                    <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, border: 1, borderColor: 'grey.200' }}>
+                      <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                        Analysis Type: 
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        {aiResults.data.analysis_type || 'general'} 
+                        {aiResults.data.analysis_type === 'demo_department_specific' && ' (Demo analysis due to API limits)'}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </AccordionDetails>
+              </Accordion>
+            )}
 
             {/* Department-Specific Detailed Analysis */}
             {selectedDepartment && (
