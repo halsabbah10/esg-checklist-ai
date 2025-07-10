@@ -27,7 +27,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
-import { reviewsAPI, uploadsAPI } from '../services/api';
+import { reviewsAPI, uploadsAPI, aiAPI } from '../services/api';
 
 interface ReviewItem {
   id: string;
@@ -58,6 +58,14 @@ export const Reviews: React.FC = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
 
+  // Fetch AI analysis for selected file
+  const { data: aiAnalysis, isLoading: aiLoading } = useQuery({
+    queryKey: ['ai-analysis', selectedReview?.id],
+    queryFn: () => aiAPI.getResultByUpload(selectedReview!.id),
+    enabled: !!selectedReview && viewDialogOpen,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Fetch review items
   const {
     data: reviews = [],
@@ -68,44 +76,40 @@ export const Reviews: React.FC = () => {
     queryKey: ['reviews', statusFilter, searchTerm],
     queryFn: async () => {
       try {
-        // First try to get actual reviews
-        const reviewsResponse = await reviewsAPI.getAll();
-        if (reviewsResponse.data && Array.isArray(reviewsResponse.data)) {
-          return reviewsResponse.data.map((review: unknown) => {
-            const reviewData = review as UploadData;
-            return {
-              id: reviewData.id,
-              filename: reviewData.filename || `Document ${reviewData.id}`,
-              status: (reviewData.status || 'pending') as 'pending' | 'approved' | 'rejected',
-              uploaded_at: reviewData.created_at || new Date().toISOString(),
-              ai_score: reviewData.ai_score,
-              comments: [],
-            };
-          });
-        }
-      } catch (reviewError) {
-        console.warn('Reviews API not available, falling back to uploads:', reviewError);
+        // Get uploads for reviews (since reviews are based on file uploads)
+        const uploadsResponse = await uploadsAPI.search({
+          status: statusFilter !== 'all' ? statusFilter : undefined,
+          filename: searchTerm || undefined,
+          limit: 100, // Increase limit to get more results
+        });
+
+        console.log('Uploads API response:', uploadsResponse);
+
+        // Check if response has data and results
+        const results = uploadsResponse.data?.results || [];
+        console.log('Upload results:', results);
+
+        return results.map((upload: unknown) => {
+          const uploadData = upload as UploadData;
+          return {
+            id: uploadData.id,
+            filename: uploadData.filename || `Document ${uploadData.id}`,
+            status: (uploadData.status || 'pending') as 'pending' | 'approved' | 'rejected',
+            uploaded_at: uploadData.created_at || new Date().toISOString(),
+            ai_score: uploadData.ai_score,
+            comments: [],
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        throw error;
       }
-
-      // Fallback to uploads API for review items
-      const uploadsResponse = await uploadsAPI.search({
-        status: statusFilter !== 'all' ? statusFilter : undefined,
-        filename: searchTerm || undefined,
-      });
-
-      return (uploadsResponse.data || []).map((upload: unknown) => {
-        const uploadData = upload as UploadData;
-        return {
-          id: uploadData.id,
-          filename: uploadData.filename || `Document ${uploadData.id}`,
-          status: (uploadData.status || 'pending') as 'pending' | 'approved' | 'rejected',
-          uploaded_at: uploadData.created_at || new Date().toISOString(),
-          ai_score: uploadData.ai_score,
-          comments: [],
-        };
-      });
     },
+    staleTime: 2 * 60 * 1000, // 2 minutes stale time
+    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
     refetchInterval: 30000, // Refresh every 30 seconds
+    retry: 3, // Retry failed requests
+    refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
   const filteredReviews = reviews.filter((review: ReviewItem) => {
@@ -226,7 +230,7 @@ export const Reviews: React.FC = () => {
         Document Reviews
       </Typography>
 
-      <Typography variant="body1" color="text.secondary" paragraph>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
         Review and approve ESG compliance documents submitted for analysis.
       </Typography>
 
@@ -279,12 +283,14 @@ export const Reviews: React.FC = () => {
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               sx={{ minWidth: 250 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search />
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
 
@@ -399,51 +405,130 @@ export const Reviews: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* View Details Dialog */}
+      {/* AI Analysis View Dialog */}
       <Dialog
         open={viewDialogOpen}
         onClose={() => setViewDialogOpen(false)}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
+        PaperProps={{
+          sx: { height: '80vh', maxHeight: '800px' }
+        }}
       >
-        <DialogTitle>Document Details</DialogTitle>
-        <DialogContent>
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h5">AI Analysis Results</Typography>
+            <Chip 
+              label={selectedReview?.status} 
+              color={selectedReview ? getStatusColor(selectedReview.status) : 'default'} 
+            />
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
           {selectedReview && (
-            <Stack spacing={2}>
-              <Paper elevation={1} sx={{ p: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  {selectedReview.filename}
+            <Stack spacing={3}>
+              {/* File Information */}
+              <Paper elevation={2} sx={{ p: 3 }}>
+                <Typography variant="h6" gutterBottom color="primary">
+                  📄 Document Information
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Uploaded: {new Date(selectedReview.uploaded_at).toLocaleDateString()}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Status: <Chip label={selectedReview.status} color={getStatusColor(selectedReview.status)} size="small" />
-                </Typography>
-                {selectedReview.ai_score && (
-                  <Typography variant="body2" color="text.secondary">
-                    AI Score: {Math.round(selectedReview.ai_score * 100)}%
-                  </Typography>
-                )}
+                <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">Filename:</Typography>
+                    <Typography variant="body1" fontWeight={500}>{selectedReview.filename}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">Upload Date:</Typography>
+                    <Typography variant="body1">{new Date(selectedReview.uploaded_at).toLocaleString()}</Typography>
+                  </Box>
+                </Box>
               </Paper>
-              
+
+              {/* AI Analysis Results */}
+              {aiLoading ? (
+                <Box display="flex" justifyContent="center" py={4}>
+                  <CircularProgress />
+                  <Typography variant="body2" sx={{ ml: 2 }}>Loading AI analysis...</Typography>
+                </Box>
+              ) : aiAnalysis?.data?.results?.length > 0 ? (
+                <Paper elevation={2} sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    🤖 AI Analysis Results
+                  </Typography>
+                  {aiAnalysis.data.results.map((result: any, index: number) => (
+                    <Box key={index} sx={{ mb: 3 }}>
+                      <Box display="flex" alignItems="center" gap={2} mb={2}>
+                        <Typography variant="h4" color="success.main" fontWeight="bold">
+                          {Math.round((result.score || result.overall_score || 0) * 100)}%
+                        </Typography>
+                        <Typography variant="subtitle1" color="text.secondary">
+                          Compliance Score
+                        </Typography>
+                      </Box>
+                      
+                      {result.analysis && (
+                        <Box>
+                          <Typography variant="subtitle2" gutterBottom>Analysis Summary:</Typography>
+                          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
+                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                              {result.analysis}
+                            </Typography>
+                          </Paper>
+                        </Box>
+                      )}
+
+                      <Box mt={2} display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={2}>
+                        <Box textAlign="center" p={1}>
+                          <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                          <Typography variant="body1" fontWeight={500}>{result.status || 'Completed'}</Typography>
+                        </Box>
+                        <Box textAlign="center" p={1}>
+                          <Typography variant="subtitle2" color="text.secondary">Analyzed</Typography>
+                          <Typography variant="body1">{new Date(result.created_at).toLocaleDateString()}</Typography>
+                        </Box>
+                        <Box textAlign="center" p={1}>
+                          <Typography variant="subtitle2" color="text.secondary">Checklist ID</Typography>
+                          <Typography variant="body1">{result.checklist_id}</Typography>
+                        </Box>
+                      </Box>
+                    </Box>
+                  ))}
+                </Paper>
+              ) : (
+                <Paper elevation={2} sx={{ p: 3 }}>
+                  <Alert severity="warning">
+                    No AI analysis results found for this document. The analysis may still be processing.
+                  </Alert>
+                </Paper>
+              )}
+
+              {/* Comments Section */}
               {selectedReview.comments && selectedReview.comments.length > 0 && (
-                <Box>
-                  <Typography variant="subtitle1" gutterBottom>
-                    Comments:
+                <Paper elevation={2} sx={{ p: 3 }}>
+                  <Typography variant="h6" gutterBottom color="primary">
+                    💬 Review Comments
                   </Typography>
                   {selectedReview.comments.map((comment, index) => (
-                    <Paper key={index} elevation={1} sx={{ p: 1, mb: 1 }}>
+                    <Paper key={index} variant="outlined" sx={{ p: 2, mb: 1 }}>
                       <Typography variant="body2">{comment}</Typography>
                     </Paper>
                   ))}
-                </Box>
+                </Paper>
               )}
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
+          <Button 
+            variant="contained" 
+            onClick={() => {
+              setViewDialogOpen(false);
+              // Could add approve/reject functionality here
+            }}
+          >
+            Review Document
+          </Button>
         </DialogActions>
       </Dialog>
 

@@ -443,7 +443,7 @@ export const Checklists = () => {
                       bgcolor: 'grey.50',
                       boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
                     },
-                    bgcolor: index % 2 === 0 ? 'background.paper' : 'grey.25',
+                    bgcolor: index % 2 === 0 ? 'background.paper' : 'grey.50',
                   }}
                   onClick={() => handleRowClick(checklist)}
                 >

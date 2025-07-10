@@ -23,25 +23,18 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Rating,
 } from '@mui/material';
 import {
   Assignment,
   CloudUpload,
   CheckCircle,
-  Cancel,
   Comment,
   Visibility,
   PendingActions,
   AssignmentTurnedIn,
   AssessmentOutlined,
 } from '@mui/icons-material';
-import { uploadsAPI, aiAPI, reviewsAPI, analyticsAPI } from '../../services/api';
+import { uploadsAPI, aiAPI, analyticsAPI } from '../../services/api';
 
 interface Upload {
   id: number;
@@ -57,6 +50,7 @@ interface AIResult {
   id: number;
   checklist_id: number;
   overall_score: number;
+  score?: number;
   analysis: string;
   created_at: string;
   updated_at: string;
@@ -91,146 +85,49 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color }) => (
   </Card>
 );
 
-interface ReviewDialogProps {
-  open: boolean;
-  onClose: () => void;
-  upload: Upload | null;
-  onReview: (uploadId: string, action: 'approve' | 'reject', comment?: string) => void;
-}
-
-const ReviewDialog: React.FC<ReviewDialogProps> = ({ open, onClose, upload, onReview }) => {
-  const [comment, setComment] = React.useState('');
-  const [selectedAction, setSelectedAction] = React.useState<'approve' | 'reject' | null>(null);
-
-  const handleSubmit = () => {
-    if (selectedAction) {
-      onReview(upload?.id?.toString() || '', selectedAction, comment);
-      setComment('');
-      setSelectedAction(null);
-      onClose();
-    }
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Review File Upload</DialogTitle>
-      <DialogContent>
-        {upload && (
-          <Box>
-            <Typography variant="h6" gutterBottom>
-              {upload.filename}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" paragraph>
-              Uploaded by User ID: {upload.user_id} on{' '}
-              {new Date(upload.uploaded_at).toLocaleString()}
-            </Typography>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" gutterBottom>
-                Current Status:
-                <Chip
-                  label={upload.status}
-                  color={
-                    upload.status === 'approved'
-                      ? 'success'
-                      : upload.status === 'rejected'
-                        ? 'error'
-                        : 'warning'
-                  }
-                  size="small"
-                  sx={{ ml: 1 }}
-                />
-              </Typography>
-            </Box>
-
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Review Comment"
-              value={comment}
-              onChange={e => setComment(e.target.value)}
-              placeholder="Add your review comments here..."
-              sx={{ mb: 2 }}
-            />
-
-            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-              <Button
-                variant={selectedAction === 'approve' ? 'contained' : 'outlined'}
-                color="success"
-                startIcon={<CheckCircle />}
-                onClick={() => setSelectedAction('approve')}
-              >
-                Approve
-              </Button>
-              <Button
-                variant={selectedAction === 'reject' ? 'contained' : 'outlined'}
-                color="error"
-                startIcon={<Cancel />}
-                onClick={() => setSelectedAction('reject')}
-              >
-                Reject
-              </Button>
-            </Box>
-          </Box>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={!selectedAction}>
-          Submit Review
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
-};
-
 export const ReviewerDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [reviewDialogOpen, setReviewDialogOpen] = React.useState(false);
-  const [selectedUpload, setSelectedUpload] = React.useState<Upload | null>(null);
 
   // Fetch pending reviews
   const {
     data: pendingUploads,
     isLoading: uploadsLoading,
-    refetch: refetchUploads,
+    error: uploadsError,
   } = useQuery<{ data: { results: Upload[] } }>({
     queryKey: ['uploads', 'pending'],
     queryFn: () => uploadsAPI.search({ status: 'pending', limit: 20 }),
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
   });
 
   // Fetch reviewer analytics
-  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+  const { 
+    data: analytics, 
+    isLoading: analyticsLoading,
+    error: analyticsError 
+  } = useQuery({
     queryKey: ['analytics', 'reviewer'],
-    queryFn: () => analyticsAPI.getSummary(),
+    queryFn: () => analyticsAPI.getAuditorMetrics(),
+    staleTime: 10 * 60 * 1000,
+    retry: 1,
   });
 
-  // Fetch AI results for analysis
-  const { data: aiResults, isLoading: aiLoading } = useQuery<{ data: { results: AIResult[] } }>({
+  // Fetch AI results
+  const { 
+    data: aiResults, 
+    isLoading: aiLoading,
+    error: aiError 
+  } = useQuery<{ data: { results: AIResult[] } }>({
     queryKey: ['ai-results', 'recent'],
     queryFn: () => aiAPI.getResults({ limit: 10 }),
+    staleTime: 3 * 60 * 1000,
+    retry: 1,
   });
 
-  const handleReview = async (uploadId: string, action: 'approve' | 'reject', comment?: string) => {
-    try {
-      if (action === 'approve') {
-        await reviewsAPI.approve(uploadId, comment);
-      } else {
-        await reviewsAPI.reject(uploadId, comment || 'Rejected');
-      }
-      refetchUploads();
-    } catch (error) {
-      console.error('Error submitting review:', error);
-    }
-  };
+  const isLoading = uploadsLoading && analyticsLoading && aiLoading;
+  const hasError = uploadsError || analyticsError || aiError;
 
-  const openReviewDialog = (upload: Upload) => {
-    setSelectedUpload(upload);
-    setReviewDialogOpen(true);
-  };
-
-  if (uploadsLoading || analyticsLoading || aiLoading) {
+  if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
@@ -240,19 +137,30 @@ export const ReviewerDashboard: React.FC = () => {
     );
   }
 
+  if (hasError) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Failed to load dashboard data. Please try refreshing the page.
+        </Alert>
+      </Container>
+    );
+  }
+
   const uploads = pendingUploads?.data?.results || [];
   const stats = analytics?.data || {};
   const aiResultsData = aiResults?.data?.results || [];
 
-  // Calculate reviewer-specific stats
   const pendingCount = uploads.filter((u: Upload) => u.status === 'pending').length;
   const completedToday = uploads.filter(
     (u: Upload) =>
-      u.status !== 'pending' && new Date(u.uploaded_at).toDateString() === new Date().toDateString()
+      u.status !== 'pending' && 
+      new Date(u.uploaded_at).toDateString() === new Date().toDateString()
   ).length;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
+      {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
           Reviewer Dashboard
@@ -290,8 +198,8 @@ export const ReviewerDashboard: React.FC = () => {
           color="primary"
         />
         <StatsCard
-          title="Total Files"
-          value={stats.totalUploads || 0}
+          title="Total Reviews"
+          value={stats.pendingReviews || 0}
           icon={<CloudUpload fontSize="large" />}
           color="secondary"
         />
@@ -348,18 +256,10 @@ export const ReviewerDashboard: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton
-                              size="small"
-                              onClick={() => openReviewDialog(upload)}
-                              color="primary"
-                            >
+                            <IconButton size="small" color="primary" title="View File Details">
                               <Visibility />
                             </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() => openReviewDialog(upload)}
-                              color="secondary"
-                            >
+                            <IconButton size="small" color="secondary" title="Review File">
                               <Comment />
                             </IconButton>
                           </Box>
@@ -383,37 +283,25 @@ export const ReviewerDashboard: React.FC = () => {
               <Alert severity="info">No AI results available</Alert>
             ) : (
               <List>
-                {aiResultsData.slice(0, 5).map((result: AIResult, index: number) => (
-                  <React.Fragment key={result.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <AssessmentOutlined color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={`AI Score: ${Math.round((result.overall_score || 0) * 100)}%`}
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              File ID: {result.file_upload_id}
-                            </Typography>
-                            <Rating
-                              value={result.overall_score || 0}
-                              precision={0.1}
-                              size="small"
-                              readOnly
-                              max={1}
-                            />
-                          </Box>
-                        }
-                      />
-                    </ListItem>
-                    {index < aiResultsData.length - 1 && (
-                      <Box
-                        component="hr"
-                        sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
-                      />
-                    )}
-                  </React.Fragment>
+                {aiResultsData.slice(0, 5).map((result: AIResult) => (
+                  <ListItem key={result.id}>
+                    <ListItemIcon>
+                      <AssessmentOutlined color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={`AI Score: ${Math.round((result.score || result.overall_score || 0) * 100)}%`}
+                      secondary={
+                        <Box>
+                          <Typography variant="caption" display="block">
+                            File ID: {result.file_upload_id || result.id}
+                          </Typography>
+                          <Typography variant="caption" display="block" color="text.secondary">
+                            {new Date(result.created_at).toLocaleDateString()}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </ListItem>
                 ))}
               </List>
             )}
@@ -453,20 +341,12 @@ export const ReviewerDashboard: React.FC = () => {
             variant="outlined" 
             fullWidth 
             startIcon={<Comment />}
-            onClick={() => navigate('/reviews')}
+            onClick={() => navigate('/reports')}
           >
-            Comments History
+            Reports
           </Button>
         </Box>
       </Paper>
-
-      {/* Review Dialog */}
-      <ReviewDialog
-        open={reviewDialogOpen}
-        onClose={() => setReviewDialogOpen(false)}
-        upload={selectedUpload}
-        onReview={handleReview}
-      />
     </Container>
   );
 };

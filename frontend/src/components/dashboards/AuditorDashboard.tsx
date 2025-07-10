@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -11,6 +11,7 @@ import {
   Alert,
   Button,
   Chip,
+  IconButton,
   List,
   ListItem,
   ListItemText,
@@ -35,6 +36,7 @@ import {
   Error as ErrorIcon,
   BarChart,
   PieChart,
+  Refresh,
 } from '@mui/icons-material';
 import { analyticsAPI, aiAPI, submissionsAPI } from '../../services/api';
 
@@ -144,29 +146,44 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({ category, score, maxS
 
 export const AuditorDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // Fetch auditor-specific metrics
-  const { data: auditorMetrics, isLoading: metricsLoading } = useQuery({
+  // Fetch auditor-specific metrics with performance optimization
+  const { data: auditorMetrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery({
     queryKey: ['analytics', 'auditor-metrics'],
     queryFn: () => analyticsAPI.getAuditorMetrics(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 15 * 60 * 1000, // 15 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to get fresh data
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch score trends
+  // Fetch score trends with performance optimization
   const { isLoading: trendsLoading } = useQuery({
     queryKey: ['analytics', 'score-trends'],
     queryFn: () => analyticsAPI.getScoreTrends(),
+    staleTime: 15 * 60 * 1000, // 15 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch AI results for compliance scoring
-  const { data: aiResults, isLoading: aiLoading } = useQuery<{ data: { results: AIResult[] } }>({
+  // Fetch AI results with performance optimization
+  const { data: aiResults, isLoading: aiLoading, refetch: refetchAIResults } = useQuery<{ data: { results: AIResult[] } }>({
     queryKey: ['ai-results', 'compliance'],
     queryFn: () => aiAPI.getResults({ limit: 20 }),
+    staleTime: 3 * 60 * 1000, // 3 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchInterval: 30000, // Refetch every 30 seconds to get fresh data
+    refetchOnWindowFocus: false,
   });
 
-  // Fetch recent submissions
+  // Fetch recent submissions with performance optimization
   const { data: submissions, isLoading: submissionsLoading } = useQuery<{ data: Submission[] }>({
     queryKey: ['submissions', 'recent'],
     queryFn: () => submissionsAPI.getAll(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
   });
 
   if (metricsLoading || trendsLoading || aiLoading || submissionsLoading) {
@@ -197,15 +214,37 @@ export const AuditorDashboard: React.FC = () => {
     return score >= 0.5 && score < 0.7;
   }).length;
 
+  // Manual refresh function
+  const handleRefresh = async () => {
+    await Promise.all([
+      refetchMetrics(),
+      refetchAIResults(),
+    ]);
+    setLastRefresh(new Date());
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-          Auditor Dashboard
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          ESG compliance monitoring and audit analytics
-        </Typography>
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+            Auditor Dashboard
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            ESG compliance monitoring and audit analytics
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Last updated: {lastRefresh.toLocaleTimeString()}
+          </Typography>
+        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={handleRefresh}
+          disabled={metricsLoading || aiLoading}
+        >
+          Refresh Data
+        </Button>
       </Box>
 
       {/* Key Metrics */}
@@ -288,11 +327,11 @@ export const AuditorDashboard: React.FC = () => {
                         <TableRow key={result.id}>
                           <TableCell>
                             <Typography variant="body2">
-                              Upload ID: {result.file_upload_id}
+                              Upload ID: {result.file_upload_id || result.id}
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500}>
+                            <Typography variant="body2" fontWeight={500} color={statusColor === 'success' ? 'success.main' : statusColor === 'error' ? 'error.main' : 'warning.main'}>
                               {score.toFixed(1)}%
                             </Typography>
                           </TableCell>

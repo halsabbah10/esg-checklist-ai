@@ -50,16 +50,18 @@ export const Analytics: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Fetch analytics data
+  // Fetch analytics data (use auditor metrics for non-admin users)
   const {
     data: analyticsData,
     isLoading: loadingAnalytics,
     error: analyticsError,
     refetch,
   } = useQuery({
-    queryKey: ['analytics', 'overall'],
-    queryFn: () => analyticsAPI.getSummary(),
+    queryKey: ['analytics', 'user-metrics'],
+    queryFn: () => analyticsAPI.getAuditorMetrics(),
     refetchInterval: realTimeEnabled ? 30000 : false,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
   });
 
   // WebSocket for real-time updates

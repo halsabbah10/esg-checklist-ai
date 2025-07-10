@@ -121,7 +121,7 @@ def set_status(
     file_upload_id: int,
     status_request: StatusRequest,
     db: Session = Depends(get_session),
-    current_user=Depends(require_role("admin")),
+    current_user=Depends(require_any_role("admin", "reviewer")),
 ):
     """
     Change the status of a file upload (approve/reject/pending).

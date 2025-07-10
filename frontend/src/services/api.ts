@@ -162,20 +162,34 @@ export const aiAPI = {
 
 // Reviews API endpoints
 export const reviewsAPI = {
-  getAll: () => api.get('/v1/reviews/'),
+  // Note: There's no getAll endpoint in the backend, use uploadsAPI.search() instead
+  getAll: () => uploadsAPI.search({ limit: 100 }),
 
   getById: (id: string) => api.get(`/v1/reviews/${id}`),
 
-  approve: (uploadId: string, comment?: string) =>
-    api.post(`/v1/reviews/${uploadId}/approve`, { comment }),
+  approve: (uploadId: string, comment?: string) => {
+    // First set status to approved, then add comment if provided
+    const promises = [
+      api.post(`/v1/reviews/${uploadId}/status`, { status: 'approved' })
+    ];
+    if (comment) {
+      promises.push(api.post(`/v1/reviews/${uploadId}/comment`, { text: comment }));
+    }
+    return Promise.all(promises);
+  },
 
-  reject: (uploadId: string, comment: string) =>
-    api.post(`/v1/reviews/${uploadId}/reject`, { comment }),
+  reject: (uploadId: string, comment: string) => {
+    // First set status to rejected, then add comment
+    return Promise.all([
+      api.post(`/v1/reviews/${uploadId}/status`, { status: 'rejected' }),
+      api.post(`/v1/reviews/${uploadId}/comment`, { text: comment })
+    ]);
+  },
 
   getComments: (uploadId: string) => api.get(`/v1/reviews/${uploadId}/comments`),
 
   addComment: (uploadId: string, comment: string) =>
-    api.post(`/v1/reviews/${uploadId}/comments`, { comment }),
+    api.post(`/v1/reviews/${uploadId}/comment`, { text: comment }),
 
   getStatus: (uploadId: string) => api.get(`/v1/reviews/${uploadId}/status`),
 };
@@ -221,27 +235,49 @@ export const notificationsAPI = {
 
 // Export API endpoints
 export const exportAPI = {
-  exportChecklists: (format: 'csv' | 'xlsx' = 'csv') =>
-    api.get(`/v1/export/checklists?format=${format}`, {
+  exportChecklists: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/checklists?format=${backendFormat}`, {
       responseType: 'blob',
-    }),
+    });
+  },
 
-  exportAIResults: (format: 'csv' | 'xlsx' = 'csv') =>
-    api.get(`/v1/export/ai-results?format=${format}`, {
+  exportAIResults: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/ai-results?format=${backendFormat}`, {
       responseType: 'blob',
-    }),
+    });
+  },
 
-  exportUsers: (format: 'csv' | 'xlsx' = 'csv') =>
-    api.get(`/v1/export/users?format=${format}`, {
+  exportUsers: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/users?format=${backendFormat}`, {
       responseType: 'blob',
-    }),
+    });
+  },
 
-  exportSubmissions: (format: 'csv' | 'xlsx' = 'csv') =>
-    api.get(`/v1/export/submissions?format=${format}`, {
+  exportSubmissions: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/submissions?format=${backendFormat}`, {
       responseType: 'blob',
-    }),
+    });
+  },
 
-  exportAuditLogs: (params: { format: 'csv' | 'xlsx' } & Record<string, unknown>) =>
+  exportAnalytics: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/analytics?format=${backendFormat}`, {
+      responseType: 'blob',
+    });
+  },
+
+  exportComplianceReport: (format: 'csv' | 'xlsx' | 'pdf' | 'docx' = 'pdf') => {
+    const backendFormat = format === 'xlsx' ? 'excel' : format;
+    return api.get(`/v1/export/compliance-report?format=${backendFormat}`, {
+      responseType: 'blob',
+    });
+  },
+
+  exportAuditLogs: (params: { format: 'csv' | 'xlsx' | 'pdf' | 'docx' } & Record<string, unknown>) =>
     api.get(`/v1/export/audit-logs?format=${params.format}`, {
       params: { ...params, format: undefined },
       responseType: 'blob',

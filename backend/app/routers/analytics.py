@@ -57,11 +57,11 @@ def dashboard_overall(current_user=Depends(require_role("admin")), db=Depends(ge
     }
 
 @router.get("/auditor-metrics")
-def get_auditor_metrics(current_user=Depends(require_role("auditor")), db=Depends(get_session)):
-    """Get auditor-specific metrics and ESG category scores"""
+def get_auditor_metrics(current_user=Depends(require_role(["auditor", "reviewer"])), db=Depends(get_session)):
+    """Get auditor/reviewer-specific metrics and ESG category scores"""
     
-    # Get AI results for compliance scoring
-    ai_results = db.exec(select(AIResult)).all()
+    # Get AI results for compliance scoring - only for current user (auditor/reviewer)
+    ai_results = db.exec(select(AIResult).where(AIResult.user_id == current_user.id)).all()
     
     if not ai_results:
         return {
@@ -85,8 +85,8 @@ def get_auditor_metrics(current_user=Depends(require_role("auditor")), db=Depend
     passed_audits = sum(1 for result in ai_results if result.score >= 0.7)
     failed_audits = sum(1 for result in ai_results if result.score < 0.7)
     
-    # Get pending reviews (submissions without AI results)
-    total_uploads = db.exec(select(func.count()).select_from(FileUpload)).one()
+    # Get pending reviews (submissions without AI results) - only for current user
+    total_uploads = db.exec(select(func.count()).select_from(FileUpload).where(FileUpload.user_id == current_user.id)).one()
     pending_reviews = total_uploads - len(ai_results)
     
     # Calculate ESG categories based on real data patterns
