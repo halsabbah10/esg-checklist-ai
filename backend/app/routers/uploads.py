@@ -444,6 +444,7 @@ def search_ai_results(
                 "feedback": r.feedback,
                 "processing_time_ms": r.processing_time_ms,
                 "ai_model_version": r.ai_model_version,
+                "analysis_metadata": r.analysis_metadata,
                 "created_at": r.created_at,
                 "created_by_user_id": r.created_by_user_id,
             }

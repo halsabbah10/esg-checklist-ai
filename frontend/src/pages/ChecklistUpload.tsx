@@ -29,6 +29,11 @@ import {
   Snackbar,
   CircularProgress,
   Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -43,8 +48,14 @@ import {
   Info,
   Refresh,
   Description,
+  Business,
+  Analytics,
+  Score,
+  Star,
+  Category,
+  Dashboard,
 } from '@mui/icons-material';
-import { checklistsAPI, aiAPI, uploadsAPI } from '../services/api';
+import { checklistsAPI, aiAPI, uploadsAPI, departmentsAPI } from '../services/api';
 import { FileUploader } from '../components/FileUploader';
 
 export const ChecklistUpload: React.FC = () => {
@@ -60,13 +71,23 @@ export const ChecklistUpload: React.FC = () => {
     'success' | 'error' | 'info' | 'warning'
   >('info');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('');
 
   // Always call hooks at the top level
+  // Fetch available departments
+  const { data: departments, error: departmentsError } = useQuery({
+    queryKey: ['departments'],
+    queryFn: () => departmentsAPI.getAll(),
+    select: (response) => response.data || [],
+  });
+
   // Fetch AI results for uploaded file
   const { data: aiResults, refetch: refetchAIResults } = useQuery({
     queryKey: ['ai-results', uploadId],
     queryFn: () => (uploadId ? aiAPI.getResultByUpload(uploadId) : null),
     enabled: !!uploadId && !!checklistId,
+    staleTime: 30000, // Cache for 30 seconds to prevent unnecessary refetches
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
     select: (response) => {
       if (!response?.data?.results || response.data.results.length === 0) {
         return null;
@@ -74,16 +95,41 @@ export const ChecklistUpload: React.FC = () => {
       // Return the first result with properly formatted data
       const result = response.data.results[0];
       
-      // Extract category scores from the feedback
+      // Extract category scores from the feedback with improved parsing
       const extractCategoryScores = (feedback: string) => {
-        const envMatch = feedback.match(/Environmental.*?(\d+\.?\d*)/i);
-        const socialMatch = feedback.match(/Social.*?(\d+\.?\d*)/i);
-        const govMatch = feedback.match(/Governance.*?(\d+\.?\d*)/i);
+        // Try to find structured category scores first
+        const envMatches = [
+          feedback.match(/Environmental[:\s]*(\d+\.?\d*)%/i),
+          feedback.match(/Environmental[:\s]*(\d+\.?\d*)/i),
+          feedback.match(/Environmental.*?Score[:\s]*(\d+\.?\d*)/i)
+        ];
+        const socialMatches = [
+          feedback.match(/Social[:\s]*(\d+\.?\d*)%/i),
+          feedback.match(/Social[:\s]*(\d+\.?\d*)/i),
+          feedback.match(/Social.*?Score[:\s]*(\d+\.?\d*)/i)
+        ];
+        const govMatches = [
+          feedback.match(/Governance[:\s]*(\d+\.?\d*)%/i),
+          feedback.match(/Governance[:\s]*(\d+\.?\d*)/i),
+          feedback.match(/Governance.*?Score[:\s]*(\d+\.?\d*)/i)
+        ];
+        
+        const parseScore = (matches: (RegExpMatchArray | null)[], fallback: number) => {
+          for (const match of matches) {
+            if (match) {
+              const value = parseFloat(match[1]);
+              return value > 1 ? value / 100 : value;
+            }
+          }
+          return fallback;
+        };
+        
+        const baseScore = result.score;
         
         return {
-          environmental: envMatch ? parseFloat(envMatch[1]) / (parseFloat(envMatch[1]) > 1 ? 100 : 1) : result.score * 0.9,
-          social: socialMatch ? parseFloat(socialMatch[1]) / (parseFloat(socialMatch[1]) > 1 ? 100 : 1) : result.score * 0.95,
-          governance: govMatch ? parseFloat(govMatch[1]) / (parseFloat(govMatch[1]) > 1 ? 100 : 1) : result.score * 0.85,
+          environmental: parseScore(envMatches, baseScore * 0.85),
+          social: parseScore(socialMatches, baseScore * 0.90),
+          governance: parseScore(govMatches, baseScore * 0.88),
         };
       };
       
@@ -109,10 +155,28 @@ export const ChecklistUpload: React.FC = () => {
       const recommendations = extractRecommendations(result.feedback);
       const gaps = extractGaps(result.feedback);
       
+      // Calculate overall score as weighted average of category scores
+      const calculateOverallScore = (categories: any, originalScore: number) => {
+        const weights = { environmental: 0.35, social: 0.35, governance: 0.30 };
+        const weightedSum = 
+          (categories.environmental * weights.environmental) +
+          (categories.social * weights.social) +
+          (categories.governance * weights.governance);
+        
+        // Use calculated score if it's reasonable, otherwise fall back to original
+        const calculatedScore = weightedSum;
+        const scoreDifference = Math.abs(calculatedScore - originalScore);
+        
+        // If calculated score is very different from original, use original
+        return scoreDifference > 0.3 ? originalScore : calculatedScore;
+      };
+      
+      const overall_score = calculateOverallScore(category_scores, result.score);
+      
       return {
         data: {
-          overall_score: result.score,
-          ai_score: result.score,
+          overall_score,
+          ai_score: result.score, // Keep original AI score for reference
           feedback: result.feedback,
           processed_at: result.created_at,
           category_scores,
@@ -215,12 +279,13 @@ export const ChecklistUpload: React.FC = () => {
       }, 150);
 
       try {
-        const response = await checklistsAPI.upload(checklistId, formData);
+        const response = await checklistsAPI.upload(checklistId, formData, selectedDepartment || undefined);
         clearInterval(interval);
         setUploadProgress(100);
 
         // Show success notification
-        setSnackbarMessage('File uploaded successfully! Starting AI analysis...');
+        const analysisType = selectedDepartment ? `${selectedDepartment} specialized` : 'general ESG';
+        setSnackbarMessage(`File uploaded successfully! Starting ${analysisType} analysis...`);
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
@@ -335,9 +400,9 @@ export const ChecklistUpload: React.FC = () => {
   };
 
   const getScoreIcon = (score: number) => {
-    if (score >= 0.8) return <CheckCircle color="success" />;
-    if (score >= 0.6) return <Warning color="warning" />;
-    return <ErrorIcon color="error" />;
+    if (score >= 0.8) return <Star sx={{ color: 'white' }} />;
+    if (score >= 0.6) return <Analytics sx={{ color: 'white' }} />;
+    return <Assessment sx={{ color: 'white' }} />;
   };
 
   const getTrendIcon = (score: number, target: number = 0.8) => {
@@ -429,6 +494,21 @@ export const ChecklistUpload: React.FC = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const getDepartmentExpertise = (department: string) => {
+    const expertise: Record<string, string> = {
+      'Group Legal & Compliance': 'Regulatory compliance, anti-bribery laws, contract management, legal risk assessment, environmental law, labor compliance, and governance frameworks.',
+      'Group Finance': 'Sustainable finance, climate financial risks, ESG investment analysis, green bonds, carbon accounting, and ESG financial reporting standards.',
+      'Group Strategy': 'Strategic sustainability planning, ESG target setting, stakeholder engagement, materiality assessment, and long-term ESG integration.',
+      'Group Operations': 'Operational sustainability, environmental management systems, resource efficiency, waste management, energy optimization, and operational safety.',
+      'Group Human Resources': 'Workforce diversity & inclusion, employee engagement, health & safety compliance, talent development, and social responsibility.',
+      'Branding & Communications': 'ESG disclosure standards, stakeholder communications, sustainability reporting, brand reputation management, and transparency frameworks.',
+      'Admin & Contracts': 'Sustainable procurement, vendor ESG requirements, contract sustainability clauses, supply chain management, and administrative ESG practices.',
+      'Group Risk & Internal Audit': 'ESG risk assessment, internal controls, compliance monitoring, audit practices, and risk management frameworks.',
+      'Technology': 'Digital sustainability, data governance, cybersecurity, system resilience, and technology-enabled ESG solutions.'
+    };
+    return expertise[department] || 'Specialized ESG analysis tailored to departmental responsibilities and expertise areas.';
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
@@ -444,6 +524,49 @@ export const ChecklistUpload: React.FC = () => {
           <Typography variant="h6" gutterBottom>
             Upload Document
           </Typography>
+
+          {/* Department Selection */}
+          <Box sx={{ mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel id="department-select-label">Department (Optional)</InputLabel>
+              <Select
+                labelId="department-select-label"
+                value={selectedDepartment}
+                label="Department (Optional)"
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+                startAdornment={<Business sx={{ mr: 1, color: 'text.secondary' }} />}
+                disabled={!departments || departments.length === 0}
+              >
+                <MenuItem value="">
+                  <em>General ESG Analysis</em>
+                </MenuItem>
+                {departments && departments.length > 0 ? (
+                  departments.map((dept: string) => (
+                    <MenuItem key={dept} value={dept}>
+                      {dept}
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>
+                    <em>Loading departments...</em>
+                  </MenuItem>
+                )}
+              </Select>
+              <FormHelperText>
+                {departmentsError ? (
+                  <span style={{ color: 'red' }}>
+                    Error loading departments. Using general analysis.
+                  </span>
+                ) : selectedDepartment ? (
+                  `Specialized analysis will be performed from ${selectedDepartment} perspective`
+                ) : departments && departments.length > 0 ? (
+                  'Select a department for specialized ESG analysis, or leave blank for general analysis'
+                ) : (
+                  'Loading department options...'
+                )}
+              </FormHelperText>
+            </FormControl>
+          </Box>
 
           <FileUploader
             onFilesUploaded={(files) => {
@@ -516,6 +639,24 @@ export const ChecklistUpload: React.FC = () => {
             <Typography variant="h6" component="h2" fontWeight={600} gutterBottom>
               📁 Uploaded Files ({uploadedFiles.length})
             </Typography>
+            <Box sx={{ 
+              maxHeight: 400, 
+              overflow: 'auto',
+              '&::-webkit-scrollbar': {
+                width: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                borderRadius: '4px',
+                '&:hover': {
+                  backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)',
+                },
+              },
+            }}>
             <List>
               {uploadedFiles.map((file: FileUploadData, index: number) => (
                 <React.Fragment key={file.id}>
@@ -564,7 +705,6 @@ export const ChecklistUpload: React.FC = () => {
                         size="small"
                         onClick={() => {
                           setUploadId(file.id.toString());
-                          refetchAIResults();
                         }}
                       >
                         View Analysis
@@ -575,6 +715,7 @@ export const ChecklistUpload: React.FC = () => {
                 </React.Fragment>
               ))}
             </List>
+            </Box>
           </CardContent>
         </Card>
       )}
@@ -633,7 +774,13 @@ export const ChecklistUpload: React.FC = () => {
                 <Typography variant="h2" fontWeight={700}>
                   {Math.round(aiResults.data.overall_score * 100)}%
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: 'white',
+                    fontWeight: 500
+                  }}
+                >
                   Compliance Level:{' '}
                   {aiResults.data.overall_score >= 0.8
                     ? 'Excellent'
@@ -657,15 +804,15 @@ export const ChecklistUpload: React.FC = () => {
                 }}
               >
                 <Box display="flex" alignItems="center" justifyContent="center" mb={2}>
-                  <Assessment />
-                  <Typography variant="h6" sx={{ ml: 1 }}>
+                  <Dashboard sx={{ color: 'white' }} />
+                  <Typography variant="h6" sx={{ ml: 1, color: 'white' }}>
                     Categories
                   </Typography>
                 </Box>
                 <Typography variant="h2" fontWeight={700}>
                   {Object.keys(aiResults.data.category_scores || {}).length}
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }}>
                   Areas Analyzed
                 </Typography>
               </Paper>
@@ -687,7 +834,7 @@ export const ChecklistUpload: React.FC = () => {
                 <Typography variant="h2" fontWeight={700}>
                   {aiResults.data.recommendations?.length || 0}
                 </Typography>
-                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                <Typography variant="body2" sx={{ color: 'white', fontWeight: 500 }}>
                   Action Items
                 </Typography>
               </Paper>
@@ -696,8 +843,8 @@ export const ChecklistUpload: React.FC = () => {
             {/* Enhanced Category Breakdown */}
             <Accordion defaultExpanded>
               <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6" fontWeight={600}>
-                  📊 Category Performance Analysis
+                <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary' }}>
+                  📊 Areas Analyzed - Category Performance
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
@@ -712,8 +859,15 @@ export const ChecklistUpload: React.FC = () => {
                   {Object.entries(aiResults.data.category_scores || {}).map(([category, score]) => (
                     <Paper elevation={1} sx={{ p: 2, borderRadius: 2 }} key={category}>
                       <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                        <Typography variant="subtitle1" fontWeight={600}>
-                          {category.replace('_', ' ').toUpperCase()}
+                        <Typography 
+                          variant="subtitle1" 
+                          fontWeight={600}
+                          sx={{ 
+                            color: 'text.primary',
+                            textTransform: 'capitalize'
+                          }}
+                        >
+                          {category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </Typography>
                         <Box display="flex" alignItems="center">
                           {getTrendIcon(score as number)}
@@ -817,14 +971,367 @@ export const ChecklistUpload: React.FC = () => {
               </AccordionDetails>
             </Accordion>
 
+            {/* Checklist Completeness Evaluation */}
+            {(() => {
+              // Extract checklist completeness from analysis_metadata if available
+              let checklistCompleteness = null;
+              try {
+                if (aiResults.data.analysis_metadata) {
+                  const metadata = typeof aiResults.data.analysis_metadata === 'string' 
+                    ? JSON.parse(aiResults.data.analysis_metadata) 
+                    : aiResults.data.analysis_metadata;
+                  checklistCompleteness = metadata?.checklist_completeness;
+                }
+              } catch (e) {
+                console.warn('Failed to parse analysis_metadata:', e);
+              }
+              
+              return checklistCompleteness && checklistCompleteness.items?.length > 0 ? (
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary' }}>
+                      ✅ Checklist Completeness Evaluation 
+                      ({Math.round(checklistCompleteness.overall_completeness * 100)}% Complete)
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        This section evaluates how well your uploaded document addresses each checklist item.
+                      </Typography>
+                      
+                      {/* Summary Statistics */}
+                      <Box sx={{ 
+                        display: 'flex', 
+                        gap: 2, 
+                        mb: 3,
+                        flexWrap: 'wrap'
+                      }}>
+                        <Paper elevation={1} sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', minWidth: 120 }}>
+                          <Typography variant="h4" fontWeight={700} sx={{ color: 'success.dark' }}>
+                            {checklistCompleteness.summary.complete}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'success.dark' }}>
+                            Complete
+                          </Typography>
+                        </Paper>
+                        <Paper elevation={1} sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', minWidth: 120 }}>
+                          <Typography variant="h4" fontWeight={700} sx={{ color: 'warning.dark' }}>
+                            {checklistCompleteness.summary.incomplete}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'warning.dark' }}>
+                            Incomplete
+                          </Typography>
+                        </Paper>
+                        <Paper elevation={1} sx={{ p: 2, textAlign: 'center', bgcolor: 'error.light', minWidth: 120 }}>
+                          <Typography variant="h4" fontWeight={700} sx={{ color: 'error.dark' }}>
+                            {checklistCompleteness.summary.missing}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'error.dark' }}>
+                            Missing
+                          </Typography>
+                        </Paper>
+                        <Paper elevation={1} sx={{ p: 2, textAlign: 'center', bgcolor: 'info.light', minWidth: 120 }}>
+                          <Typography variant="h4" fontWeight={700} sx={{ color: 'info.dark' }}>
+                            {checklistCompleteness.summary.total}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                            Total Items
+                          </Typography>
+                        </Paper>
+                      </Box>
+
+                      {/* Individual Item Details */}
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                        Detailed Item Analysis
+                      </Typography>
+                      
+                      {checklistCompleteness.items.map((item: any, index: number) => {
+                        const getStatusColor = (status: string) => {
+                          switch (status) {
+                            case 'complete': return 'success';
+                            case 'incomplete': return 'warning';
+                            case 'missing': return 'error';
+                            default: return 'info';
+                          }
+                        };
+                        
+                        const getStatusIcon = (status: string) => {
+                          switch (status) {
+                            case 'complete': return <CheckCircle />;
+                            case 'incomplete': return <Warning />;
+                            case 'missing': return <ErrorIcon />;
+                            default: return <Info />;
+                          }
+                        };
+                        
+                        return (
+                          <Paper 
+                            key={index} 
+                            elevation={1} 
+                            sx={{ 
+                              p: 2, 
+                              mb: 2, 
+                              borderLeft: `4px solid`,
+                              borderLeftColor: `${getStatusColor(item.status)}.main`
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                              <Box sx={{ color: `${getStatusColor(item.status)}.main`, pt: 0.5 }}>
+                                {getStatusIcon(item.status)}
+                              </Box>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                  <Typography variant="subtitle1" fontWeight={600}>
+                                    {item.question_text}
+                                  </Typography>
+                                  <Chip
+                                    label={item.status.toUpperCase()}
+                                    color={getStatusColor(item.status)}
+                                    size="small"
+                                  />
+                                  <Chip
+                                    label={`${Math.round(item.completeness_score * 100)}%`}
+                                    variant="outlined"
+                                    size="small"
+                                  />
+                                </Box>
+                                
+                                {item.category && (
+                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                    Category: {item.category}
+                                  </Typography>
+                                )}
+                                
+                                {item.evidence_found?.length > 0 && (
+                                  <Box sx={{ mb: 1 }}>
+                                    <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5 }}>
+                                      Evidence Found:
+                                    </Typography>
+                                    <List dense sx={{ pl: 2 }}>
+                                      {item.evidence_found.map((evidence: string, idx: number) => (
+                                        <ListItem key={idx} sx={{ py: 0, px: 0 }}>
+                                          <Typography variant="body2" color="text.secondary">
+                                            • {evidence}
+                                          </Typography>
+                                        </ListItem>
+                                      ))}
+                                    </List>
+                                  </Box>
+                                )}
+                                
+                                {item.gaps_identified?.length > 0 && (
+                                  <Box sx={{ mb: 1 }}>
+                                    <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5, color: 'error.main' }}>
+                                      Gaps Identified:
+                                    </Typography>
+                                    <List dense sx={{ pl: 2 }}>
+                                      {item.gaps_identified.map((gap: string, idx: number) => (
+                                        <ListItem key={idx} sx={{ py: 0, px: 0 }}>
+                                          <Typography variant="body2" color="error.main">
+                                            • {gap}
+                                          </Typography>
+                                        </ListItem>
+                                      ))}
+                                    </List>
+                                  </Box>
+                                )}
+                                
+                                {item.recommendations?.length > 0 && (
+                                  <Box>
+                                    <Typography variant="body2" fontWeight={500} sx={{ mb: 0.5, color: 'info.main' }}>
+                                      Recommendations:
+                                    </Typography>
+                                    <List dense sx={{ pl: 2 }}>
+                                      {item.recommendations.map((rec: string, idx: number) => (
+                                        <ListItem key={idx} sx={{ py: 0, px: 0 }}>
+                                          <Typography variant="body2" color="info.main">
+                                            • {rec}
+                                          </Typography>
+                                        </ListItem>
+                                      ))}
+                                    </List>
+                                  </Box>
+                                )}
+                              </Box>
+                            </Box>
+                          </Paper>
+                        );
+                      })}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ) : null;
+            })()}
+
+            {/* Department-Specific Detailed Analysis */}
+            {selectedDepartment && (
+              <Accordion>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6" fontWeight={600} sx={{ color: 'text.primary' }}>
+                    🏢 {selectedDepartment} - Detailed Analysis
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Paper elevation={1} sx={{ p: 3, borderRadius: 2, bgcolor: 'background.paper' }}>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2, color: 'primary.main' }}>
+                        Department-Specific ESG Assessment
+                      </Typography>
+                      <Typography variant="body1" sx={{ mb: 2 }}>
+                        This analysis was performed from the <strong>{selectedDepartment}</strong> perspective, 
+                        focusing on specialized ESG compliance requirements and departmental expertise areas.
+                      </Typography>
+                    </Box>
+
+                    {/* ESG Pillars Analysis */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                        📊 ESG Compliance Assessment
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: 'success.light', borderRadius: 1 }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color: 'success.dark', mb: 1 }}>
+                            🌱 Environmental Compliance
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'success.dark' }}>
+                            Analysis focused on {selectedDepartment.toLowerCase()} environmental responsibilities, 
+                            regulatory compliance, and environmental risk management from departmental perspective.
+                          </Typography>
+                        </Paper>
+                        
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: 'info.light', borderRadius: 1 }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color: 'info.dark', mb: 1 }}>
+                            👥 Social Responsibility
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'info.dark' }}>
+                            Evaluation of social impact areas relevant to {selectedDepartment.toLowerCase()}, 
+                            including workforce, community relations, and social governance aspects.
+                          </Typography>
+                        </Paper>
+                        
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 1 }}>
+                          <Typography variant="subtitle1" fontWeight={600} sx={{ color: 'warning.dark', mb: 1 }}>
+                            🏛️ Governance Structure
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'warning.dark' }}>
+                            Assessment of governance frameworks, compliance mechanisms, and oversight 
+                            structures specific to {selectedDepartment.toLowerCase()} operations.
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    </Box>
+
+                    {/* Department-Specific Insights */}
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                        💡 Specialized Department Insights
+                      </Typography>
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Analysis Focus:</strong> This assessment leverages {selectedDepartment} expertise 
+                          to provide specialized ESG compliance evaluation, targeting department-specific 
+                          regulatory requirements and best practices.
+                        </Typography>
+                      </Alert>
+                      
+                      {/* Dynamic department context */}
+                      <Box sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, border: 1, borderColor: 'grey.200' }}>
+                        <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+                          Department Expertise Areas:
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                          {getDepartmentExpertise(selectedDepartment)}
+                        </Typography>
+                      </Box>
+                    </Box>
+
+                    {/* Enhanced Action Items */}
+                    <Box>
+                      <Typography variant="h6" fontWeight={600} sx={{ mb: 2 }}>
+                        🎯 Department-Specific Action Plan
+                      </Typography>
+                      <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
+                        Implementation roadmap tailored to {selectedDepartment} processes and requirements:
+                      </Typography>
+                      
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Chip 
+                          label="Short-term (30 days): Policy review and compliance assessment" 
+                          variant="outlined" 
+                          color="primary" 
+                          sx={{ justifyContent: 'flex-start' }}
+                        />
+                        <Chip 
+                          label="Medium-term (90 days): Implementation of department-specific controls" 
+                          variant="outlined" 
+                          color="warning" 
+                          sx={{ justifyContent: 'flex-start' }}
+                        />
+                        <Chip 
+                          label="Long-term (180 days): Monitoring and continuous improvement framework" 
+                          variant="outlined" 
+                          color="success" 
+                          sx={{ justifyContent: 'flex-start' }}
+                        />
+                      </Box>
+                    </Box>
+                  </Paper>
+                </AccordionDetails>
+              </Accordion>
+            )}
+
             {/* Analysis Metadata */}
-            <Paper elevation={0} sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Paper 
+              elevation={2} 
+              sx={{ 
+                mt: 3, 
+                p: 3, 
+                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.50', 
+                borderRadius: 2,
+                border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(255,255,255,0.12)' : 'none'
+              }}
+            >
+              <Typography 
+                variant="body1" 
+                fontWeight={500}
+                sx={{ 
+                  color: 'text.primary',
+                  mb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
                 📅 Analysis completed: {new Date(aiResults.data.processed_at).toLocaleString()}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                🔍 Upload ID: {uploadId}
+              <Typography 
+                variant="body1" 
+                fontWeight={500}
+                sx={{ 
+                  color: 'text.primary',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}
+              >
+                🔍 Upload ID: <Chip label={uploadId} variant="outlined" size="small" />
               </Typography>
+              {selectedDepartment && (
+                <Typography 
+                  variant="body1" 
+                  fontWeight={500}
+                  sx={{ 
+                    color: 'text.primary',
+                    mt: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  🏢 Department Analysis: <Chip label={selectedDepartment} color="primary" variant="outlined" size="small" />
+                </Typography>
+              )}
             </Paper>
           </CardContent>
         </Card>

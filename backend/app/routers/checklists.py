@@ -188,6 +188,7 @@ os.makedirs(settings.upload_path, exist_ok=True)
 async def upload_file(
     checklist_id: int,
     file: UploadFile = File(...),
+    department: Optional[str] = Query(None, description="Department for specialized ESG analysis"),
     db: Session = Depends(get_session),
     current_user=Depends(require_role("auditor")),
 ):
@@ -269,12 +270,44 @@ async def upload_file(
             logger.exception(f"Error extracting text from {secure_filepath}: {e}")
             raw_text = f"Error extracting text: {e}"
 
-        # AI/NLP scoring using Gemini with real-time tracking
-        logger.info(f"Starting AI scoring for file: {secure_filename}")
+        # AI/NLP scoring using Gemini with optional department-specific analysis
+        analysis_type = f"department-specific ({department})" if department else "general ESG"
+        logger.info(f"Starting {analysis_type} AI scoring for file: {secure_filename}")
         ai_start_time = datetime.now(timezone.utc)
+        processing_time_ms = 0  # Initialize default value
 
         try:
-            score, feedback = ai_score_text_with_gemini(raw_text)
+            # Fetch checklist items for completeness evaluation
+            checklist_items_query = db.exec(select(ChecklistItem).where(ChecklistItem.checklist_id == checklist_id)).all()
+            checklist_items = [
+                {
+                    "id": item.id,
+                    "question_text": item.question_text,
+                    "category": item.category,
+                    "weight": item.weight
+                }
+                for item in checklist_items_query
+            ]
+            
+            # Import AIScorer once at the top
+            from app.ai.scorer import AIScorer
+            scorer = AIScorer()
+            
+            if department:
+                # Use department-specific analysis
+                score, feedback, analysis_metadata = scorer.analyze_by_department(raw_text, department, checklist_items)
+                logger.info(f"Department-specific analysis completed for {department}")
+            else:
+                # Use general ESG analysis
+                score, feedback = ai_score_text_with_gemini(raw_text)
+                # Create metadata for general analysis
+                checklist_completeness = scorer.evaluate_checklist_completeness(raw_text, checklist_items) if checklist_items else {}
+                analysis_metadata = {
+                    "analysis_type": "general_esg",
+                    "checklist_completeness": checklist_completeness
+                }
+                logger.info("General ESG analysis completed")
+            
             ai_end_time = datetime.now(timezone.utc)
             processing_time_ms = int((ai_end_time - ai_start_time).total_seconds() * 1000)
 
@@ -297,6 +330,15 @@ async def upload_file(
             # Provide fallback score and feedback
             score = 0.5
             feedback = f"AI scoring temporarily unavailable. Error: {str(e)[:200]}..."
+            # Create fallback metadata
+            analysis_metadata = {
+                "analysis_type": "fallback_error",
+                "error": str(e)[:200],
+                "checklist_completeness": {}
+            }
+            # Calculate processing time even for failed attempts
+            ai_end_time = datetime.now(timezone.utc)
+            processing_time_ms = int((ai_end_time - ai_start_time).total_seconds() * 1000)
 
         # Truncate text if too long for database (TEXT can hold ~65k chars)
         max_text_length = 65000
@@ -306,7 +348,13 @@ async def upload_file(
         if len(feedback) > max_text_length:
             feedback = feedback[:max_text_length] + "...[truncated]"
 
-        # Store AI result in DB
+        # Store AI result in DB with department context if specified
+        ai_model_version = f"gemini-{department.lower().replace(' ', '-')}" if department else "gemini-general"
+        
+        # Convert metadata to JSON string for database storage
+        import json
+        analysis_metadata_str = json.dumps(analysis_metadata) if 'analysis_metadata' in locals() else None
+        
         ai_result = AIResult(
             file_upload_id=file_record.id,  # Now guaranteed to be int
             checklist_id=checklist_id,
@@ -314,6 +362,9 @@ async def upload_file(
             raw_text=raw_text,
             score=score,
             feedback=feedback,
+            ai_model_version=ai_model_version,
+            processing_time_ms=processing_time_ms,
+            analysis_metadata=analysis_metadata_str
         )
         db.add(ai_result)
         db.commit()

@@ -112,12 +112,14 @@ export const checklistsAPI = {
   submit: (checklistId: string, answers: Record<string, unknown>) =>
     api.post(`/v1/checklists/${checklistId}/submit`, { answers }),
 
-  upload: (id: string, formData: FormData) => {
+  upload: (id: string, formData: FormData, department?: string) => {
     // Remove Content-Type header to let browser set it with boundary for multipart/form-data
+    const params = department ? { department } : {};
     return api.post(`/v1/checklists/${id}/upload`, formData, {
       headers: {
         'Content-Type': undefined, // Let browser set the correct multipart/form-data with boundary
       },
+      params,
       timeout: 180000, // 3 minutes for file upload and AI processing
     });
   },
@@ -446,6 +448,27 @@ export const realtimeAnalyticsAPI = {
     const wsURL = baseURL.replace(/^http/, 'ws');
     return `${wsURL}/v1/realtime-analytics/ws/${channel}`;
   },
+};
+
+// Departments API endpoints
+export const departmentsAPI = {
+  getAll: () => api.get('/v1/departments/public'),
+
+  getAllAuthenticated: () => api.get('/v1/departments/'),
+
+  getInfo: (departmentName: string) => 
+    api.get(`/v1/departments/${encodeURIComponent(departmentName)}/info`),
+
+  analyze: (data: {
+    text: string;
+    department_name: string;
+    checklist_items?: unknown[];
+    file_upload_id?: number;
+    checklist_id?: number;
+  }) => api.post('/v1/departments/analyze', data),
+
+  getHistory: (departmentName: string, params?: { limit?: number; offset?: number }) =>
+    api.get(`/v1/departments/analyze/history/${encodeURIComponent(departmentName)}`, { params }),
 };
 
 export default api;

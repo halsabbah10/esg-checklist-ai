@@ -13,6 +13,7 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from slowapi.errors import RateLimitExceeded
 
 from app.routers.analytics import router as analytics_router
+from app.routers.departments import router as departments_router
 from app.routers.export import router as export_router
 from app.routers.realtime_analytics import router as realtime_analytics_router
 from app.routers.uploads import router as uploads_router
@@ -268,6 +269,7 @@ app.include_router(realtime_analytics_router, prefix=api_prefix)
 app.include_router(audit_router, prefix=api_prefix)
 app.include_router(export_router, prefix=api_prefix)
 app.include_router(uploads_router, prefix=api_prefix)
+app.include_router(departments_router, prefix=api_prefix)
 
 # Admin routers with API versioning
 app.include_router(admin_users_router, prefix=api_prefix)
