@@ -1,41 +1,107 @@
 # 🌍 ESG Checklist AI - Enterprise-Grade ESG Compliance Platform
 
-> **AI-powered ESG compliance automation system with advanced analytics, multi-user management, and comprehensive audit trails.**
+> **AI-powered ESG compliance automation system with advanced analytics, real-time dashboards, multi-format reporting, and comprehensive audit trails.**
 
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688.svg?style=flat&logo=FastAPI)](https://fastapi.tiangolo.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.116.0-009688.svg?style=flat&logo=FastAPI)](https://fastapi.tiangolo.com)
+[![React](https://img.shields.io/badge/React-18.2.0-61DAFB.svg?style=flat&logo=react)](https://reactjs.org)
 [![Python](https://img.shields.io/badge/Python-3.11+-blue.svg?style=flat&logo=python)](https://python.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6.svg?style=flat&logo=typescript)](https://typescriptlang.org)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![SQLModel](https://img.shields.io/badge/SQLModel-Latest-red.svg)](https://sqlmodel.tiangolo.com/)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)](README.md)
 
 ## 🎯 **Project Overview**
 
-The **ESG Checklist AI** is a comprehensive enterprise solution designed to automate and streamline Environmental, Social, and Governance (ESG) compliance processes. This system leverages cutting-edge AI technology to analyze documents, score compliance, generate insights, and provide actionable feedback for audit teams.
+The **ESG Checklist AI** is a comprehensive full-stack enterprise solution designed to automate and streamline Environmental, Social, and Governance (ESG) compliance processes. This system leverages cutting-edge AI technology to analyze documents, score compliance, generate insights, and provide actionable feedback for audit teams through modern, responsive dashboards.
 
 ### 🚀 **Key Features**
 
-- **🤖 AI-Powered Analysis**: Advanced document analysis using Google Gemini and OpenAI
-- **📊 Real-Time Analytics**: Comprehensive dashboards and reporting capabilities
-- **👥 Multi-User Management**: Role-based access control (Admin, Auditor, Reviewer)
-- **📁 File Processing**: Support for PDF, Excel, Word, and text documents
-- **🔍 Advanced Search**: Intelligent search and filtering across all content
-- **📤 Data Export**: Multiple export formats (CSV, Excel, PDF, JSON)
-- **🔐 Enterprise Security**: JWT authentication, audit trails, and data protection
-- **📧 Notifications**: Automated email alerts and system notifications
-- **⚡ High Performance**: Async processing, caching, and circuit breakers
+#### **🤖 AI-Powered Analysis**
+- Advanced document analysis using Google Gemini and OpenAI
+- Real-time compliance scoring with detailed feedback
+- Intelligent text extraction from multiple document formats
+- AI result analysis with comprehensive scoring metrics
+
+#### **📊 Advanced Analytics & Dashboards**
+- **Real-time Analytics Dashboards**: Live performance metrics and KPIs
+- **Role-based Dashboards**: Admin, Auditor, and Reviewer specific views
+- **Interactive Data Visualization**: Charts, graphs, and trend analysis
+- **Compliance Monitoring**: Real-time compliance status tracking
+
+#### **👥 Multi-User Management**
+- **Role-based Access Control**: Admin, Auditor, Reviewer permissions
+- **User Management**: Complete user lifecycle management
+- **Authentication & Security**: JWT-based secure authentication
+- **Activity Tracking**: Comprehensive user activity logs
+
+#### **📁 Advanced File Processing**
+- **Multi-format Support**: PDF, Excel, Word, CSV, and text documents
+- **Drag-and-drop Upload**: Modern file upload interface
+- **Large File Handling**: Chunked processing for large documents
+- **File Validation**: Security and type validation
+
+#### **🔍 Intelligent Search & Filtering**
+- **Advanced Search**: Intelligent search across all content
+- **Dynamic Filtering**: Real-time filtering by multiple criteria
+- **Sorting & Pagination**: Efficient data navigation
+- **Search Analytics**: Search performance tracking
+
+#### **📤 Multi-Format Export System**
+- **Format Support**: PDF, Word (DOCX), Excel (XLSX), and CSV exports
+- **Professional Reports**: Styled PDF reports with company branding
+- **Custom Export Options**: Flexible data export configurations
+- **Batch Export**: Multiple format export capabilities
+
+#### **🎨 Modern User Interface**
+- **React Frontend**: Modern, responsive Material-UI interface
+- **Dark/Light Mode**: Theme customization support
+- **Mobile Responsive**: Optimized for all device sizes
+- **Accessibility**: WCAG compliant interface design
+
+#### **🔐 Enterprise Security**
+- **JWT Authentication**: Secure, stateless authentication
+- **Data Protection**: Comprehensive input validation and sanitization
+- **Audit Trails**: Complete system activity logging
+- **Rate Limiting**: API protection and abuse prevention
+
+#### **📧 Notifications & Communication**
+- **Real-time Notifications**: In-app notification system
+- **Email Alerts**: Automated email notifications
+- **Review System**: Document review and approval workflows
+- **Comment System**: Collaborative review and feedback
+
+#### **⚡ High Performance**
+- **Async Processing**: Non-blocking I/O operations
+- **Caching**: Intelligent query caching with React Query
+- **Database Optimization**: Indexed queries and connection pooling
+- **Circuit Breakers**: Fault-tolerant service integrations
 
 ## 🏗️ **System Architecture**
 
 ### **Technology Stack**
 
-- **Backend**: FastAPI (Python 3.11+)
+#### **Backend**
+- **Framework**: FastAPI (Python 3.11+) with async support
 - **Database**: SQLite (dev) / PostgreSQL (production)
 - **ORM**: SQLModel with Alembic migrations
 - **AI/ML**: Google Gemini AI, OpenAI GPT, Transformers
 - **Authentication**: JWT OAuth2 with role-based access
-- **File Processing**: pandas, openpyxl, pdfplumber, python-docx
+- **File Processing**: pandas, openpyxl, pdfplumber, python-docx, ReportLab
 - **Monitoring**: Structured logging, Prometheus metrics
-- **Deployment**: Docker, Docker Compose, nginx
+
+#### **Frontend**
+- **Framework**: React 18 with TypeScript
+- **UI Library**: Material-UI (MUI) v5
+- **State Management**: React Query (TanStack Query)
+- **Routing**: React Router v6
+- **Build Tool**: Vite with hot module replacement
+- **Styling**: Emotion CSS-in-JS with theme support
+
+#### **Infrastructure**
+- **Containerization**: Docker with multi-stage builds
+- **Orchestration**: Docker Compose
+- **Web Server**: nginx for production
+- **Development**: Hot reload and live debugging
 
 ### **Project Structure**
 
@@ -44,19 +110,46 @@ esg-checklist-ai/
 ├── backend/                    # FastAPI backend application
 │   ├── app/
 │   │   ├── routers/           # API route handlers
-│   │   ├── models.py          # Database models
-│   │   ├── auth.py            # Authentication & authorization
-│   │   ├── config.py          # Configuration management
-│   │   └── utils/             # Utility functions
-│   ├── alembic/               # Database migrations
-│   └── uploads/               # File upload storage
+│   │   │   ├── analytics.py   # Analytics and reporting endpoints
+│   │   │   ├── export.py      # Multi-format export functionality
+│   │   │   ├── reviews.py     # Document review workflows
+│   │   │   ├── uploads.py     # File upload and processing
+│   │   │   └── users.py       # User management and auth
+│   │   ├── ai/               # AI integration modules
+│   │   │   ├── scorer.py     # AI scoring engine
+│   │   │   └── analyzers.py  # Document analysis
+│   │   ├── models.py         # Database models with relationships
+│   │   ├── auth.py           # Authentication & authorization
+│   │   ├── database.py       # Database configuration
+│   │   ├── config.py         # Configuration management
+│   │   └── utils/            # Utility functions
+│   ├── alembic/              # Database migrations
+│   └── uploads/              # File upload storage
+├── frontend/                  # React frontend application
+│   ├── src/
+│   │   ├── components/       # Reusable UI components
+│   │   │   ├── dashboards/   # Dashboard components
+│   │   │   ├── forms/        # Form components
+│   │   │   └── ui/           # Base UI components
+│   │   ├── pages/            # Page components
+│   │   │   ├── Analytics.tsx # Analytics dashboard
+│   │   │   ├── Reports.tsx   # Reports and exports
+│   │   │   ├── Reviews.tsx   # Document review interface
+│   │   │   └── Checklists.tsx# Checklist management
+│   │   ├── services/         # API service layer
+│   │   │   └── api.ts        # API client with type safety
+│   │   ├── hooks/            # Custom React hooks
+│   │   └── utils/            # Frontend utilities
+│   ├── public/               # Static assets
+│   └── package.json          # Frontend dependencies
 ├── data/                      # Sample data and configurations
-├── docs/                      # Documentation
+├── docs/                      # Comprehensive documentation
 ├── samples/                   # Sample ESG files for testing
 ├── templates/                 # Email and report templates
 ├── notebooks/                 # Data analysis notebooks
 ├── docker-compose.yml         # Container orchestration
-├── Dockerfile                 # Container definition
+├── Dockerfile.backend         # Backend container definition
+├── Dockerfile.frontend        # Frontend container definition
 └── requirements.txt           # Python dependencies
 ```
 
@@ -64,71 +157,88 @@ esg-checklist-ai/
 
 ### **Prerequisites**
 
-- Python 3.11+
-- Virtual environment support
-- Git
-- Optional: Docker and Docker Compose
+- **Backend**: Python 3.11+, Virtual environment support
+- **Frontend**: Node.js 18+, npm or yarn
+- **Development**: Git, Docker (optional)
+- **AI Services**: Google Gemini API key
 
-### **1. Installation**
+### **1. Backend Setup**
 
 ```bash
 # Clone the repository
 git clone <repository-url>
 cd esg-checklist-ai
 
-# Create and activate virtual environment
+# Backend setup
+cd backend
 python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Environment configuration
+cp .env.template .env
+# Edit .env with your configuration
 ```
 
-### **2. Configuration**
+### **2. Frontend Setup**
 
 ```bash
-# Copy environment template
-cp .env.template .env
+# Frontend setup (in new terminal)
+cd frontend
+npm install
 
-# Edit configuration (required)
-nano .env  # or your preferred editor
+# Start development server
+npm run dev
 ```
 
-**Essential Configuration:**
+### **3. Configuration**
 
+**Backend Environment (.env):**
 ```env
 SECRET_KEY=your-secure-secret-key-here
 GEMINI_API_KEY=your-gemini-api-key
 DATABASE_URL=sqlite:///./test.db
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-### **3. Database Setup**
+**Frontend Environment:**
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+### **4. Database Setup**
 
 ```bash
 # Navigate to backend directory
 cd backend
 
 # Initialize database
-python -c "from app.models import SQLModel; from app.database import engine; SQLModel.metadata.create_all(engine)"
-
-# Or use Alembic for migrations
 alembic upgrade head
+
+# Or create tables directly
+python -c "from app.models import SQLModel; from app.database import engine; SQLModel.metadata.create_all(engine)"
 ```
 
-### **4. Start the Server**
+### **5. Start the Application**
 
 ```bash
-# Development server
+# Terminal 1: Backend server
+cd backend
 python run_server.py
+# Or: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
-# Or using uvicorn directly
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+# Terminal 2: Frontend server
+cd frontend
+npm run dev
 ```
 
-### **5. Access the Application**
+### **6. Access the Application**
 
+- **Frontend Application**: http://localhost:3000 or http://localhost:5173
 - **API Documentation**: http://localhost:8000/docs
-- **Alternative Docs**: http://localhost:8000/redoc
+- **Alternative API Docs**: http://localhost:8000/redoc
 - **Health Check**: http://localhost:8000/health
 
 ## 🔑 **Default Login Credentials**
@@ -144,171 +254,222 @@ Role: Administrator
 ### **Using Docker Compose (Recommended)**
 
 ```bash
-# Start all services
-docker-compose up -d
+# Build and start all services
+docker-compose up -d --build
 
 # View logs
 docker-compose logs -f
 
 # Stop services
 docker-compose down
+
+# Production deployment
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
-### **Manual Docker Build**
+### **Individual Container Build**
 
 ```bash
-# Build image
-docker build -t esg-checklist-ai .
+# Build backend
+docker build -f Dockerfile.backend -t esg-backend .
 
-# Run container
-docker run -d -p 8000:8000 --name esg-api esg-checklist-ai
+# Build frontend
+docker build -f Dockerfile.frontend -t esg-frontend .
+
+# Run containers
+docker run -d -p 8000:8000 --name esg-backend esg-backend
+docker run -d -p 3000:3000 --name esg-frontend esg-frontend
 ```
 
 ## 📚 **API Documentation**
 
-The system provides comprehensive API documentation with interactive testing capabilities:
-
 ### **Core Endpoints**
 
-| Endpoint Category | Base Path                 | Description                        |
-| ----------------- | ------------------------- | ---------------------------------- |
-| Authentication    | `/users`                  | User management and authentication |
-| Checklists        | `/checklists`             | Checklist CRUD operations          |
-| File Upload       | `/checklists/{id}/upload` | Document upload and AI analysis    |
-| Analytics         | `/analytics`              | Performance metrics and insights   |
-| Search            | `/checklists/search`      | Advanced search functionality      |
-| Export            | `/export`                 | Data export in multiple formats    |
-| Admin             | `/admin`                  | Administrative functions           |
-| Audit             | `/audit`                  | System audit logs                  |
+| Endpoint Category | Base Path                     | Description                           |
+| ----------------- | ----------------------------- | ------------------------------------- |
+| Authentication    | `/v1/users`                   | User management and authentication    |
+| Checklists        | `/v1/checklists`              | Checklist CRUD operations             |
+| File Upload       | `/v1/checklists/{id}/upload`  | Document upload and AI analysis       |
+| Analytics         | `/v1/analytics`               | Performance metrics and insights      |
+| Reviews           | `/v1/reviews`                 | Document review and approval workflow |
+| Export            | `/v1/export`                  | Multi-format data export             |
+| Search            | `/v1/search`                  | Advanced search functionality         |
+| Admin             | `/v1/admin`                   | Administrative functions              |
+| Notifications     | `/v1/notifications`           | In-app notification system            |
 
-### **Key API Features**
+### **New API Features**
 
-- **Interactive Documentation**: Swagger UI with live testing
-- **Authentication**: JWT Bearer token support
-- **Role-based Access**: Admin, Auditor, Reviewer permissions
-- **File Upload**: Drag-and-drop file processing
-- **Real-time Analytics**: Live performance metrics
-- **Export Capabilities**: CSV, Excel, PDF, JSON formats
+- **Multi-format Export**: PDF, Word, Excel, CSV support with professional formatting
+- **Real-time Analytics**: Live dashboard data with caching optimization
+- **Advanced Search**: Full-text search with filtering and pagination
+- **Review Workflows**: Complete document review and approval system
+- **Notification System**: Real-time in-app and email notifications
+- **Rate Limiting**: API protection with configurable limits
 
 ## 🎯 **Usage Examples**
 
-### **1. Upload and Analyze ESG Document**
+### **1. Frontend Application Usage**
+
+The application provides intuitive dashboards for different user roles:
+
+- **Admin Dashboard**: Complete system overview, user management, analytics
+- **Auditor Dashboard**: Compliance monitoring, report generation, analytics
+- **Reviewer Dashboard**: Document review queue, approval workflows, AI analysis
+
+### **2. API Integration Examples**
 
 ```bash
-# Authenticate
-curl -X POST "http://localhost:8000/users/login" \
+# Authenticate and get token
+curl -X POST "http://localhost:8000/v1/users/login" \
      -H "Content-Type: application/x-www-form-urlencoded" \
      -d "username=test@admin.com&password=admin123"
 
-# Upload file for analysis
-curl -X POST "http://localhost:8000/checklists/1/upload" \
+# Upload file for AI analysis
+curl -X POST "http://localhost:8000/v1/checklists/1/upload" \
      -H "Authorization: Bearer YOUR_TOKEN" \
      -F "file=@sample_esg_document.pdf"
-```
 
-### **2. Get Analytics Dashboard Data**
-
-```bash
-curl -X GET "http://localhost:8000/analytics/overall" \
+# Get real-time analytics
+curl -X GET "http://localhost:8000/v1/analytics/overall" \
      -H "Authorization: Bearer YOUR_TOKEN"
-```
 
-### **3. Search Checklists**
-
-```bash
-curl -X GET "http://localhost:8000/checklists/search?q=environmental&limit=10" \
-     -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### **4. Export Data**
-
-```bash
-curl -X GET "http://localhost:8000/export/ai-results?format=csv" \
+# Export data in PDF format
+curl -X GET "http://localhost:8000/v1/export/checklists?format=pdf" \
      -H "Authorization: Bearer YOUR_TOKEN" \
-     --output ai_results.csv
+     --output esg_checklists.pdf
+
+# Search with advanced filters
+curl -X GET "http://localhost:8000/v1/search/file-uploads?status=approved&limit=10" \
+     -H "Authorization: Bearer YOUR_TOKEN"
 ```
 
 ## 📊 **Analytics & Reporting**
 
-### **Available Analytics**
+### **Dashboard Analytics**
 
-- **Overall System Metrics**: User activity, file uploads, AI analysis results
-- **Checklist Performance**: Completion rates, average scores, trending
-- **User Analytics**: Individual performance, role-based insights
-- **AI Scoring Trends**: Historical scoring patterns and improvements
-- **Compliance Dashboards**: Real-time compliance status monitoring
+- **Real-time Metrics**: Live KPI tracking and performance indicators
+- **Role-based Views**: Customized dashboards for different user roles
+- **Interactive Charts**: Dynamic data visualization with drill-down capabilities
+- **Compliance Monitoring**: Real-time compliance status and trend analysis
+
+### **Advanced Reporting**
+
+- **Multi-format Export**: Professional PDF reports, Word documents, Excel spreadsheets, CSV data
+- **Custom Report Generation**: Flexible report configuration and filtering
+- **Scheduled Reports**: Automated report generation and distribution
+- **Audit Trail Reports**: Comprehensive system activity and user action logs
 
 ### **Export Capabilities**
 
-- **Format Support**: CSV, Excel, PDF, JSON
-- **Filtered Exports**: Date ranges, user groups, score thresholds
-- **Scheduled Reports**: Automated report generation
-- **Audit Trails**: Complete system activity logs
+- **PDF Reports**: Professional, styled reports with company branding and charts
+- **Word Documents**: Structured documents with tables, headers, and formatting
+- **Excel Spreadsheets**: Complete data exports with multiple sheets and formatting
+- **CSV Files**: Raw data exports for analysis and integration
+
+## 🎨 **User Interface Features**
+
+### **Modern Design**
+
+- **Material-UI Framework**: Consistent, professional design system
+- **Responsive Layout**: Optimized for desktop, tablet, and mobile devices
+- **Dark/Light Theme**: User preference theme switching
+- **Accessibility**: WCAG compliant with keyboard navigation support
+
+### **Interactive Components**
+
+- **Advanced Data Tables**: Sorting, filtering, pagination, and search
+- **Drag-and-Drop Upload**: Modern file upload with progress indicators
+- **Real-time Notifications**: Toast notifications and alert system
+- **Modal Dialogs**: Contextual overlays for detailed information
+
+### **Dashboard Features**
+
+- **Live Data Updates**: Real-time data refresh with React Query
+- **Interactive Charts**: Clickable charts with detailed tooltips
+- **Advanced Filtering**: Multi-criteria filtering with saved preferences
+- **Export Integration**: One-click export from any data view
 
 ## 🔐 **Security Features**
 
 ### **Authentication & Authorization**
 
-- **JWT Tokens**: Secure, stateless authentication
-- **Role-Based Access**: Granular permission control
-- **Password Security**: Bcrypt hashing with salt
-- **Session Management**: Configurable token expiration
+- **JWT Tokens**: Secure, stateless authentication with refresh tokens
+- **Role-Based Access Control**: Granular permission system
+- **Password Security**: Bcrypt hashing with configurable complexity
+- **Session Management**: Configurable token expiration and refresh
 
 ### **Data Protection**
 
-- **Input Validation**: Comprehensive request validation
-- **SQL Injection Prevention**: Parameterized queries
-- **File Upload Security**: Type validation and size limits
-- **CORS Configuration**: Cross-origin request protection
+- **Input Validation**: Comprehensive request validation with Pydantic
+- **SQL Injection Prevention**: Parameterized queries and ORM protection
+- **File Upload Security**: Type validation, size limits, and content scanning
+- **CORS Configuration**: Secure cross-origin request handling
 
 ### **Audit & Compliance**
 
-- **Complete Audit Trails**: All system actions logged
-- **User Activity Tracking**: Login, upload, and analysis logs
-- **Data Retention Policies**: Configurable retention periods
-- **Compliance Reporting**: Regulatory compliance support
+- **Complete Audit Trails**: All system actions logged with timestamps
+- **User Activity Tracking**: Login, upload, analysis, and export logs
+- **Data Retention Policies**: Configurable retention and cleanup
+- **Compliance Reporting**: Regulatory compliance audit support
 
 ## 🚀 **Advanced Features**
 
 ### **AI Integration**
 
-- **Multiple AI Providers**: Google Gemini, OpenAI support
-- **Circuit Breaker Pattern**: Fault-tolerant AI service calls
+- **Multiple AI Providers**: Google Gemini and OpenAI support with fallback
+- **Circuit Breaker Pattern**: Fault-tolerant AI service integration
 - **Retry Logic**: Automatic retry with exponential backoff
-- **Performance Monitoring**: AI response time tracking
-
-### **File Processing**
-
-- **Multi-format Support**: PDF, Excel, Word, CSV, Text
-- **Intelligent Text Extraction**: OCR and structured data parsing
-- **Large File Handling**: Chunked processing for large documents
-- **Metadata Extraction**: Document properties and statistics
+- **Performance Monitoring**: AI response time tracking and optimization
 
 ### **Performance Optimization**
 
-- **Async Processing**: Non-blocking I/O operations
-- **Caching Layer**: Redis-based response caching
-- **Database Indexing**: Optimized query performance
-- **Connection Pooling**: Efficient database connections
+- **Frontend Caching**: React Query with intelligent cache management
+- **Backend Caching**: Redis-based response caching
+- **Database Optimization**: Indexed queries and connection pooling
+- **Async Processing**: Non-blocking operations throughout the stack
+
+### **Real-time Features**
+
+- **Live Dashboard Updates**: Real-time data refresh without page reload
+- **Progressive Loading**: Optimized loading states and skeleton screens
+- **Optimistic Updates**: Immediate UI feedback with error recovery
+- **Background Processing**: Non-blocking file processing and AI analysis
 
 ## 🛠️ **Development Guide**
 
 ### **Setting Up Development Environment**
 
 ```bash
-# Install development dependencies
+# Backend development
+cd backend
 pip install -r requirements.txt
-
-# Install pre-commit hooks
+pip install -r requirements-dev.txt  # Development dependencies
 pre-commit install
 
-# Run tests
-pytest
+# Frontend development
+cd frontend
+npm install
+npm run dev
 
-# Code formatting
-black .
-isort .
-flake8 .
+# Run tests
+cd backend && pytest
+cd frontend && npm test
+```
+
+### **Code Quality Tools**
+
+```bash
+# Backend code quality
+black .                    # Code formatting
+isort .                   # Import sorting
+flake8 .                  # Linting
+bandit -r app/            # Security scanning
+pytest --cov=app         # Test coverage
+
+# Frontend code quality
+npm run lint              # ESLint
+npm run type-check        # TypeScript checking
+npm run format            # Prettier formatting
 ```
 
 ### **Database Management**
@@ -322,116 +483,110 @@ alembic upgrade head
 
 # Rollback migration
 alembic downgrade -1
-```
 
-### **Running Tests**
-
-```bash
-# Run all tests
-pytest
-
-# Run with coverage
-pytest --cov=app
-
-# Run specific test file
-pytest tests/test_api.py
+# Database reset (development only)
+rm test.db && alembic upgrade head
 ```
 
 ## 📋 **Configuration Reference**
 
-### **Environment Variables**
+### **Backend Environment Variables**
 
-| Variable           | Description                | Default                         | Required |
-| ------------------ | -------------------------- | ------------------------------- | -------- |
-| `SECRET_KEY`       | JWT signing secret         | -                               | ✅       |
-| `GEMINI_API_KEY`   | Google Gemini API key      | -                               | ✅       |
-| `DATABASE_URL`     | Database connection string | `sqlite:///./test.db`           | ❌       |
-| `ALLOWED_ORIGINS`  | CORS allowed origins       | `localhost:3000,localhost:8080` | ❌       |
-| `MAX_FILE_SIZE_MB` | Maximum upload file size   | `50`                            | ❌       |
-| `LOG_LEVEL`        | Logging level              | `INFO`                          | ❌       |
+| Variable                 | Description                  | Default                           | Required |
+| ------------------------ | ---------------------------- | --------------------------------- | -------- |
+| `SECRET_KEY`             | JWT signing secret           | -                                 | ✅       |
+| `GEMINI_API_KEY`         | Google Gemini API key        | -                                 | ✅       |
+| `OPENAI_API_KEY`         | OpenAI API key               | -                                 | ❌       |
+| `DATABASE_URL`           | Database connection string   | `sqlite:///./test.db`             | ❌       |
+| `ALLOWED_ORIGINS`        | CORS allowed origins         | `http://localhost:3000`           | ❌       |
+| `MAX_FILE_SIZE_MB`       | Maximum upload file size     | `50`                              | ❌       |
+| `LOG_LEVEL`              | Logging level                | `INFO`                            | ❌       |
+| `RATE_LIMIT_REQUESTS`    | Rate limit per minute        | `100`                             | ❌       |
+| `CACHE_TTL_SECONDS`      | Cache time-to-live           | `300`                             | ❌       |
 
-### **Database Configuration**
+### **Frontend Environment Variables**
 
-The system supports multiple database backends:
-
-- **SQLite** (default): `sqlite:///./test.db`
-- **PostgreSQL**: `postgresql://user:pass@localhost/db`
-- **MySQL**: `mysql://user:pass@localhost/db`
+| Variable                 | Description                  | Default                           | Required |
+| ------------------------ | ---------------------------- | --------------------------------- | -------- |
+| `VITE_API_BASE_URL`      | Backend API base URL         | `http://localhost:8000`           | ❌       |
+| `VITE_APP_TITLE`         | Application title            | `ESG Checklist AI`                | ❌       |
+| `VITE_THEME_MODE`        | Default theme mode           | `light`                           | ❌       |
 
 ## 🤝 **Contributing**
 
 ### **Development Workflow**
 
-1. **Fork the repository**
-2. **Create feature branch**: `git checkout -b feature/amazing-feature`
-3. **Make changes and test**: `pytest && black . && flake8 .`
-4. **Commit changes**: `git commit -m 'Add amazing feature'`
-5. **Push to branch**: `git push origin feature/amazing-feature`
-6. **Open Pull Request**
+1. **Fork the repository** and create feature branch
+2. **Setup development environment** (backend + frontend)
+3. **Make changes** following code standards
+4. **Run tests** and ensure quality checks pass
+5. **Commit changes** with descriptive messages
+6. **Push to branch** and open Pull Request
 
 ### **Code Standards**
 
-- **Python Style**: Black formatting, PEP 8 compliance
-- **Type Hints**: Full type annotation coverage
-- **Documentation**: Comprehensive docstrings
-- **Testing**: Minimum 80% test coverage
+- **Backend**: Black formatting, PEP 8 compliance, full type hints
+- **Frontend**: ESLint + Prettier, TypeScript strict mode
+- **Testing**: Minimum 80% test coverage for critical paths
+- **Documentation**: Comprehensive docstrings and comments
 
 ## 🐛 **Troubleshooting**
 
 ### **Common Issues**
 
-**1. Server Won't Start**
-
+**1. Frontend Build Errors**
 ```bash
-# Check Python version
-python --version  # Should be 3.11+
+# Clear node modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
 
-# Verify dependencies
+# Check Node.js version
+node --version  # Should be 18+
+```
+
+**2. Backend Server Issues**
+```bash
+# Check Python version and dependencies
+python --version  # Should be 3.11+
 pip check
 
-# Check database connection
+# Database connection test
 python -c "from app.database import engine; print('DB OK')"
 ```
 
-**2. AI Analysis Failing**
-
+**3. AI Analysis Failing**
 ```bash
 # Verify API keys
 echo $GEMINI_API_KEY
 
 # Test AI connection
-python -c "from app.utils.ai import test_connection; test_connection()"
+python -c "from app.ai.scorer import test_connection; test_connection()"
 ```
 
-**3. File Upload Issues**
-
+**4. Export Generation Issues**
 ```bash
-# Check upload directory permissions
-ls -la uploads/
+# Check dependencies for report generation
+python -c "import reportlab, docx; print('Export dependencies OK')"
 
-# Verify file size limits
-grep MAX_FILE_SIZE .env
+# Verify file permissions
+ls -la uploads/ exports/
 ```
 
 ## 📞 **Support & Contact**
 
 ### **Documentation**
 
-- **API Docs**: http://localhost:8000/docs
-- **User Guide**: `/docs/user-guide.md`
-- **Admin Guide**: `/docs/admin-guide.md`
-- **Deployment Guide**: `/docs/deployment-guide.md`
-
-### **Project Team**
-
-This project is a collaborative effort by Husam AlSabbah and Zakkaria  
-e& Risk and Assurance Department
+- **API Docs**: http://localhost:8000/docs (Interactive Swagger UI)
+- **Frontend Storybook**: http://localhost:6006 (Component library)
+- **User Guides**: `/docs/` directory
+- **API Reference**: Complete endpoint documentation
 
 ### **Getting Help**
 
-- **Issues**: Create GitHub issue with detailed description
-- **Questions**: Contact development team
-- **Security**: Report vulnerabilities privately
+- **Issues**: Create detailed GitHub issues with reproduction steps
+- **Feature Requests**: Use GitHub discussions for new feature ideas
+- **Security**: Report vulnerabilities through secure channels
+- **Development**: Contact development team for technical questions
 
 ## 📄 **License**
 
@@ -440,13 +595,21 @@ No part of this project may be copied, modified, distributed, or used in any for
 
 ## 🙏 **Acknowledgments**
 
+### **Technology Partners**
 - **FastAPI**: Modern, fast web framework for building APIs
-- **SQLModel**: SQL databases in Python, designed for simplicity and compatibility
+- **React**: A JavaScript library for building user interfaces
+- **Material-UI**: React components for faster and easier web development
+- **SQLModel**: SQL databases in Python with type safety
 - **Google Gemini**: Advanced AI capabilities for document analysis
-- **Contributors**: All team members who contributed to this project
+- **OpenAI**: Cutting-edge AI language models
+
+### **Project Team**
+This project is a collaborative effort by Husam AlSabbah and Zakkaria  
+e& Risk and Assurance Department
 
 ---
 
 **Made with ❤️ by the e& Risk and Assurance Team**
 
-_Last Updated: July 2025_
+_Last Updated: January 2025_
+_Version: 2.0.0 - Full-Stack Enterprise Edition_
