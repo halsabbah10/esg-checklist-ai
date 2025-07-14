@@ -244,7 +244,7 @@ async def validate_upload_file(file: UploadFile) -> tuple[str, str]:
     return secure_name, extension
 
 
-def generate_secure_filepath(filename: str, user_id: int, checklist_id: int = None) -> pathlib.Path:
+def generate_secure_filepath(filename: str, user_id: int, checklist_id: Optional[int] = None) -> pathlib.Path:
     """
     Generate a secure file path with sanitized components
 
@@ -272,7 +272,7 @@ def generate_secure_filepath(filename: str, user_id: int, checklist_id: int = No
 
     # Create unique filename to prevent conflicts
     unique_id = str(uuid.uuid4())[:8]
-    
+
     # Use checklist_id if provided, otherwise use 'esg-doc' for ESG document uploads
     doc_type = checklist_id if checklist_id is not None else "esg-doc"
     secure_filename = f"{user_id}_{doc_type}_{unique_id}_{stem}{suffix}"

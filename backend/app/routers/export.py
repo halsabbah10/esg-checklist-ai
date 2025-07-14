@@ -831,7 +831,7 @@ def export_analytics_data(
                 "avg_processing_time_ms": round(avg_processing_time, 2),
                 "total_activities": len(user_activities),
                 "most_recent_activity": max([a.timestamp for a in user_activities]) if user_activities else None,
-                "activity_types": list(set(a.action_type for a in user_activities)),
+                "activity_types": list({a.action_type for a in user_activities}),
             })
 
         df = pd.DataFrame(data)

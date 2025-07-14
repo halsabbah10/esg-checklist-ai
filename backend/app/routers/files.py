@@ -26,7 +26,7 @@ async def download_file(
 ):
     """
     Download a file by its ID.
-    
+
     Requires admin, auditor, or reviewer role.
     Users can only download files they uploaded or if they have admin/reviewer privileges.
     """
@@ -85,7 +85,7 @@ async def download_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error downloading file {file_id}: {e!s}")
+        logger.exception(f"Error downloading file {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error downloading file"
@@ -100,7 +100,7 @@ async def view_file(
 ):
     """
     View a file inline (for supported types like PDFs, images, text files).
-    
+
     Requires admin, auditor, or reviewer role.
     Users can only view files they uploaded or if they have admin/reviewer privileges.
     """
@@ -157,7 +157,7 @@ async def view_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error viewing file {file_id}: {e!s}")
+        logger.exception(f"Error viewing file {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error viewing file"
@@ -173,7 +173,7 @@ async def stream_file(
 ):
     """
     Stream a file with range support (useful for large files and video/audio).
-    
+
     Requires admin, auditor, or reviewer role.
     """
     try:
@@ -250,7 +250,7 @@ async def stream_file(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error streaming file {file_id}: {e!s}")
+        logger.exception(f"Error streaming file {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error streaming file"
@@ -265,7 +265,7 @@ async def get_file_info(
 ):
     """
     Get file metadata and information.
-    
+
     Requires admin, auditor, or reviewer role.
     """
     try:
@@ -308,7 +308,7 @@ async def get_file_info(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting file info {file_id}: {e!s}")
+        logger.exception(f"Error getting file info {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error getting file information"
@@ -323,7 +323,7 @@ async def get_file_ai_analysis(
 ):
     """
     Get AI analysis results for a specific file upload.
-    
+
     Requires admin, auditor, or reviewer role.
     Users can only access analysis for files they uploaded or if they have admin/reviewer privileges.
     """
@@ -401,7 +401,7 @@ async def get_file_ai_analysis(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error getting AI analysis for file {file_id}: {e!s}")
+        logger.exception(f"Error getting AI analysis for file {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error getting AI analysis"

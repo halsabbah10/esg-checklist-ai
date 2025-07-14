@@ -232,7 +232,7 @@ export const uploadsAPI = {
 
   // Status update would need to be implemented in backend
   updateStatus: (uploadId: string, data: { status: string; comment?: string; reviewer_notes?: string }) => {
-    console.warn('Upload status update not implemented in backend yet');
+    console.warn('Upload status update not implemented in backend yet', { uploadId, data });
     return Promise.resolve({ data: { success: true } });
   },
 

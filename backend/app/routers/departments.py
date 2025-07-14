@@ -56,7 +56,7 @@ def get_departments_public():
     """
     Get list of all available department names for dropdown/selection purposes.
     This is a public endpoint that doesn't require authentication.
-    
+
     Returns:
         List of department names
     """
@@ -79,7 +79,7 @@ def get_departments(
     """
     Get list of all available departments for analysis.
     Requires authentication.
-    
+
     Returns:
         List of department names
     """
@@ -102,10 +102,10 @@ def get_department_info(
 ):
     """
     Get detailed information about a specific department.
-    
+
     Args:
         department_name: Name of the department
-        
+
     Returns:
         Department configuration and context information
     """
@@ -170,12 +170,12 @@ def analyze_by_department(
 ):
     """
     Perform department-specific ESG analysis on provided text.
-    
+
     Args:
         request: Analysis request with text and department specification
         db: Database session
         current_user: Authenticated user
-        
+
     Returns:
         Department-specific analysis results with score and feedback
     """
@@ -257,14 +257,14 @@ def get_department_analysis_history(
 ):
     """
     Get analysis history for a specific department.
-    
+
     Args:
         department_name: Name of the department
         limit: Maximum number of results to return
         offset: Number of results to skip
         db: Database session
         current_user: Authenticated user
-        
+
     Returns:
         List of analysis results for the department
     """

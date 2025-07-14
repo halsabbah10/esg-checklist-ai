@@ -104,7 +104,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 
   const handleDownload = async () => {
     try {
-      const response = await uploadsAPI.download(uploadId);
+      const response = await uploadsAPI.download(uploadId.toString());
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -361,6 +361,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <RotateRight />
             </IconButton>
           )}
+          <IconButton 
+            onClick={() => {
+              const elem = document.documentElement;
+              if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+              }
+            }}
+            title="Fullscreen"
+          >
+            <Fullscreen />
+          </IconButton>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -387,7 +398,7 @@ const FileContentLoader: React.FC<{ uploadId: number }> = ({ uploadId }) => {
   useEffect(() => {
     const loadContent = async () => {
       try {
-        const response = await uploadsAPI.download(uploadId);
+        const response = await uploadsAPI.download(uploadId.toString());
         const text = await response.data.text();
         setContent(text);
       } catch (error) {

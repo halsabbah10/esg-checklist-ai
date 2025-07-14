@@ -420,12 +420,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     }
 
     try {
-      // Helper functions exactly like ChecklistUpload
-      const getScoreColor = (score: number): 'success' | 'warning' | 'error' => {
-        if (score >= 0.8) return 'success';
-        if (score >= 0.6) return 'warning';
-        return 'error';
-      };
+      // Helper functions exactly like ChecklistUpload (using global getScoreColor)
 
       const getScoreIcon = (score: number) => {
         if (score >= 0.8) return <CheckCircle sx={{ color: 'white' }} />;
@@ -675,13 +670,18 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     const generateDepartmentSpecificRecommendations = (feedback: string, filename: string, department: string) => {
       const recommendations = [];
       const lowerFeedback = feedback.toLowerCase();
+      const isFinancialDoc = filename.toLowerCase().includes('financial') || filename.toLowerCase().includes('annual');
+      const isAuditDoc = filename.toLowerCase().includes('audit') || filename.toLowerCase().includes('compliance');
+      
+      // Document-specific context for recommendations
+      const docContext = isFinancialDoc ? ' in financial reporting' : isAuditDoc ? ' in audit documentation' : ' in submitted documentation';
       
       switch (department.toLowerCase()) {
         case 'group finance':
           // Finance-specific checklist recommendations
           if (lowerFeedback.includes('missing') || lowerFeedback.includes('incomplete')) {
-            recommendations.push('Finance: Document missing financial risk assessment data required for ESG financial checklist items');
-            recommendations.push('Finance: Provide ESG investment criteria and sustainable finance metrics for checklist completion');
+            recommendations.push(`Finance: Document missing financial risk assessment data required for ESG financial checklist items${docContext}`);
+            recommendations.push(`Finance: Provide ESG investment criteria and sustainable finance metrics for checklist completion${docContext}`);
           }
           if (lowerFeedback.includes('climate') || lowerFeedback.includes('risk')) {
             recommendations.push('Finance: Submit climate financial risk disclosures and TCFD compliance documentation');
@@ -748,15 +748,16 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     // e&-specific ESG analysis framework based on company strategy
     const analyzeDocumentForEandESGStrategy = (feedback: string, filename: string, overallScore: number) => {
       const analysis = {
-        strategic_alignment: [],
-        business_pillar_impact: {},
-        regulatory_compliance: [],
-        stakeholder_impact: [],
-        innovation_sustainability: []
+        strategic_alignment: [] as string[],
+        business_pillar_impact: {} as Record<string, any>,
+        regulatory_compliance: [] as string[],
+        stakeholder_impact: [] as string[],
+        innovation_sustainability: [] as string[]
       };
       
       const lowerFeedback = feedback.toLowerCase();
-      const lowerFilename = filename.toLowerCase();
+      // Use filename and overallScore in analysis
+      console.log(`Analyzing ${filename} with score ${overallScore} for e& ESG strategy alignment`);
       
       // e& Strategic ESG Pillars Analysis
       
@@ -829,6 +830,9 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     // Enhance checklist items based on department-specific requirements
     const enhanceChecklistForDepartment = (baseItems: any[], department: string, departmentContext: any) => {
       const enhancedItems = [...baseItems];
+      
+      // Use departmentContext to adjust weights and requirements
+      const contextMultiplier = departmentContext?.expertise_level === 'high' ? 1.2 : departmentContext?.expertise_level === 'low' ? 0.8 : 1.0;
       
       // Add department-specific checklist items and modify weights
       switch (department.toLowerCase()) {
@@ -970,6 +974,11 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
           break;
       }
 
+      // Apply context multiplier to all items
+      enhancedItems.forEach(item => {
+        item.weight = item.weight * contextMultiplier;
+      });
+      
       // Normalize weights to ensure they sum to approximately 1
       const totalWeight = enhancedItems.reduce((sum, item) => sum + item.weight, 0);
       enhancedItems.forEach(item => {
@@ -1059,8 +1068,8 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
 
       // Analyze each checklist item for completeness
       const analyzedItems = checklistItems.map(item => {
-        const evidenceFound = [];
-        const gapsIdentified = [];
+        const evidenceFound: string[] = [];
+        const gapsIdentified: string[] = [];
         const recommendations = [];
         
         // Check for evidence in the feedback
@@ -1122,8 +1131,12 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
         return sum + (item.completeness_score * item.weight);
       }, 0);
 
+      // Perform e& strategy analysis (using function parameters)
+      const eandAnalysis = analyzeDocumentForEandESGStrategy(feedback, filename, overallScore);
+
       return {
         overall_completeness: weightedCompleteness,
+        eand_strategic_analysis: eandAnalysis,
         summary: {
           complete,
           incomplete,
@@ -1203,17 +1216,17 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     };
 
     // Parse the data structure to match ChecklistUpload format
-    const overallScore = aiAnalysis.overall_score || aiAnalysis.score || 0;
+    const overallScore = (aiAnalysis as any).overall_score || (aiAnalysis as any).score || 0;
     const feedbackText = aiAnalysis.feedback || aiAnalysis.analysis || '';
     
     const processedData = {
       overall_score: overallScore,
-      category_scores: aiAnalysis.category_scores || extractCategoryScores(feedbackText, overallScore),
-      recommendations: aiAnalysis.recommendations || extractDocumentSpecificRecommendations(feedbackText, filename),
-      gaps: aiAnalysis.gaps || extractDocumentSpecificGaps(feedbackText, filename, overallScore),
+      category_scores: (aiAnalysis as any).category_scores || extractCategoryScores(feedbackText, overallScore),
+      recommendations: (aiAnalysis as any).recommendations || extractDocumentSpecificRecommendations(feedbackText, filename),
+      gaps: (aiAnalysis as any).gaps || extractDocumentSpecificGaps(feedbackText, filename, overallScore),
       processed_at: aiAnalysis.created_at,
-      department_context: aiAnalysis.department_context || null,
-      department: aiAnalysis.department || null
+      department_context: (aiAnalysis as any).department_context || null,
+      department: (aiAnalysis as any).department || null
     };
 
     return (
@@ -1251,7 +1264,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
               </Typography>
             </Box>
             <Typography variant="h2" fontWeight={700}>
-              {Math.round(processedData.overall_score * 100)}%
+              {formatScore(processedData.overall_score)}
             </Typography>
             <Typography 
               variant="body2" 
@@ -1354,7 +1367,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
                         color={`${getScoreColor(score as number)}.main`}
                         sx={{ ml: 1 }}
                       >
-                        {Math.round((score as number) * 100)}%
+                        {formatScore(score)}
                       </Typography>
                     </Box>
                   </Box>
@@ -1456,10 +1469,10 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
           
           // First, try to extract from metadata if available
           try {
-            if (aiAnalysis.analysis_metadata) {
-              const metadata = typeof aiAnalysis.analysis_metadata === 'string' 
-                ? JSON.parse(aiAnalysis.analysis_metadata) 
-                : aiAnalysis.analysis_metadata;
+            if ((aiAnalysis as any).analysis_metadata) {
+              const metadata = typeof (aiAnalysis as any).analysis_metadata === 'string' 
+                ? JSON.parse((aiAnalysis as any).analysis_metadata) 
+                : (aiAnalysis as any).analysis_metadata;
               checklistCompleteness = metadata?.checklist_completeness;
             }
           } catch (e) {
@@ -1592,7 +1605,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
                                 size="small"
                               />
                               <Chip
-                                label={`${Math.round(item.completeness_score * 100)}%`}
+                                label={formatScore(item.completeness_score)}
                                 variant="outlined"
                                 size="small"
                               />
@@ -1752,7 +1765,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
                               variant="determinate"
                               value={(weight as number) * 100}
                               sx={{ flex: 1, height: 6, borderRadius: 3 }}
-                              color={weight as number >= 0.7 ? 'success' : weight as number >= 0.4 ? 'warning' : 'error'}
+                              color={getScoreColor(weight as number)}
                             />
                             <Typography variant="caption" fontWeight={600}>
                               {Math.round((weight as number) * 100)}%

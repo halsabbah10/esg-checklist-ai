@@ -1,30 +1,28 @@
+import contextlib
+import io
+import json
 import logging
-import os
 from datetime import datetime, timezone
-from typing import Optional, List
 from enum import Enum
+from typing import Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-from sqlmodel import Session, select
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
+from sqlmodel import Session
 
 from app.services.realtime_analytics import (
-    realtime_analytics,
     track_ai_processing,
-    track_file_upload,
 )
 from app.utils.file_security import generate_secure_filepath, validate_upload_file
 from app.utils.notifications import notify_user
-from fastapi.responses import StreamingResponse
-import io
-import json
 
+from ..ai.department_configs import get_all_departments
+from ..ai.scorer import AIScorer
 from ..auth import require_role
 from ..config import get_settings
 from ..database import get_session
-from ..models import AIResult, Checklist, ChecklistItem, FileUpload
-from ..ai.scorer import AIScorer
-from ..ai.department_configs import get_all_departments
+from ..models import AIResult, Checklist, FileUpload
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
@@ -68,7 +66,7 @@ def get_available_models(
                 "provider": "Google",
                 "capabilities": [
                     "Comprehensive ESG scoring",
-                    "Department-specific analysis", 
+                    "Department-specific analysis",
                     "Multi-language support",
                     "Fast processing"
                 ],
@@ -141,7 +139,7 @@ def validate_analysis_configuration(
 ):
     """Validate the analysis configuration before proceeding."""
     logger.info(f"Validating configuration: model={request.model.value}, department={request.department}")
-    
+
     # Validate department
     departments = get_all_departments()
     if request.department not in departments:
@@ -149,31 +147,27 @@ def validate_analysis_configuration(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid department: {request.department}"
         )
-    
+
     # Validate model availability
-    scorer = AIScorer()
+    AIScorer()
     model_available = False
-    
-    if request.model == AIModel.GEMINI and settings.GEMINI_API_KEY:
+
+    if (request.model == AIModel.GEMINI and settings.GEMINI_API_KEY) or (request.model == AIModel.DEEPSEEK and settings.DEEPSEEK_API_KEY) or (request.model == AIModel.EAND_CHATGPT and settings.EAND_API_KEY):
         model_available = True
-    elif request.model == AIModel.DEEPSEEK and settings.DEEPSEEK_API_KEY:
-        model_available = True
-    elif request.model == AIModel.EAND_CHATGPT and settings.EAND_API_KEY:
-        model_available = True
-    
+
     if not model_available:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"AI model {request.model.value} is not available or not configured"
         )
-    
+
     return {
         "valid": True,
         "configuration": {
             "model": request.model.value,
             "model_name": {
                 "gemini": "Google Gemini 2.0 Flash",
-                "deepseek": "DeepSeek R1", 
+                "deepseek": "DeepSeek R1",
                 "eand": "e& ChatGPT"
             }.get(request.model.value, request.model.value),
             "department": request.department,
@@ -196,14 +190,14 @@ async def upload_and_analyze_document(
     This is the main endpoint for the 4-step AI analysis workflow.
     """
     logger.info(f"User {current_user.id} starting AI analysis: model={model}, department={department}")
-    
+
     # Validate inputs
     if model not in ["gemini", "deepseek", "eand"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid AI model: {model}"
         )
-    
+
     # Validate department
     departments = get_all_departments()
     if department not in departments:
@@ -211,22 +205,22 @@ async def upload_and_analyze_document(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid department: {department}"
         )
-    
+
     try:
         # Step 1: File validation and storage
         file_content = await file.read()
         file_size = len(file_content)
         await file.seek(0)
-        
+
         secure_filename, file_extension = await validate_upload_file(file)
         secure_filepath = generate_secure_filepath(secure_filename, current_user.id)
         secure_filepath.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Save file
         import aiofiles
         async with aiofiles.open(secure_filepath, "wb") as f:
             await f.write(file_content)
-        
+
         # Create file record
         file_record = FileUpload(
             checklist_id=None,  # No specific checklist - user uploads ESG document
@@ -237,21 +231,21 @@ async def upload_and_analyze_document(
             file_type=file.content_type or "application/octet-stream",
             processing_status="processing"
         )
-        
+
         db.add(file_record)
         db.commit()
         db.refresh(file_record)
-        
+
         # Step 2: Text extraction
         raw_text = await extract_text_from_file(secure_filepath, file_extension)
-        
+
         # Step 3: AI Analysis with specified model
         scorer = AIScorer()
-        
+
         # Temporarily override the scorer's provider for this analysis
         original_provider = scorer.provider
         scorer.provider = model
-        
+
         try:
             # Perform department-specific analysis on the uploaded ESG document
             ai_start_time = datetime.now(timezone.utc)
@@ -260,17 +254,17 @@ async def upload_and_analyze_document(
             )
             ai_end_time = datetime.now(timezone.utc)
             processing_time_ms = int((ai_end_time - ai_start_time).total_seconds() * 1000)
-            
+
             logger.info(f"AI analysis completed with {model} model: score={score}")
-            
+
         finally:
             # Restore original provider
             scorer.provider = original_provider
-        
+
         # Step 4: Store results
         import json
         analysis_metadata_str = json.dumps(analysis_metadata) if analysis_metadata else None
-        
+
         ai_result = AIResult(
             file_upload_id=file_record.id,
             checklist_id=None,  # No specific checklist - user uploads ESG document
@@ -282,13 +276,13 @@ async def upload_and_analyze_document(
             processing_time_ms=processing_time_ms,
             analysis_metadata=analysis_metadata_str
         )
-        
+
         db.add(ai_result)
         file_record.processing_status = "completed"
         db.add(file_record)
         db.commit()
         db.refresh(ai_result)
-        
+
         # Send notification
         try:
             notify_user(
@@ -304,7 +298,7 @@ async def upload_and_analyze_document(
             )
         except Exception as e:
             logger.exception(f"Failed to send notification: {e}")
-        
+
         # Track analytics
         try:
             track_ai_processing(
@@ -317,7 +311,7 @@ async def upload_and_analyze_document(
             )
         except Exception as e:
             logger.exception(f"Failed to track analytics: {e}")
-        
+
         return {
             "success": True,
             "analysis_id": ai_result.id,
@@ -334,10 +328,10 @@ async def upload_and_analyze_document(
                 "completeness": analysis_metadata.get("checklist_completeness", {}) if analysis_metadata else {}
             }
         }
-        
+
     except Exception as e:
         logger.exception(f"AI analysis failed: {e}")
-        
+
         # Clean up on error
         if "file_record" in locals() and file_record and file_record.id:
             try:
@@ -346,16 +340,14 @@ async def upload_and_analyze_document(
                 db.commit()
             except Exception:
                 pass
-        
+
         if "secure_filepath" in locals() and secure_filepath and secure_filepath.exists():
-            try:
+            with contextlib.suppress(Exception):
                 secure_filepath.unlink()
-            except Exception:
-                pass
-        
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"AI analysis failed: {str(e)}"
+            detail=f"AI analysis failed: {e!s}"
         )
 
 
@@ -372,12 +364,12 @@ def get_analysis_results(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found"
         )
-    
+
     # Get associated file info
     file_upload = db.get(FileUpload, ai_result.file_upload_id)
     # For ESG document uploads, checklist_id is None
     checklist = db.get(Checklist, ai_result.checklist_id) if ai_result.checklist_id else None
-    
+
     # Parse metadata
     import json
     metadata = {}
@@ -386,7 +378,7 @@ def get_analysis_results(
             metadata = json.loads(ai_result.analysis_metadata)
         except json.JSONDecodeError:
             logger.warning(f"Failed to parse metadata for analysis {analysis_id}")
-    
+
     return {
         "analysis_id": ai_result.id,
         "score": ai_result.score,
@@ -423,11 +415,11 @@ def export_analysis_results(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found"
         )
-    
+
     # Get associated file info
     file_upload = db.get(FileUpload, ai_result.file_upload_id)
     checklist = db.get(Checklist, ai_result.checklist_id) if ai_result.checklist_id else None
-    
+
     # Parse metadata
     metadata = {}
     if ai_result.analysis_metadata:
@@ -435,7 +427,7 @@ def export_analysis_results(
             metadata = json.loads(ai_result.analysis_metadata)
         except json.JSONDecodeError:
             logger.warning(f"Failed to parse metadata for analysis {analysis_id}")
-    
+
     # Prepare export data
     export_data = {
         "analysis_id": ai_result.id,
@@ -456,7 +448,7 @@ def export_analysis_results(
         },
         "metadata": metadata
     }
-    
+
     if format.lower() == "json":
         # Return JSON format
         json_str = json.dumps(export_data, indent=2, default=str)
@@ -465,11 +457,11 @@ def export_analysis_results(
             media_type="application/json",
             headers={"Content-Disposition": f"attachment; filename=analysis_{analysis_id}.json"}
         )
-    
-    elif format.lower() == "excel":
+
+    if format.lower() == "excel":
         # Create Excel export (simplified implementation)
         import pandas as pd
-        
+
         # Create DataFrame with analysis data
         df_data = {
             "Metric": [
@@ -487,41 +479,41 @@ def export_analysis_results(
                 export_data["file_info"]["file_size"]
             ]
         }
-        
+
         df = pd.DataFrame(df_data)
-        
+
         # Create Excel file in memory
         excel_buffer = io.BytesIO()
-        with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
-            df.to_excel(writer, sheet_name='Analysis Summary', index=False)
-            
+        with pd.ExcelWriter(excel_buffer, engine="openpyxl") as writer:
+            df.to_excel(writer, sheet_name="Analysis Summary", index=False)
+
             # Add feedback as separate sheet
             feedback_df = pd.DataFrame({"AI Analysis Feedback": [export_data["feedback"]]})
-            feedback_df.to_excel(writer, sheet_name='Detailed Feedback', index=False)
-        
+            feedback_df.to_excel(writer, sheet_name="Detailed Feedback", index=False)
+
         excel_buffer.seek(0)
-        
+
         return StreamingResponse(
             io.BytesIO(excel_buffer.read()),
             media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             headers={"Content-Disposition": f"attachment; filename=analysis_{analysis_id}.xlsx"}
         )
-    
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported export format: {format}. Supported formats: json, excel"
-        )
+
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail=f"Unsupported export format: {format}. Supported formats: json, excel"
+    )
 
 
 # Helper function for text extraction
 async def extract_text_from_file(file_path, file_extension: str) -> str:
     """Extract text from uploaded file based on its extension."""
     import csv
+
+    import openpyxl
     import pdfplumber
     from docx import Document
-    import openpyxl
-    
+
     try:
         if file_extension == "pdf":
             with pdfplumber.open(file_path) as pdf:
@@ -532,7 +524,7 @@ async def extract_text_from_file(file_path, file_extension: str) -> str:
         elif file_extension == "xlsx":
             wb = openpyxl.load_workbook(file_path)
             text = []
-            
+
             # First try to find the "ESG Questionnaires" tab specifically
             target_sheet = None
             for ws in wb.worksheets:
@@ -540,7 +532,7 @@ async def extract_text_from_file(file_path, file_extension: str) -> str:
                     target_sheet = ws
                     logger.info(f"Found ESG questionnaires sheet: '{ws.title}'")
                     break
-            
+
             # If no ESG questionnaires sheet found, use all sheets (fallback)
             if target_sheet:
                 worksheets_to_process = [target_sheet]
@@ -548,7 +540,7 @@ async def extract_text_from_file(file_path, file_extension: str) -> str:
             else:
                 worksheets_to_process = wb.worksheets
                 logger.info("No ESG questionnaires sheet found, processing all sheets")
-            
+
             for ws in worksheets_to_process:
                 for row in ws.iter_rows(values_only=True):
                     text.append(" ".join([str(cell) if cell else "" for cell in row]))

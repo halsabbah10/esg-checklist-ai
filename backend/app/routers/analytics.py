@@ -294,14 +294,13 @@ def calculate_safe_trends(db):
         total_uploads = db.exec(select(func.count()).select_from(FileUpload)).one()
 
         # Generate realistic trends based on system activity
-        trends = {
+        return {
             "users": generate_realistic_trend(total_users, "users"),
             "checklists": generate_realistic_trend(total_checklists, "checklists"),
             "uploads": generate_realistic_trend(total_uploads, "uploads"),
             "score": generate_realistic_trend(total_uploads, "score")  # Base score trend on upload activity
         }
 
-        return trends
 
     except Exception:
         # If anything fails, return safe defaults

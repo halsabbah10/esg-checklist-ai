@@ -11,10 +11,6 @@ import {
   Alert,
   Button,
   Chip,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
   Paper,
   Table,
   TableBody,
@@ -25,7 +21,6 @@ import {
   LinearProgress,
 } from '@mui/material';
 import {
-  Assignment,
   AssessmentOutlined,
   FileDownload,
   Timeline,
@@ -170,7 +165,7 @@ export const FallbackAuditorDashboard: React.FC = () => {
   });
 
   // Determine loading state
-  const isLoading = dashboardLoading || (dashboardError && (metricsLoading || aiLoading || submissionsLoading));
+  const isLoading = Boolean(dashboardLoading || (dashboardError && (metricsLoading || aiLoading || submissionsLoading)));
 
   if (isLoading) {
     return (
@@ -191,19 +186,17 @@ export const FallbackAuditorDashboard: React.FC = () => {
   }
 
   // Handle data from either optimized or fallback endpoints
-  let metrics, aiResultsData, submissionsData;
+  let metrics, aiResultsData;
 
   if (dashboardData && !dashboardError) {
     // Use optimized endpoint data
     const data = dashboardData.data;
     metrics = data.metrics;
     aiResultsData = data.aiResults || [];
-    submissionsData = data.uploads || [];
   } else {
     // Use fallback endpoint data
     const auditorData = auditorMetrics?.data || {};
     const aiData = aiResults?.data?.results || [];
-    const submissionData = submissions?.data || [];
     
     metrics = {
       overallScore: auditorData.overallScore || 0,
@@ -214,7 +207,6 @@ export const FallbackAuditorDashboard: React.FC = () => {
       esgCategories: auditorData.esgCategories || []
     };
     aiResultsData = aiData;
-    submissionsData = submissionData;
   }
 
   // Show error if both optimized and fallback failed

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom'; // Removed unused
 import {
   Container,
   Typography,
@@ -50,7 +50,7 @@ interface UploadData {
 }
 
 export const Reviews: React.FC = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Removed unused
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>(
     'all'
@@ -93,7 +93,13 @@ export const Reviews: React.FC = () => {
         const results = uploadsResponse.data?.results || [];
         console.log('Upload results:', results);
 
-        return results.map((upload: unknown) => {
+        // Remove duplicates by ID and return mapped results
+        const uniqueResults = results.filter((upload: unknown, index: number, self: unknown[]) => {
+          const uploadData = upload as UploadData;
+          return self.findIndex((u: unknown) => (u as UploadData).id === uploadData.id) === index;
+        });
+
+        return uniqueResults.map((upload: unknown) => {
           const uploadData = upload as UploadData;
           return {
             id: uploadData.id,
@@ -109,10 +115,10 @@ export const Reviews: React.FC = () => {
         throw error;
       }
     },
-    staleTime: 2 * 60 * 1000, // 2 minutes stale time
-    gcTime: 5 * 60 * 1000, // 5 minutes garbage collection
-    refetchInterval: 30000, // Refresh every 30 seconds
-    retry: 3, // Retry failed requests
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+    gcTime: 10 * 60 * 1000, // 10 minutes garbage collection
+    refetchInterval: false, // Disable automatic refresh to prevent duplicates
+    retry: 2, // Reduce retry attempts
     refetchOnWindowFocus: false, // Don't refetch on window focus
   });
 
@@ -202,6 +208,7 @@ export const Reviews: React.FC = () => {
   };
 
   const handleStatusChange = (newStatus: string) => {
+    console.log(`Status changed to: ${newStatus}`);
     // Refresh data after status change
     refetch();
   };
@@ -370,55 +377,60 @@ export const Reviews: React.FC = () => {
                       }
                     />
 
-                    <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                    <Box sx={{ ml: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                       <Button
                         size="small"
                         startIcon={<Visibility />}
                         onClick={() => handleViewDetails(review)}
                         variant="contained"
+                        sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
                       >
-                        View Document
+                        View
                       </Button>
 
                       <Button
                         size="small"
                         variant="outlined"
                         onClick={() => handleViewDetailsLegacy(review)}
+                        sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
                       >
                         Quick View
                       </Button>
 
                       {review.status === 'pending' && (
-                        <>
+                        <Stack direction="row" spacing={0.5} sx={{ ml: 1 }}>
                           <Button
                             size="small"
-                            variant="outlined"
+                            variant="contained"
                             color="success"
                             onClick={() => handleApprove(review.id)}
                             disabled={approveMutation.isPending}
+                            sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
                           >
                             {approveMutation.isPending ? 'Approving...' : 'Approve'}
                           </Button>
                           <Button
                             size="small"
-                            variant="outlined"
+                            variant="contained"
                             color="error"
                             onClick={() => handleReject(review.id)}
                             disabled={rejectMutation.isPending}
+                            sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
                           >
                             {rejectMutation.isPending ? 'Rejecting...' : 'Reject'}
                           </Button>
-                        </>
+                        </Stack>
                       )}
 
                       <Button
                         size="small"
                         startIcon={<Comment />}
                         onClick={() => handleAddComment(review)}
-                        variant="contained"
-                        color="secondary"
+                        variant="outlined"
+                        color="primary"
+                        sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
                       >
-                        Review & Comment
+                        Comment
                       </Button>
                     </Box>
                   </ListItem>
@@ -480,7 +492,7 @@ export const Reviews: React.FC = () => {
                   <Typography variant="h6" gutterBottom color="primary">
                     🤖 AI Analysis Results
                   </Typography>
-                  {aiAnalysis.data.results.map((result: any, index: number) => (
+                  {aiAnalysis?.data?.results?.map((result: any, index: number) => (
                     <Box key={index} sx={{ mb: 3 }}>
                       <Box display="flex" alignItems="center" gap={2} mb={2}>
                         <Typography variant="h4" color="success.main" fontWeight="bold">

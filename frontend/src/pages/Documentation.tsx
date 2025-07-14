@@ -13,12 +13,10 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  Divider,
   Button,
   Alert,
   Chip,
-  Grid,
-  Link,
+  Grid2 as Grid,
 } from '@mui/material';
 import {
   ExpandMore,
@@ -26,7 +24,7 @@ import {
   CloudUpload,
   Assessment,
   Security,
-  Admin,
+  AdminPanelSettings,
   Group,
   PlayArrow,
   CheckCircle,
@@ -40,7 +38,7 @@ export const Documentation: React.FC = () => {
   const navigate = useNavigate();
   const [expandedPanel, setExpandedPanel] = useState<string | false>('getting-started');
 
-  const handlePanelChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+  const handlePanelChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedPanel(isExpanded ? panel : false);
   };
 
@@ -89,21 +87,21 @@ export const Documentation: React.FC = () => {
               System Overview
             </Typography>
             <Grid container spacing={2} sx={{ mb: 3 }}>
-              <Grid item xs={12} md={4}>
+              <Grid xs={12} md={4}>
                 <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                   <CloudUpload color="primary" sx={{ fontSize: 40, mb: 1 }} />
                   <Typography variant="h6">Upload Documents</Typography>
                   <Typography variant="body2">Upload ESG documents in various formats</Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid xs={12} md={4}>
                 <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                   <Assessment color="secondary" sx={{ fontSize: 40, mb: 1 }} />
                   <Typography variant="h6">AI Analysis</Typography>
                   <Typography variant="body2">Automated compliance scoring using Gemini AI</Typography>
                 </Paper>
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid xs={12} md={4}>
                 <Paper elevation={1} sx={{ p: 2, textAlign: 'center' }}>
                   <CheckCircle color="success" sx={{ fontSize: 40, mb: 1 }} />
                   <Typography variant="h6">Review & Approve</Typography>
@@ -309,7 +307,7 @@ export const Documentation: React.FC = () => {
           <Card variant="outlined" sx={{ mb: 2 }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                <Admin color="error" sx={{ mr: 1 }} />
+                <AdminPanelSettings color="error" sx={{ mr: 1 }} />
                 <Typography variant="h6">Administrator</Typography>
               </Box>
               <Typography variant="body2" color="text.secondary" paragraph>

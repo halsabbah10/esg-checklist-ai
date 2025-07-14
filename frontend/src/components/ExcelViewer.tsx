@@ -12,7 +12,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   IconButton,
   Tooltip,
   Menu,
@@ -21,12 +20,8 @@ import {
 } from '@mui/material';
 import {
   Download,
-  Refresh,
   ZoomIn,
   ZoomOut,
-  FilterList,
-  Sort,
-  MoreVert,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { filesAPI } from '../services/api';
@@ -104,21 +99,27 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
 
       const sheets: WorksheetData[] = [];
 
-    workbook.SheetNames.forEach((sheetName) => {
+    for (const sheetName of workbook.SheetNames) {
       const worksheet = workbook.Sheets[sheetName];
       const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1:A1');
       
       const rows = range.e.r + 1;
       const cols = range.e.c + 1;
       
-      // Initialize data array
-      const data: CellData[][] = Array(rows).fill(null).map(() => 
-        Array(cols).fill(null).map(() => ({ value: '', type: 'string' as const }))
+      // Limit processing to prevent browser freeze (max 500 rows x 50 columns)
+      const maxRows = Math.min(rows, 500);
+      const maxCols = Math.min(cols, 50);
+      
+      // Initialize data array with limited size
+      const data: CellData[][] = Array(maxRows).fill(null).map(() => 
+        Array(maxCols).fill(null).map(() => ({ value: '', type: 'string' as const }))
       );
-
-      // Fill data from worksheet
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
+      
+      console.log(`Processing sheet "${sheetName}": ${maxRows}x${maxCols} (original: ${rows}x${cols})`);
+      
+      // Fill data from worksheet with size limits
+      for (let row = 0; row < maxRows; row++) {
+        for (let col = 0; col < maxCols; col++) {
           const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
           const cell = worksheet[cellAddress];
           
@@ -160,16 +161,21 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
             data[row][col] = cellData;
           }
         }
+        
+        // Yield control every 100 rows to prevent freezing
+        if (row % 100 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        }
       }
 
       sheets.push({
         name: sheetName,
         data,
         range: worksheet['!ref'] || 'A1:A1',
-        cols,
-        rows,
+        cols: maxCols,
+        rows: maxRows,
       });
-    });
+    }
 
       console.log(`Processed ${sheets.length} sheets successfully`);
 

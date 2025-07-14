@@ -45,7 +45,7 @@ Your response must include these exact sections with specific, actionable conten
 ### Environmental Compliance Assessment
 [Detailed analysis with specific regulatory findings, citing actual laws and regulations]
 
-### Social Compliance Assessment  
+### Social Compliance Assessment
 [Detailed analysis with specific regulatory findings, citing actual laws and regulations]
 
 ### Governance Compliance Assessment

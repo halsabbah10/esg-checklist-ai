@@ -21,7 +21,6 @@ from app.services.realtime_analytics import (
     track_ai_processing,
     track_file_upload,
 )
-from app.utils.ai import ai_score_text_with_gemini
 from app.utils.email import send_ai_score_notification
 from app.utils.file_security import generate_secure_filepath, validate_upload_file
 from app.utils.notifications import notify_user
@@ -273,7 +272,7 @@ async def upload_file(
             db.refresh(file_record)
         except Exception as db_error:
             # If database fails, clean up the file
-            logger.error(f"Database error, cleaning up file: {secure_filepath}")
+            logger.exception(f"Database error, cleaning up file: {secure_filepath}")
             secure_filepath.unlink(missing_ok=True)
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -305,7 +304,7 @@ async def upload_file(
             elif file_extension == "xlsx":
                 wb = openpyxl.load_workbook(secure_filepath)
                 text = []
-                
+
                 # First try to find the "ESG Questionnaires" tab specifically
                 target_sheet = None
                 for ws in wb.worksheets:
@@ -313,7 +312,7 @@ async def upload_file(
                         target_sheet = ws
                         logger.info(f"Found ESG questionnaires sheet: '{ws.title}'")
                         break
-                
+
                 # If no ESG questionnaires sheet found, use all sheets (fallback)
                 if target_sheet:
                     worksheets_to_process = [target_sheet]
@@ -321,7 +320,7 @@ async def upload_file(
                 else:
                     worksheets_to_process = wb.worksheets
                     logger.info("No ESG questionnaires sheet found, processing all sheets")
-                
+
                 for ws in worksheets_to_process:
                     for row in ws.iter_rows(values_only=True):
                         text.append(" ".join([str(cell) if cell else "" for cell in row]))
@@ -426,7 +425,7 @@ async def upload_file(
 **Score**: {score:.2f}
 
 ### Technical Note
-AI scoring is temporarily unavailable due to configuration issues. 
+AI scoring is temporarily unavailable due to configuration issues.
 Error: {str(e)[:100]}...
 
 ### File-Specific Assessment
@@ -560,7 +559,7 @@ Based on file characteristics:
             db.commit()
             logger.info(f"Upload completed successfully: {secure_filename} (ID: {file_record.id})")
         except Exception as e:
-            logger.error(f"Failed to update final processing status: {e}")
+            logger.exception(f"Failed to update final processing status: {e}")
             # Don't fail the upload for this
 
         return {
@@ -587,7 +586,7 @@ Based on file characteristics:
                 secure_filepath.unlink()
                 logger.info(f"Cleaned up partial file: {secure_filepath}")
             except Exception as cleanup_error:
-                logger.error(f"Failed to clean up partial file: {cleanup_error}")
+                logger.exception(f"Failed to clean up partial file: {cleanup_error}")
 
         # Update file record status if it exists
         if "file_record" in locals() and file_record and file_record.id:
@@ -596,7 +595,7 @@ Based on file characteristics:
                 db.add(file_record)
                 db.commit()
             except Exception as status_error:
-                logger.error(f"Failed to update error status: {status_error}")
+                logger.exception(f"Failed to update error status: {status_error}")
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

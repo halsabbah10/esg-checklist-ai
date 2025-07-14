@@ -34,6 +34,21 @@ def get_my_notifications(
     ]
 
 
+# Get unread notification count for current user
+@router.get("/unread-count")
+def get_unread_count(
+    db: Session = Depends(get_session),
+    current_user=Depends(require_role("auditor")),
+):
+    count = db.exec(
+        select(Notification).where(
+            Notification.user_id == current_user.id,
+            Notification.read == False
+        )
+    ).all()
+    return {"unread_count": len(count)}
+
+
 # Mark notification as read
 @router.post("/{notification_id}/read")
 def mark_notification_read(

@@ -17,7 +17,6 @@ import {
   CheckCircle2,
   Bot,
   Building2,
-  FileText,
   AlertCircle
 } from 'lucide-react';
 import api from '../../services/api';

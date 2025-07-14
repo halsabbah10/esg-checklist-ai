@@ -4,6 +4,7 @@ Create optimized database indexes for search performance
 Run this script to add missing indexes for better search performance
 """
 
+import contextlib
 import sqlite3
 from pathlib import Path
 
@@ -12,7 +13,6 @@ def create_search_indexes():
     """Create indexes to optimize search performance"""
     db_path = Path("test.db")
     if not db_path.exists():
-        print("Database file not found. Make sure to run this from the backend directory.")
         return
 
     conn = sqlite3.connect(db_path)
@@ -49,31 +49,21 @@ def create_search_indexes():
         "CREATE INDEX IF NOT EXISTS idx_fileupload_checklist_user ON fileupload (checklist_id, user_id)",
     ]
 
-    print("Creating performance indexes...")
-    for idx, sql in enumerate(indexes, 1):
-        try:
+    for _idx, sql in enumerate(indexes, 1):
+        with contextlib.suppress(sqlite3.Error):
             cursor.execute(sql)
-            print(f"✓ Created index {idx}/{len(indexes)}")
-        except sqlite3.Error as e:
-            print(f"✗ Failed to create index {idx}: {e}")
 
     conn.commit()
 
     # Analyze tables for query planner optimization
-    print("\nAnalyzing tables for query optimization...")
     tables = ["fileupload", "airesult", "checklist", "user", "submissionanswer"]
     for table in tables:
-        try:
+        with contextlib.suppress(sqlite3.Error):
             cursor.execute(f"ANALYZE {table}")
-            print(f"✓ Analyzed {table}")
-        except sqlite3.Error as e:
-            print(f"✗ Failed to analyze {table}: {e}")
 
     conn.commit()
     conn.close()
 
-    print("\n✅ Database optimization complete!")
-    print("Search operations should now be significantly faster.")
 
 if __name__ == "__main__":
     create_search_indexes()

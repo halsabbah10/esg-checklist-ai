@@ -93,7 +93,7 @@ export const ReviewActions: React.FC<ReviewActionsProps> = ({
 
     try {
       // Update the upload status
-      await uploadsAPI.updateStatus(uploadId, {
+      await uploadsAPI.updateStatus(uploadId.toString(), {
         status: newStatus,
         comment: comment.trim(),
         reviewer_notes: comment.trim(),
@@ -125,7 +125,7 @@ export const ReviewActions: React.FC<ReviewActionsProps> = ({
     setError(null);
 
     try {
-      await uploadsAPI.addComment(uploadId, {
+      await uploadsAPI.addComment(uploadId.toString(), {
         comment: comment.trim(),
         comment_type: 'reviewer_note',
       });
@@ -216,8 +216,8 @@ export const ReviewActions: React.FC<ReviewActionsProps> = ({
                   variant="outlined"
                 />
                 <Typography variant="caption" color="text.secondary" sx={{ alignSelf: 'center' }}>
-                  Analyzed: {aiAnalysis.created_at || aiAnalysis.updated_at ? 
-                    new Date(aiAnalysis.created_at || aiAnalysis.updated_at).toLocaleDateString() : 
+                  Analyzed: {aiAnalysis.created_at ? 
+                    new Date(aiAnalysis.created_at).toLocaleDateString() : 
                     'Unknown date'}
                 </Typography>
               </Box>

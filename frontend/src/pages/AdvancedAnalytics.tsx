@@ -67,10 +67,10 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'
 
 export const AdvancedAnalytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30');
-  const [selectedChecklist] = useState('all');
+  // const [selectedChecklist] = useState('all'); // Removed unused variable
   const [tabValue, setTabValue] = useState(0);
 
-  // Fetch various analytics data
+  // Fetch various analytics data using correct endpoint names
   const { data: overallAnalytics, isLoading: loadingOverall } = useQuery({
     queryKey: ['analytics', 'overall'],
     queryFn: () => analyticsAPI.getSummary(),
@@ -78,8 +78,7 @@ export const AdvancedAnalytics: React.FC = () => {
 
   const { data: scoreTrends, isLoading: loadingTrends } = useQuery({
     queryKey: ['analytics', 'score-trends', timeRange],
-    queryFn: () =>
-      analyticsAPI.getScoreTrends(selectedChecklist !== 'all' ? selectedChecklist : undefined),
+    queryFn: () => analyticsAPI.getScoreTrends(),
   });
 
   const { data: scoreByChecklist, isLoading: loadingByChecklist } = useQuery({

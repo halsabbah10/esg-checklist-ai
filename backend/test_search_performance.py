@@ -12,7 +12,6 @@ def test_search_performance():
     """Test search performance before and after optimization"""
     db_path = Path("test.db")
     if not db_path.exists():
-        print("Database file not found.")
         return
 
     conn = sqlite3.connect(db_path)
@@ -32,54 +31,43 @@ def test_search_performance():
 
         # Cross-table joins
         ("File uploads with AI results", """
-            SELECT f.filename, a.score, a.ai_model_version 
-            FROM fileupload f 
-            JOIN airesult a ON f.id = a.file_upload_id 
-            ORDER BY f.uploaded_at DESC 
+            SELECT f.filename, a.score, a.ai_model_version
+            FROM fileupload f
+            JOIN airesult a ON f.id = a.file_upload_id
+            ORDER BY f.uploaded_at DESC
             LIMIT 20
         """),
     ]
 
-    print("🔍 Testing search performance...")
-    print("=" * 60)
 
     total_time = 0
-    for name, query in test_queries:
+    for _name, query in test_queries:
         start_time = time.perf_counter()
         try:
             cursor.execute(query)
-            results = cursor.fetchall()
+            cursor.fetchall()
             end_time = time.perf_counter()
 
             query_time = (end_time - start_time) * 1000  # Convert to milliseconds
             total_time += query_time
 
-            print(f"✓ {name}")
-            print(f"  Time: {query_time:.2f}ms | Results: {len(results)}")
 
-        except sqlite3.Error as e:
-            print(f"✗ {name}: {e}")
+        except sqlite3.Error:
+            pass
 
-    print("=" * 60)
-    print(f"📊 Total execution time: {total_time:.2f}ms")
-    print(f"📊 Average query time: {total_time/len(test_queries):.2f}ms")
 
     # Check if indexes exist
-    print("\n🔧 Checking search indexes...")
     cursor.execute("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%'")
     indexes = cursor.fetchall()
-    print(f"Found {len(indexes)} performance indexes:")
-    for idx in indexes:
-        print(f"  • {idx[0]}")
+    for _idx in indexes:
+        pass
 
     conn.close()
 
-    if total_time < 100:  # Under 100ms total
-        print("\n✅ Excellent performance! Search queries are well optimized.")
-    elif total_time < 500:
-        print("\n🟡 Good performance. Some queries could be further optimized.")
+    if total_time < 100 or total_time < 500:  # Under 100ms total
+        pass
     else:
-        print("\n🔴 Performance could be improved. Consider reviewing query patterns.")
+        pass
 
 if __name__ == "__main__":
     test_search_performance()

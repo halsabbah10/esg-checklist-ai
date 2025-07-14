@@ -4,7 +4,7 @@ Each department has specialized prompts and context for targeted analysis.
 """
 
 import json
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Department-specific AI analysis configurations
 DEPARTMENT_CONFIGS = [
@@ -131,10 +131,10 @@ DEPARTMENT_CONFIGS = [
 def get_department_config(department_name: str) -> Dict[str, Any]:
     """
     Get the configuration for a specific department.
-    
+
     Args:
         department_name: Name of the department
-        
+
     Returns:
         Department configuration dictionary or None if not found
     """
@@ -147,21 +147,21 @@ def get_department_config(department_name: str) -> Dict[str, Any]:
 def get_all_departments() -> List[str]:
     """
     Get list of all available department names.
-    
+
     Returns:
         List of department names
     """
     return [config["department_name"] for config in DEPARTMENT_CONFIGS]
 
 
-def get_department_prompt(department_name: str, checklist_items: List[Dict[str, Any]] = None) -> str:
+def get_department_prompt(department_name: str, checklist_items: Optional[List[Dict[str, Any]]] = None) -> str:
     """
     Get the department-specific prompt for AI analysis.
-    
+
     Args:
         department_name: Name of the department
         checklist_items: Optional list of checklist items to include in prompt
-        
+
     Returns:
         Formatted prompt string for the AI model
     """
@@ -180,13 +180,13 @@ def get_department_prompt(department_name: str, checklist_items: List[Dict[str, 
     return prompt
 
 
-def get_generic_prompt(checklist_items: List[Dict[str, Any]] = None) -> str:
+def get_generic_prompt(checklist_items: Optional[List[Dict[str, Any]]] = None) -> str:
     """
     Get a generic ESG analysis prompt when no specific department is selected.
-    
+
     Args:
         checklist_items: Optional list of checklist items to include in prompt
-        
+
     Returns:
         Generic prompt string for the AI model
     """
@@ -216,10 +216,10 @@ Immediately below Recommendations, insert a new 'Detailed Compliance Report' sho
 def format_department_context(department_name: str) -> Dict[str, Any]:
     """
     Get formatted audit context for a department.
-    
+
     Args:
         department_name: Name of the department
-        
+
     Returns:
         Audit context dictionary
     """

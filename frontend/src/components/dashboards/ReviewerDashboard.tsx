@@ -32,6 +32,8 @@ import {
   PendingActions,
   AssignmentTurnedIn,
   AssessmentOutlined,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import { uploadsAPI, aiAPI } from '../../services/api';
 import { TabbedDocumentViewer } from '../TabbedDocumentViewer';
@@ -209,6 +211,12 @@ export const ReviewerDashboard: React.FC = () => {
   };
 
   const handleStatusChange = (newStatus: string) => {
+    console.log(`Status changed to: ${newStatus}`);
+    // Update local state optimistically if needed
+    if (selectedUpload) {
+      // Could update local state here based on newStatus
+      console.log(`Upload ${selectedUpload.id} status changed to ${newStatus}`);
+    }
     // Refresh data after status change
     window.location.reload(); // Simple refresh - could be optimized with query invalidation
   };
@@ -257,6 +265,18 @@ export const ReviewerDashboard: React.FC = () => {
           value={totalUploads}
           icon={<CloudUpload fontSize="large" />}
           color="secondary"
+        />
+        <StatsCard
+          title="Approved"
+          value={approvedCount}
+          icon={<CheckCircle fontSize="large" />}
+          color="success"
+        />
+        <StatsCard
+          title="Rejected"
+          value={rejectedCount}
+          icon={<Cancel fontSize="large" />}
+          color="error"
         />
       </Box>
 

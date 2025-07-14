@@ -28,10 +28,10 @@ interface Step3Props {
 }
 
 const PROCESSING_STAGES = [
-  { id: 'upload', title: 'File Upload', description: 'Securely uploading your document', duration: 3 },
-  { id: 'extraction', title: 'Text Extraction', description: 'Extracting and parsing document content', duration: 5 },
-  { id: 'analysis', title: 'AI Analysis', description: 'Processing with selected AI model', duration: 15 },
-  { id: 'scoring', title: 'ESG Scoring', description: 'Calculating compliance scores and generating insights', duration: 7 }
+  { id: 'upload', title: 'File Upload', description: 'Securely uploading your document', duration: 5 },
+  { id: 'extraction', title: 'Text Extraction', description: 'Extracting and parsing document content', duration: 10 },
+  { id: 'analysis', title: 'AI Analysis', description: 'Processing with selected AI model', duration: 120 },
+  { id: 'scoring', title: 'ESG Scoring', description: 'Calculating compliance scores and generating insights', duration: 15 }
 ];
 
 export default function Step3ProcessingAnalysis({ state, onComplete, onError }: Step3Props) {
@@ -58,7 +58,7 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
 
       const response = await api.post('/v1/ai-analysis/upload-and-analyze', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 120000,
+        timeout: 300000, // 5 minutes to handle long AI analysis
       });
 
       setCurrentStage(PROCESSING_STAGES.length);
@@ -73,7 +73,25 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
 
     } catch (error: any) {
       console.error('Analysis failed:', error);
-      const errorMessage = error.response?.data?.detail || 'AI analysis failed. Please try again.';
+      console.error('Error response:', error.response);
+      console.error('Error response data:', error.response?.data);
+      
+      // Check if this is actually a successful response that we're misinterpreting
+      if (error.response?.status === 200 || error.response?.data?.success) {
+        console.log('Analysis actually succeeded, treating as success');
+        setCurrentStage(PROCESSING_STAGES.length);
+        setProgress(100);
+        
+        setTimeout(() => {
+          onComplete({
+            analysisId: error.response.data.analysis_id,
+            results: error.response.data.results
+          });
+        }, 1000);
+        return;
+      }
+      
+      const errorMessage = error.response?.data?.detail || error.message || 'AI analysis failed. Please try again.';
       setError(errorMessage);
       onError(errorMessage);
     }
@@ -154,7 +172,7 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
               {Math.round(progress)}% Complete
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Estimated: ~30 seconds
+              Estimated: ~2-3 minutes
             </Typography>
           </Box>
         </CardContent>

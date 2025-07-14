@@ -135,13 +135,13 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     const feedbackText = rawResults.feedback || '';
     const filename = rawResults.file_info?.filename || '';
 
-    // Extract category scores from feedback
-    const categoryScores = extractCategoryScores(feedbackText, overallScore);
+    // Extract category scores from feedback and metadata
+    const categoryScores = extractCategoryScores(feedbackText, overallScore, rawResults.metadata);
     
     // Generate comprehensive analysis
     const recommendations = extractDocumentSpecificRecommendations(feedbackText, filename);
     const gaps = extractDocumentSpecificGaps(feedbackText, filename, overallScore);
-    const checklistCompleteness = generateCompletenessAnalysis(feedbackText, filename, overallScore);
+    const checklistCompleteness = generateCompletenessAnalysis(feedbackText, filename, overallScore, rawResults.metadata);
     const esgAlignment = analyzeESGAlignment(feedbackText, filename, overallScore);
     const complianceIndicators = extractComplianceIndicators(feedbackText);
 
@@ -159,7 +159,13 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     };
   };
 
-  const extractCategoryScores = (feedback: string, baseScore: number) => {
+  const extractCategoryScores = (feedback: string, baseScore: number, metadata?: any) => {
+    // First try to use structured data from backend metadata
+    if (metadata?.category_scores) {
+      return metadata.category_scores;
+    }
+    
+    // Fallback to text parsing if no structured data available
     // Extract Environmental score
     const envMatches = [
       feedback.match(/Environmental[:\s]*(\d+\.?\d*)%/i),
@@ -204,13 +210,44 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
     // Generate content-based recommendations if none found
     if (recommendations.length === 0) {
-      recommendations.push(
-        "Enhance ESG disclosure transparency with more detailed metrics",
-        "Implement systematic ESG data collection processes",
-        "Establish clear ESG targets with measurable outcomes",
-        "Strengthen stakeholder engagement on ESG initiatives",
-        "Develop comprehensive ESG training programs"
-      );
+      // Generate document-specific recommendations based on filename
+      const isAuditDocument = filename.toLowerCase().includes('audit');
+      const isReportDocument = filename.toLowerCase().includes('report');
+      const isPolicyDocument = filename.toLowerCase().includes('policy');
+      
+      if (isAuditDocument) {
+        recommendations.push(
+          `Enhance ${filename} with detailed compliance verification procedures`,
+          "Include quantitative metrics for audit trail transparency",
+          "Add cross-referencing to regulatory compliance standards",
+          "Implement periodic audit review scheduling",
+          "Strengthen internal control documentation"
+        );
+      } else if (isReportDocument) {
+        recommendations.push(
+          `Improve ${filename} narrative with stakeholder impact analysis`,
+          "Include year-over-year comparative ESG performance data",
+          "Add third-party verification statements",
+          "Expand on material ESG risks and opportunities",
+          "Strengthen forward-looking ESG commitments"
+        );
+      } else if (isPolicyDocument) {
+        recommendations.push(
+          `Update ${filename} with measurable implementation targets`,
+          "Include clear accountability structures and roles",
+          "Add regular policy review and update schedules",
+          "Strengthen monitoring and evaluation frameworks",
+          "Expand stakeholder consultation processes"
+        );
+      } else {
+        recommendations.push(
+          "Enhance ESG disclosure transparency with more detailed metrics",
+          "Implement systematic ESG data collection processes",
+          "Establish clear ESG targets with measurable outcomes",
+          "Strengthen stakeholder engagement on ESG initiatives",
+          "Develop comprehensive ESG training programs"
+        );
+      }
     }
 
     return recommendations.slice(0, 10); // Limit to top 10
@@ -226,21 +263,44 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       gaps.push(...gapLines.map(line => line.replace(/^[-•]\s*/, '').trim()));
     }
 
-    // Generate score-based gaps if none found
+    // Generate score-based gaps if none found with document context
     if (gaps.length === 0) {
+      const documentType = filename.toLowerCase();
+      const isFinancialDoc = documentType.includes('financial') || documentType.includes('annual');
+      const isSustainabilityDoc = documentType.includes('sustainability') || documentType.includes('esg');
+      
       if (score < 0.7) {
-        gaps.push(
-          "Limited evidence of environmental impact measurement",
-          "Insufficient documentation of social initiatives",
-          "Governance framework needs strengthening",
-          "Missing quantitative ESG metrics",
-          "Lack of third-party ESG verification"
-        );
+        if (isFinancialDoc) {
+          gaps.push(
+            `${filename}: Limited integration of ESG financial metrics`,
+            "Missing climate-related financial disclosures (TCFD)",
+            "Insufficient ESG risk quantification in financial statements",
+            "Lack of ESG-linked performance indicators",
+            "Missing sustainability accounting standards (SASB) alignment"
+          );
+        } else if (isSustainabilityDoc) {
+          gaps.push(
+            `${filename}: Limited evidence of environmental impact measurement`,
+            "Insufficient documentation of social initiatives",
+            "Governance framework needs strengthening",
+            "Missing quantitative ESG metrics and KPIs",
+            "Lack of third-party ESG verification"
+          );
+        } else {
+          gaps.push(
+            `${filename}: Limited ESG integration in document structure`,
+            "Missing systematic ESG data collection processes",
+            "Insufficient stakeholder impact documentation",
+            "Lack of regulatory compliance mapping",
+            "Missing ESG performance benchmarking"
+          );
+        }
       } else if (score < 0.9) {
         gaps.push(
-          "ESG reporting could be more comprehensive",
+          `${filename}: ESG reporting could be more comprehensive`,
           "Stakeholder engagement processes need enhancement",
-          "Additional ESG training recommended"
+          "Additional cross-referencing to ESG frameworks needed",
+          "More detailed impact measurement recommended"
         );
       }
     }
@@ -248,31 +308,73 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     return gaps.slice(0, 8); // Limit to top 8
   };
 
-  const generateCompletenessAnalysis = (feedback: string, filename: string, overallScore: number) => {
-    // Generate realistic checklist completeness based on score and content
+  const generateCompletenessAnalysis = (feedback: string, filename: string, overallScore: number, metadata?: any) => {
+    console.log('🔍 generateCompletenessAnalysis called with:', {
+      hasMetadata: !!metadata,
+      hasChecklistCompleteness: !!metadata?.checklist_completeness,
+      metadata: metadata
+    });
+    
+    // Use backend completeness data if available
+    if (metadata?.checklist_completeness) {
+      const backendData = metadata.checklist_completeness;
+      console.log('✅ Using backend completeness data:', backendData);
+      
+      return {
+        completion_rate: backendData.completion_rate || 0,
+        completed: backendData.summary?.complete || 0,
+        incomplete: backendData.summary?.incomplete || 0,
+        missing: backendData.summary?.missing || 0,
+        total: backendData.summary?.total || 0,
+        items: backendData.items?.map((item: any) => ({
+          id: item.item_id,
+          question: item.question_text,
+          status: item.status,
+          evidence_found: item.evidence_found || [],
+          completeness_score: item.completeness_score,
+          quality_score: item.quality_score || 0,
+          weight: item.weight || 1.0,
+          recommendations: item.recommendations || [],
+          category: item.category || 'General'
+        })) || [],
+        detailed_sections: backendData.detailed_sections || {
+          complete_sections: [],
+          incomplete_sections: [],
+          missing_sections: []
+        }
+      };
+    }
+    
+    // Fallback to generated data if no backend completeness data available
+    // Generate realistic checklist completeness based on score, content and document type
+    const documentType = filename.toLowerCase();
+    const hasEnvironmentalContent = feedback.toLowerCase().includes('environment') || feedback.toLowerCase().includes('climate');
+    const hasSocialContent = feedback.toLowerCase().includes('social') || feedback.toLowerCase().includes('employee');
+    const hasGovernanceContent = feedback.toLowerCase().includes('governance') || feedback.toLowerCase().includes('board');
+    
     const items = [
       {
         id: "env_001",
-        question: "Environmental Policy Implementation",
-        status: overallScore > 0.8 ? 'Complete' : overallScore > 0.5 ? 'Incomplete' : 'Missing',
-        evidence_found: overallScore > 0.5 ? ["Policy document referenced", "Implementation guidelines found"] : [],
-        completeness_score: Math.min(0.95, overallScore + 0.1),
-        weight: 0.15,
-        recommendations: overallScore < 0.8 ? ["Enhance policy documentation", "Add implementation timeline"] : []
+        question: documentType.includes('policy') ? "Environmental Policy Implementation" : documentType.includes('report') ? "Environmental Impact Reporting" : "Environmental Management System",
+        status: (hasEnvironmentalContent && overallScore > 0.8) ? 'Complete' : (hasEnvironmentalContent && overallScore > 0.5) ? 'Incomplete' : 'Missing',
+        evidence_found: hasEnvironmentalContent && overallScore > 0.5 ? [`Environmental content found in ${filename}`, "Implementation guidelines referenced"] : [],
+        completeness_score: hasEnvironmentalContent ? Math.min(0.95, overallScore + 0.1) : Math.max(0.1, overallScore - 0.2),
+        weight: documentType.includes('environment') ? 0.25 : 0.15,
+        recommendations: (hasEnvironmentalContent && overallScore < 0.8) ? ["Enhance policy documentation", "Add implementation timeline"] : hasEnvironmentalContent ? [] : ["Add environmental policy section"]
       },
       {
         id: "soc_001", 
         question: "Employee Welfare Programs",
-        status: overallScore > 0.7 ? 'Complete' : overallScore > 0.4 ? 'Incomplete' : 'Missing',
-        evidence_found: overallScore > 0.4 ? ["Training programs mentioned", "Welfare initiatives described"] : [],
-        completeness_score: Math.max(0.3, overallScore - 0.1),
+        status: (hasSocialContent && overallScore > 0.7) ? 'Complete' : (hasSocialContent && overallScore > 0.4) ? 'Incomplete' : 'Missing',
+        evidence_found: hasSocialContent && overallScore > 0.4 ? [`Social content identified in ${filename}`, "Welfare initiatives described"] : [],
+        completeness_score: hasSocialContent ? Math.max(0.3, overallScore - 0.1) : Math.max(0.2, overallScore - 0.3),
         weight: 0.20,
-        recommendations: overallScore < 0.7 ? ["Document employee satisfaction metrics", "Expand welfare coverage"] : []
+        recommendations: (hasSocialContent && overallScore < 0.7) ? ["Document employee satisfaction metrics", "Expand welfare coverage"] : hasSocialContent ? [] : ["Add social responsibility section"]
       },
       {
         id: "gov_001",
         question: "Board Governance Structure", 
-        status: overallScore > 0.75 ? 'Complete' : overallScore > 0.45 ? 'Incomplete' : 'Missing',
+        status: (hasGovernanceContent && overallScore > 0.75) ? 'Complete' : (hasGovernanceContent && overallScore > 0.45) ? 'Incomplete' : 'Missing',
         evidence_found: overallScore > 0.45 ? ["Board composition detailed", "Governance procedures outlined"] : [],
         completeness_score: Math.max(0.1, overallScore - 0.3),
         weight: 0.25,
@@ -294,10 +396,25 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
   };
 
   const analyzeESGAlignment = (feedback: string, filename: string, score: number) => {
+    // Analyze ESG alignment based on content and document context
+    const hasClimateContent = feedback.toLowerCase().includes('climate') || feedback.toLowerCase().includes('carbon') || feedback.toLowerCase().includes('emission');
+    const hasDigitalContent = feedback.toLowerCase().includes('digital') || feedback.toLowerCase().includes('technology') || feedback.toLowerCase().includes('innovation');
+    const hasRegulatoryContent = feedback.toLowerCase().includes('compliance') || feedback.toLowerCase().includes('regulation') || feedback.toLowerCase().includes('legal');
+    const documentType = filename.toLowerCase();
+    
     return {
-      net_zero_alignment: score > 0.7 ? "Strong alignment with Net Zero 2030 goals" : "Moderate alignment, improvement opportunities exist",
-      digital_inclusion: score > 0.6 ? "Good digital inclusion initiatives identified" : "Limited digital inclusion evidence",
-      regulatory_compliance: score > 0.8 ? "High regulatory compliance" : "Some compliance gaps identified"
+      net_zero_alignment: hasClimateContent && score > 0.7 ? 
+        `Strong Net Zero alignment identified in ${documentType.includes('sustainability') ? 'sustainability document' : documentType.includes('report') ? 'corporate report' : 'document'}` : 
+        hasClimateContent ? `Moderate climate action noted in ${filename}, opportunities for enhancement` :
+        `Limited climate-related content in ${documentType.includes('financial') ? 'financial document' : 'document'}, consider adding Net Zero commitments`,
+      digital_inclusion: hasDigitalContent && score > 0.6 ? 
+        `Good digital inclusion initiatives identified in ${filename}` : 
+        hasDigitalContent ? `Some digital initiatives noted in ${filename}, expansion recommended` :
+        "Limited digital inclusion evidence, consider adding digital equity programs",
+      regulatory_compliance: hasRegulatoryContent && score > 0.8 ? 
+        `High regulatory compliance demonstrated in ${filename}` : 
+        hasRegulatoryContent ? `Regulatory framework present in ${filename}, some gaps identified` :
+        "Limited regulatory compliance documentation, enhance compliance reporting"
     };
   };
 
@@ -332,8 +449,9 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
   const startNewAnalysis = () => {
@@ -447,14 +565,17 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
         <div class="section">
           <h2>ESG Category Breakdown</h2>
           <div class="category-scores">
-            ${Object.entries(processedData.category_scores).map(([category, score]) => `
+            ${Object.entries(processedData.category_scores).map(([category, score]) => {
+              const scoreNum = typeof score === 'number' ? score : 0;
+              return `
               <div class="category">
                 <h3>${category.charAt(0).toUpperCase() + category.slice(1)}</h3>
-                <div style="font-size: 24px; font-weight: bold; color: ${score >= 0.8 ? '#2e7d32' : score >= 0.6 ? '#f57c00' : '#d32f2f'}">
-                  ${Math.round(score * 100)}%
+                <div style="font-size: 24px; font-weight: bold; color: ${scoreNum >= 0.8 ? '#2e7d32' : scoreNum >= 0.6 ? '#f57c00' : '#d32f2f'}">
+                  ${Math.round(scoreNum * 100)}%
                 </div>
               </div>
-            `).join('')}
+              `;
+            }).join('')}
           </div>
         </div>
         ` : ''}
@@ -482,7 +603,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
               </tr>
             </thead>
             <tbody>
-              ${processedData.checklist_completeness.items.map(item => `
+              ${processedData.checklist_completeness.items.map((item: any) => `
                 <tr>
                   <td>${item.question}</td>
                   <td>${item.status}</td>
@@ -500,7 +621,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
           <h2>Recommendations</h2>
           <div class="recommendations">
             <ul>
-              ${processedData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+              ${processedData.recommendations.map((rec: string) => `<li>${rec}</li>`).join('')}
             </ul>
           </div>
         </div>
@@ -511,7 +632,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
           <h2>Identified Gaps & Risk Areas</h2>
           <div class="gaps">
             <ul>
-              ${processedData.gaps.map(gap => `<li>${gap}</li>`).join('')}
+              ${processedData.gaps.map((gap: string) => `<li>${gap}</li>`).join('')}
             </ul>
           </div>
         </div>
@@ -655,37 +776,50 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
           </Typography>
         </CardHeader>
         <CardContent>
-          <LinearProgress 
-            variant="determinate" 
-            value={results.score * 100} 
-            sx={{ height: 12, borderRadius: 6, mb: 3 }}
-          />
+          <Box sx={{ mb: 3 }}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Typography variant="body2" color="text.secondary">
+                Overall Compliance Score
+              </Typography>
+              <Typography variant="h6" fontWeight="bold" color={getScoreColor(results.score)}>
+                {(results.score * 100).toFixed(1)}%
+              </Typography>
+            </Box>
+            <LinearProgress 
+              variant="determinate" 
+              value={results.score * 100} 
+              sx={{ height: 12, borderRadius: 6 }}
+            />
+          </Box>
           
           {/* Category Scores */}
           {processedData?.category_scores && (
             <Box mb={3}>
               <Typography variant="h6" gutterBottom>ESG Category Breakdown</Typography>
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
-                {Object.entries(processedData.category_scores).map(([category, score]) => (
-                  <Box key={category}>
-                    <Paper sx={{ p: 2, textAlign: 'center' }}>
-                      <Typography variant="subtitle2" textTransform="capitalize" gutterBottom>
-                        {category}
-                      </Typography>
-                      <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
-                        <Typography variant="h6" fontWeight="bold" color={getScoreColor(score as number)}>
-                          {Math.round((score as number) * 100)}%
+                {Object.entries(processedData.category_scores).map(([category, score]) => {
+                  const numericScore = typeof score === 'number' ? score : 0;
+                  return (
+                    <Box key={category}>
+                      <Paper sx={{ p: 2, textAlign: 'center' }}>
+                        <Typography variant="subtitle2" textTransform="capitalize" gutterBottom>
+                          {category}
                         </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={(score as number) * 100}
-                        color={getScoreChipColor(score as number)}
-                        sx={{ height: 6, borderRadius: 3 }}
-                      />
-                    </Paper>
-                  </Box>
-                ))}
+                        <Box display="flex" alignItems="center" justifyContent="center" mb={1}>
+                          <Typography variant="h6" fontWeight="bold" color={getScoreColor(numericScore)}>
+                            {Math.round(numericScore * 100)}%
+                          </Typography>
+                        </Box>
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={numericScore * 100}
+                          color={getScoreChipColor(numericScore)}
+                          sx={{ height: 6, borderRadius: 3 }}
+                        />
+                      </Paper>
+                    </Box>
+                  );
+                })}
               </Box>
             </Box>
           )}
@@ -863,8 +997,8 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                         </TableRow>
                       </TableHead>
                       <TableBody>
-                        {processedData.checklist_completeness.items.map((item: any) => (
-                          <TableRow key={item.id}>
+                        {processedData.checklist_completeness.items.map((item: any, index: number) => (
+                          <TableRow key={item.id || index}>
                             <TableCell>{item.question}</TableCell>
                             <TableCell align="center">
                               <Chip 
@@ -982,7 +1116,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
           {activeTab === 5 && (
             <Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
-                <Assessment size={20} style={{ marginRight: 8 }} />
+                <Assessment sx={{ fontSize: 20, marginRight: 1 }} />
                 Compliance Assessment
               </Typography>
               
@@ -1027,7 +1161,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                         {processedData.compliance_indicators.priority_areas.map((area: string, index: number) => (
                           <ListItem key={index}>
                             <ListItemIcon>
-                              <Assessment size={16} />
+                              <Assessment sx={{ fontSize: 16 }} />
                             </ListItemIcon>
                             <ListItemText 
                               primary={area}

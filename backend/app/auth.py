@@ -131,7 +131,7 @@ def require_role(roles: Union[str, List[str]]):
     - admin: Full control over system (manage users, checklists, settings)
     - reviewer: Review and manage submissions
     - auditor: Personal work only
-    
+
     Args:
         roles: Single role string or list of role strings
     """

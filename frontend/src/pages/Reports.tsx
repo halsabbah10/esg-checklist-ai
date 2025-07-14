@@ -214,7 +214,7 @@ export const Reports: React.FC = () => {
     const report = availableReports.find(r => r.id === reportId);
     if (report) {
       // Generate actual preview content based on available data
-      const reportContent = generateReportPreview(reportId, report);
+      const reportContent = generateReportPreview(reportId);
       
       // Open a new window with properly formatted report preview
       const newWindow = window.open('', '_blank', 'width=1000,height=700,scrollbars=yes');
@@ -337,7 +337,7 @@ export const Reports: React.FC = () => {
     }
   };
 
-  const generateReportPreview = (reportId: string, report: Report): string => {
+  const generateReportPreview = (reportId: string): string => {
     const kpiSummary = dashboardData ? `
       <div class="data-section">
         <h3>📊 Key Performance Indicators</h3>
