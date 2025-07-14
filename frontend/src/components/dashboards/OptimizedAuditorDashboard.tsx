@@ -26,7 +26,6 @@ import {
 } from '@mui/material';
 import {
   Assignment,
-  TrendingUp,
   AssessmentOutlined,
   FileDownload,
   Timeline,
@@ -37,31 +36,31 @@ import {
   PieChart,
   Refresh,
 } from '@mui/icons-material';
-import { analyticsAPI, aiAPI, submissionsAPI } from '../../services/api';
+import { analyticsAPI } from '../../services/api';
 
-interface AIResult {
-  id: number;
-  checklist_id: number;
-  overall_score: number;
-  analysis: string;
-  created_at: string;
-  updated_at: string;
-  status: string;
-  upload_id?: number;
-  filename?: string;
-  file_upload_id?: number;
-}
-
-interface Submission {
-  id: number;
-  checklist_id: number;
-  user_id: number;
-  status: 'pending' | 'approved' | 'rejected' | 'in_review';
-  created_at: string;
-  updated_at: string;
-  filename?: string;
-  ai_score?: number;
-  submitted_at?: string;
+interface DashboardData {
+  metrics: {
+    overallScore: number;
+    passedAudits: number;
+    failedAudits: number;
+    pendingReviews: number;
+    avgProcessingTime: number;
+    esgCategories: Array<{ category: string; score: number }>;
+  };
+  aiResults: Array<{
+    id: number;
+    overall_score: number;
+    file_upload_id?: number;
+    created_at?: string;
+  }>;
+  uploads: Array<{
+    id: number;
+    filename: string;
+    uploaded_at?: string;
+    status: string;
+  }>;
+  totalAiResults: number;
+  totalUploads: number;
 }
 
 interface StatsCardProps {
@@ -69,11 +68,10 @@ interface StatsCardProps {
   value: number | string;
   icon: React.ReactNode;
   color: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
-  trend?: number;
   subtitle?: string;
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend, subtitle }) => (
+const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, subtitle }) => (
   <Card elevation={2}>
     <CardContent>
       <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -88,19 +86,6 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend,
             <Typography variant="caption" color="text.secondary">
               {subtitle}
             </Typography>
-          )}
-          {trend && (
-            <Box display="flex" alignItems="center" mt={0.5}>
-              <TrendingUp fontSize="small" color={trend > 0 ? 'success' : 'error'} />
-              <Typography
-                variant="caption"
-                color={trend > 0 ? 'success.main' : 'error.main'}
-                sx={{ ml: 0.5 }}
-              >
-                {trend > 0 ? '+' : ''}
-                {trend}%
-              </Typography>
-            </Box>
           )}
         </Box>
         <Box color={`${color}.main`}>{icon}</Box>
@@ -143,43 +128,27 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({ category, score, maxS
   );
 };
 
-export const AuditorDashboard: React.FC = () => {
+export const OptimizedAuditorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // Optimized: Fetch all dashboard data in parallel with better caching
-  const { data: auditorMetrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery({
-    queryKey: ['analytics', 'auditor-metrics'],
-    queryFn: () => analyticsAPI.getAuditorMetrics(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchInterval: 2 * 60 * 1000, // Reduced to 2 minutes
-    refetchOnWindowFocus: false,
-  });
-
-  // Optimized: Load AI results with reduced limit and better caching
-  const { data: aiResults, isLoading: aiLoading, refetch: refetchAIResults } = useQuery<{ data: { results: AIResult[] } }>({
-    queryKey: ['ai-results', 'compliance'],
-    queryFn: () => aiAPI.getResults({ limit: 10 }), // Reduced from 20 to 10
-    staleTime: 3 * 60 * 1000, // 3 minutes
+  // Optimized: Single API call for all dashboard data
+  const { 
+    data: dashboardData, 
+    isLoading, 
+    refetch,
+    error 
+  } = useQuery<{ data: DashboardData }>({
+    queryKey: ['dashboard-data', 'auditor'],
+    queryFn: () => analyticsAPI.getDashboardData(),
+    staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: 2 * 60 * 1000, // Reduced refetch interval
+    refetchInterval: 3 * 60 * 1000, // Refetch every 3 minutes
     refetchOnWindowFocus: false,
+    retry: 2,
   });
 
-  // Optimized: Load recent submissions with reduced limit
-  const { data: submissions, isLoading: submissionsLoading } = useQuery<{ data: Submission[] }>({
-    queryKey: ['submissions', 'recent'],
-    queryFn: () => submissionsAPI.getAll(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnWindowFocus: false,
-  });
-
-  // Improved loading state - show partial content while loading
-  const isInitialLoading = metricsLoading && aiLoading && submissionsLoading;
-  
-  if (isInitialLoading) {
+  if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
@@ -192,29 +161,42 @@ export const AuditorDashboard: React.FC = () => {
     );
   }
 
-  const aiResultsData = aiResults?.data?.results || [];
-  const submissionsData = submissions?.data || [];
-  const metrics = auditorMetrics?.data || {};
+  if (error) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Failed to load dashboard data. Please try refreshing the page.
+        </Alert>
+      </Container>
+    );
+  }
 
-  // Use real metrics from backend
-  const overallScore = metrics.overallScore || 0;
-  const passedAudits = metrics.passedAudits || 0;
-  const failedAudits = metrics.failedAudits || 0;
-  const avgProcessingTime = metrics.avgProcessingTime || 0;
-  const esgCategories = metrics.esgCategories || [];
+  const data = dashboardData?.data || {
+    metrics: {
+      overallScore: 0,
+      passedAudits: 0,
+      failedAudits: 0,
+      pendingReviews: 0,
+      avgProcessingTime: 0,
+      esgCategories: []
+    },
+    aiResults: [],
+    uploads: [],
+    totalAiResults: 0,
+    totalUploads: 0
+  };
+
+  const { metrics, aiResults, uploads } = data;
 
   // Calculate warning audits (scores between 0.5 and 0.7)
-  const warningAudits = aiResultsData.filter((result: AIResult) => {
+  const warningAudits = aiResults.filter((result) => {
     const score = result.overall_score || 0;
     return score >= 0.5 && score < 0.7;
   }).length;
 
   // Manual refresh function
   const handleRefresh = async () => {
-    await Promise.all([
-      refetchMetrics(),
-      refetchAIResults(),
-    ]);
+    await refetch();
     setLastRefresh(new Date());
   };
 
@@ -236,7 +218,7 @@ export const AuditorDashboard: React.FC = () => {
           variant="outlined"
           startIcon={<Refresh />}
           onClick={handleRefresh}
-          disabled={metricsLoading || aiLoading}
+          disabled={isLoading}
         >
           Refresh Data
         </Button>
@@ -253,20 +235,20 @@ export const AuditorDashboard: React.FC = () => {
       >
         <StatsCard
           title="Overall Compliance"
-          value={`${Math.round(overallScore * 100)}%`}
+          value={`${Math.round(metrics.overallScore * 100)}%`}
           icon={<AssessmentOutlined fontSize="large" />}
           color="primary"
         />
         <StatsCard
           title="Passed Audits"
-          value={passedAudits}
+          value={metrics.passedAudits}
           icon={<CheckCircle fontSize="large" />}
           color="success"
           subtitle="Score ≥ 70%"
         />
         <StatsCard
           title="Failed Audits"
-          value={failedAudits}
+          value={metrics.failedAudits}
           icon={<ErrorIcon fontSize="large" />}
           color="error"
           subtitle="Score < 50%"
@@ -287,7 +269,7 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               ESG Compliance Scores
             </Typography>
-            {esgCategories.map((item: any) => (
+            {metrics.esgCategories.map((item) => (
               <ComplianceScore key={item.category} category={item.category} score={item.score} />
             ))}
           </CardContent>
@@ -299,7 +281,7 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Recent Audit Results
             </Typography>
-            {aiResultsData.length === 0 ? (
+            {aiResults.length === 0 ? (
               <Alert severity="info">No audit results available</Alert>
             ) : (
               <TableContainer>
@@ -312,7 +294,7 @@ export const AuditorDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {aiResultsData.slice(0, 5).map((result: AIResult) => {
+                    {aiResults.slice(0, 5).map((result) => {
                       const score = (result.overall_score || 0) * 100;
                       const status = score >= 70 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail';
                       const statusColor =
@@ -347,51 +329,48 @@ export const AuditorDashboard: React.FC = () => {
       <Box
         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}
       >
-        {/* Compliance Trends */}
+        {/* Recent Activity */}
         <Card elevation={2}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
-              Compliance Activity Overview
+              Recent Upload Activity
             </Typography>
-            {submissionsData.length === 0 ? (
-              <Alert severity="info">No submission data available</Alert>
+            {uploads.length === 0 ? (
+              <Alert severity="info">No upload data available</Alert>
             ) : (
               <List>
-                {submissionsData.slice(0, 6).map((submission: Submission, index: number) => (
-                  <React.Fragment key={submission.id}>
+                {uploads.slice(0, 6).map((upload, index) => (
+                  <React.Fragment key={upload.id}>
                     <ListItem>
                       <ListItemIcon>
                         <Assignment color="primary" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={`Checklist ID: ${submission.checklist_id}`}
+                        primary={upload.filename}
                         secondary={
                           <Box>
                             <Typography variant="caption" display="block">
-                              User ID: {submission.user_id}
+                              Upload ID: {upload.id}
                             </Typography>
                             <Typography variant="caption" display="block">
-                              Submitted:{' '}
-                              {submission.submitted_at
-                                ? new Date(submission.submitted_at).toLocaleDateString()
-                                : 'N/A'}
+                              Uploaded: {upload.uploaded_at ? new Date(upload.uploaded_at).toLocaleDateString() : 'N/A'}
                             </Typography>
                           </Box>
                         }
                       />
                       <Chip
-                        label={submission.status}
+                        label={upload.status}
                         color={
-                          submission.status === 'approved'
+                          upload.status === 'approved'
                             ? 'success'
-                            : submission.status === 'rejected'
+                            : upload.status === 'rejected'
                               ? 'error'
                               : 'warning'
                         }
                         size="small"
                       />
                     </ListItem>
-                    {index < submissionsData.length - 1 && (
+                    {index < uploads.length - 1 && (
                       <Box
                         component="hr"
                         sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
@@ -404,7 +383,7 @@ export const AuditorDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* System Performance */}
+        {/* Audit Statistics */}
         <Card elevation={2}>
           <CardContent>
             <Typography variant="h6" gutterBottom>
@@ -414,7 +393,7 @@ export const AuditorDashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Total Audits</Typography>
                 <Typography variant="body2" fontWeight={500}>
-                  {aiResultsData.length}
+                  {data.totalAiResults}
                 </Typography>
               </Box>
             </Box>
@@ -423,8 +402,8 @@ export const AuditorDashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Pass Rate</Typography>
                 <Typography variant="body2" fontWeight={500} color="success.main">
-                  {aiResultsData.length > 0
-                    ? Math.round((passedAudits / aiResultsData.length) * 100)
+                  {data.totalAiResults > 0
+                    ? Math.round((metrics.passedAudits / data.totalAiResults) * 100)
                     : 0}
                   %
                 </Typography>
@@ -435,7 +414,7 @@ export const AuditorDashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Avg Processing Time</Typography>
                 <Typography variant="body2" fontWeight={500}>
-                  {avgProcessingTime > 0 ? `${avgProcessingTime} min` : 'N/A'}
+                  {metrics.avgProcessingTime > 0 ? `${metrics.avgProcessingTime} min` : 'N/A'}
                 </Typography>
               </Box>
             </Box>

@@ -4,17 +4,21 @@ Provides specialized AI analysis tailored to different department contexts.
 """
 
 import logging
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import Session
 
+from ..ai.department_configs import (
+    format_department_context,
+    get_all_departments,
+    get_department_config,
+)
+from ..ai.scorer import AIScorer
 from ..auth import require_role
 from ..database import get_session
-from ..ai.scorer import AIScorer
-from ..ai.department_configs import get_all_departments, get_department_config, format_department_context
-from ..models import AIResult, Checklist, FileUpload, User
+from ..models import AIResult
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/departments", tags=["departments"])
@@ -112,9 +116,9 @@ def get_department_info(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Department '{department_name}' not found"
             )
-        
+
         audit_context = config.get("audit_context", {})
-        
+
         # Extract mandate from department name mapping
         mandate_mapping = {
             "Group Legal & Compliance": "Regulatory compliance, anti-bribery, and contract management",
@@ -127,7 +131,7 @@ def get_department_info(
             "Group Risk & Internal Audit": "Risk assessment, ESG internal controls, and audit practices",
             "Technology": "Digital sustainability, data management, and system resilience"
         }
-        
+
         return {
             "department_name": department_name,
             "mandate": mandate_mapping.get(department_name, "ESG compliance and management"),
@@ -147,7 +151,7 @@ def get_department_info(
             "ui_config": config.get("ui_config", {}),
             "audit_context": audit_context
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -183,10 +187,10 @@ def analyze_by_department(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Department '{request.department_name}' not found"
             )
-        
+
         # Initialize AI scorer
         scorer = AIScorer()
-        
+
         # Perform department-specific analysis
         logger.info(f"Starting department-specific analysis for {request.department_name}")
         score, feedback = scorer.analyze_by_department(
@@ -194,7 +198,7 @@ def analyze_by_department(
             department_name=request.department_name,
             checklist_items=request.checklist_items
         )
-        
+
         # Store result in database if file_upload_id is provided
         if request.file_upload_id:
             ai_result = AIResult(
@@ -215,10 +219,10 @@ def analyze_by_department(
             db.commit()
             db.refresh(ai_result)
             logger.info(f"Stored department analysis result with ID: {ai_result.id}")
-        
+
         # Get audit context for response
         audit_context = format_department_context(request.department_name)
-        
+
         return DepartmentAnalysisResponse(
             score=score,
             feedback=feedback,
@@ -226,7 +230,7 @@ def analyze_by_department(
             audit_context=audit_context,
             analysis_type="department_specific"
         )
-        
+
     except HTTPException:
         raise
     except ValueError as e:
@@ -271,12 +275,12 @@ def get_department_analysis_history(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Department '{department_name}' not found"
             )
-        
+
         # Query analysis results with department metadata
         results = db.query(AIResult).filter(
             AIResult.metadata.op("->>")(department_name).isnot(None)
         ).offset(offset).limit(limit).all()
-        
+
         return [
             {
                 "id": result.id,
@@ -291,7 +295,7 @@ def get_department_analysis_history(
             }
             for result in results
         ]
-        
+
     except HTTPException:
         raise
     except Exception as e:

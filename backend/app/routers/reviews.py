@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 
-from app.auth import get_current_user, require_role
+from app.auth import get_current_user
 from app.database import get_session
 from app.models import Comment, FileUpload
 from app.utils.notifications import notify_file_commented, notify_file_status_change

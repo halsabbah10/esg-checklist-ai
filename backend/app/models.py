@@ -123,7 +123,7 @@ class FileUpload(BaseModel, table=True):
     )
 
     id: Optional[int] = Field(default=None, primary_key=True)
-    checklist_id: int = Field(foreign_key="checklist.id")
+    checklist_id: Optional[int] = Field(default=None, foreign_key="checklist.id")
     user_id: int = Field(foreign_key="user.id")
     filename: str = Field(max_length=255)
     filepath: str = Field(max_length=500)
@@ -152,13 +152,13 @@ class AIResult(BaseModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
     file_upload_id: int = Field(foreign_key="fileupload.id")
-    checklist_id: int = Field(foreign_key="checklist.id")
+    checklist_id: Optional[int] = Field(default=None, foreign_key="checklist.id")
     user_id: int = Field(foreign_key="user.id")
     raw_text: str = Field(sa_type=Text)
     score: float = Field(ge=0.0, le=1.0)  # Validation: score must be between 0 and 1
     feedback: str = Field(sa_type=Text)
     processing_time_ms: Optional[int] = Field(default=None)
-    ai_model_version: str = Field(default="gemini-1.5-flash", max_length=50)
+    ai_model_version: str = Field(default="gemini-2.0-flash-exp", max_length=50)
     analysis_metadata: Optional[str] = Field(default=None, sa_type=Text)  # JSON field for additional data like department context and checklist completeness
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

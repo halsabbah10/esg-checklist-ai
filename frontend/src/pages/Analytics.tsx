@@ -260,7 +260,8 @@ export const Analytics: React.FC = () => {
               Overall Score
             </Typography>
             <Typography variant="h4" color="primary">
-              {overallData ? Math.round(overallData.average_ai_score * 100) : 77}%
+              {overallData && overallData.average_ai_score !== null && overallData.average_ai_score !== undefined && !isNaN(overallData.average_ai_score) ? 
+                Math.round(overallData.average_ai_score * 100) : 0}%
             </Typography>
             <Chip label="+5% vs last month" color="success" size="small" />
           </CardContent>

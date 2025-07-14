@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -27,14 +27,15 @@ import {
 import {
   Assignment,
   CloudUpload,
-  CheckCircle,
   Comment,
   Visibility,
   PendingActions,
   AssignmentTurnedIn,
   AssessmentOutlined,
 } from '@mui/icons-material';
-import { uploadsAPI, aiAPI, analyticsAPI } from '../../services/api';
+import { uploadsAPI, aiAPI } from '../../services/api';
+import { TabbedDocumentViewer } from '../TabbedDocumentViewer';
+import { ReviewActions } from '../ReviewActions';
 
 interface Upload {
   id: number;
@@ -87,51 +88,48 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color }) => (
 
 export const ReviewerDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const [selectedUpload, setSelectedUpload] = useState<Upload | null>(null);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [reviewActionsOpen, setReviewActionsOpen] = useState(false);
 
-  // Fetch pending reviews
+  // Use the same successful approach as Reviews page
   const {
-    data: pendingUploads,
+    data: uploadsData,
     isLoading: uploadsLoading,
     error: uploadsError,
   } = useQuery<{ data: { results: Upload[] } }>({
-    queryKey: ['uploads', 'pending'],
-    queryFn: () => uploadsAPI.search({ status: 'pending', limit: 20 }),
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    queryKey: ['uploads', 'all-for-reviewer'],
+    queryFn: () => uploadsAPI.search({ limit: 100 }), // Same as Reviews page
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
-  // Fetch reviewer analytics
-  const { 
-    data: analytics, 
-    isLoading: analyticsLoading,
-    error: analyticsError 
-  } = useQuery({
-    queryKey: ['analytics', 'reviewer'],
-    queryFn: () => analyticsAPI.getAuditorMetrics(),
-    staleTime: 10 * 60 * 1000,
-    retry: 1,
-  });
-
-  // Fetch AI results
-  const { 
-    data: aiResults, 
+  // Get AI results for analysis display
+  const {
+    data: aiResultsData,
     isLoading: aiLoading,
-    error: aiError 
   } = useQuery<{ data: { results: AIResult[] } }>({
-    queryKey: ['ai-results', 'recent'],
-    queryFn: () => aiAPI.getResults({ limit: 10 }),
-    staleTime: 3 * 60 * 1000,
-    retry: 1,
+    queryKey: ['ai-results', 'all-for-reviewer'],
+    queryFn: () => aiAPI.getResults({ limit: 50 }),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 
-  const isLoading = uploadsLoading && analyticsLoading && aiLoading;
-  const hasError = uploadsError || analyticsError || aiError;
+  const isLoading = uploadsLoading || aiLoading;
+  const hasError = uploadsError;
 
   if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-          <CircularProgress />
+          <Box sx={{ textAlign: 'center' }}>
+            <CircularProgress size={60} />
+            <Typography variant="h6" sx={{ mt: 2 }}>Loading Reviews...</Typography>
+          </Box>
         </Box>
       </Container>
     );
@@ -142,21 +140,78 @@ export const ReviewerDashboard: React.FC = () => {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Alert severity="error">
           Failed to load dashboard data. Please try refreshing the page.
+          {uploadsError?.message && (
+            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              Error: {uploadsError.message}
+            </Typography>
+          )}
         </Alert>
       </Container>
     );
   }
 
-  const uploads = pendingUploads?.data?.results || [];
-  const stats = analytics?.data || {};
-  const aiResultsData = aiResults?.data?.results || [];
+  // Process data like the Reviews page does
+  const uploads = uploadsData?.data?.results || [];
+  const aiResults = aiResultsData?.data?.results || [];
+  
+  // Calculate metrics from the actual data
+  const totalUploads = uploads.length;
+  const pendingCount = uploads.filter(u => u.status === 'pending').length;
+  const approvedCount = uploads.filter(u => u.status === 'approved').length;
+  const rejectedCount = uploads.filter(u => u.status === 'rejected').length;
+  
+  // Calculate metrics with proper score handling
+  const validScores = aiResults
+    .map(r => {
+      const score = r.overall_score || r.score || 0;
+      const numScore = typeof score === 'string' ? parseFloat(score) : score;
+      return isNaN(numScore) ? 0 : (numScore <= 1 ? numScore : numScore / 100);
+    })
+    .filter(score => score > 0);
 
-  const pendingCount = uploads.filter((u: Upload) => u.status === 'pending').length;
+  const metrics = {
+    overallScore: validScores.length > 0 ? 
+      validScores.reduce((sum, score) => sum + score, 0) / validScores.length : 0,
+    passedAudits: validScores.filter(score => score >= 0.7).length,
+    failedAudits: validScores.filter(score => score < 0.7).length,
+    pendingReviews: pendingCount,
+    avgProcessingTime: 0,
+    esgCategories: []
+  };
+
+  // Helper function to format AI scores consistently
+  const formatAIScore = (score: any): number => {
+    if (score === null || score === undefined || isNaN(score)) return 0;
+    const numScore = typeof score === 'string' ? parseFloat(score) : score;
+    if (isNaN(numScore)) return 0;
+    // Handle both 0-1 and 0-100 scale
+    return numScore <= 1 ? Math.round(numScore * 100) : Math.round(numScore);
+  };
+
+  // Calculate reviewer-specific stats from real data
+  const pendingUploads = uploads.filter(u => u.status === 'pending');
   const completedToday = uploads.filter(
-    (u: Upload) =>
+    (u) =>
       u.status !== 'pending' && 
+      u.uploaded_at &&
       new Date(u.uploaded_at).toDateString() === new Date().toDateString()
-  ).length;
+  );
+
+  // Handle upload actions
+  const handleViewDocument = (upload: Upload) => {
+    setSelectedUpload(upload);
+    setDocumentViewerOpen(true);
+  };
+
+  const handleReviewActions = (upload: Upload) => {
+    setSelectedUpload(upload);
+    setReviewActionsOpen(true);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    // Refresh data after status change
+    window.location.reload(); // Simple refresh - could be optimized with query invalidation
+  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -181,25 +236,25 @@ export const ReviewerDashboard: React.FC = () => {
       >
         <StatsCard
           title="Pending Reviews"
-          value={pendingCount}
+          value={pendingUploads.length}
           icon={<PendingActions fontSize="large" />}
           color="warning"
         />
         <StatsCard
           title="Completed Today"
-          value={completedToday}
+          value={completedToday.length}
           icon={<AssignmentTurnedIn fontSize="large" />}
           color="success"
         />
         <StatsCard
           title="AI Analyses"
-          value={aiResultsData.length}
+          value={aiResults.length}
           icon={<AssessmentOutlined fontSize="large" />}
           color="primary"
         />
         <StatsCard
-          title="Total Reviews"
-          value={stats.pendingReviews || 0}
+          title="Total Uploads"
+          value={totalUploads}
           icon={<CloudUpload fontSize="large" />}
           color="secondary"
         />
@@ -220,25 +275,31 @@ export const ReviewerDashboard: React.FC = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>File Name</TableCell>
+                      <TableCell>User</TableCell>
                       <TableCell>Uploaded</TableCell>
                       <TableCell>Status</TableCell>
                       <TableCell>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {uploads.slice(0, 8).map((upload: Upload) => (
+                    {pendingUploads.slice(0, 8).map((upload) => (
                       <TableRow key={upload.id}>
                         <TableCell>
                           <Typography variant="body2" fontWeight={500}>
-                            {upload.filename}
+                            {upload.filename || `Document ${upload.id}`}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            User ID: {upload.user_id}
+                            ID: {upload.id}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           <Typography variant="caption">
-                            {new Date(upload.uploaded_at).toLocaleDateString()}
+                            User {upload.user_id || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="caption">
+                            {upload.uploaded_at ? new Date(upload.uploaded_at).toLocaleDateString() : 'N/A'}
                           </Typography>
                         </TableCell>
                         <TableCell>
@@ -256,10 +317,20 @@ export const ReviewerDashboard: React.FC = () => {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <IconButton size="small" color="primary" title="View File Details">
+                            <IconButton 
+                              size="small" 
+                              color="primary" 
+                              title="View Document"
+                              onClick={() => handleViewDocument(upload)}
+                            >
                               <Visibility />
                             </IconButton>
-                            <IconButton size="small" color="secondary" title="Review File">
+                            <IconButton 
+                              size="small" 
+                              color="secondary" 
+                              title="Review Actions"
+                              onClick={() => handleReviewActions(upload)}
+                            >
                               <Comment />
                             </IconButton>
                           </Box>
@@ -279,24 +350,24 @@ export const ReviewerDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Recent AI Analysis
             </Typography>
-            {aiResultsData.length === 0 ? (
+            {aiResults.length === 0 ? (
               <Alert severity="info">No AI results available</Alert>
             ) : (
               <List>
-                {aiResultsData.slice(0, 5).map((result: AIResult) => (
+                {aiResults.slice(0, 4).map((result) => (
                   <ListItem key={result.id}>
                     <ListItemIcon>
                       <AssessmentOutlined color="primary" />
                     </ListItemIcon>
                     <ListItemText
-                      primary={`AI Score: ${Math.round((result.score || result.overall_score || 0) * 100)}%`}
+                      primary={`AI Score: ${formatAIScore(result.overall_score || result.score)}%`}
                       secondary={
                         <Box>
                           <Typography variant="caption" display="block">
                             File ID: {result.file_upload_id || result.id}
                           </Typography>
                           <Typography variant="caption" display="block" color="text.secondary">
-                            {new Date(result.created_at).toLocaleDateString()}
+                            {result.created_at ? new Date(result.created_at).toLocaleDateString() : 'N/A'}
                           </Typography>
                         </Box>
                       }
@@ -308,6 +379,41 @@ export const ReviewerDashboard: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
+
+      {/* Summary Statistics */}
+      <Card elevation={2} sx={{ mt: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Review Summary
+          </Typography>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Average AI Score
+              </Typography>
+              <Typography variant="h5" color="primary.main">
+                {formatAIScore(metrics.overallScore)}%
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Pass Rate
+              </Typography>
+              <Typography variant="h5" color="success.main">
+                {aiResults.length > 0 ? Math.round((metrics.passedAudits / aiResults.length) * 100) : 0}%
+              </Typography>
+            </Box>
+            <Box>
+              <Typography variant="body2" color="text.secondary">
+                Pending Queue
+              </Typography>
+              <Typography variant="h5" color="warning.main">
+                {pendingUploads.length}
+              </Typography>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <Paper elevation={1} sx={{ p: 3, mt: 4 }}>
@@ -347,6 +453,29 @@ export const ReviewerDashboard: React.FC = () => {
           </Button>
         </Box>
       </Paper>
+
+      {/* Tabbed Document Viewer Modal */}
+      {selectedUpload && (
+        <TabbedDocumentViewer
+          open={documentViewerOpen}
+          onClose={() => setDocumentViewerOpen(false)}
+          uploadId={selectedUpload.id}
+          filename={selectedUpload.filename || `Document ${selectedUpload.id}`}
+          fileSize={selectedUpload.file_size}
+        />
+      )}
+
+      {/* Review Actions Modal */}
+      {selectedUpload && (
+        <ReviewActions
+          open={reviewActionsOpen}
+          onClose={() => setReviewActionsOpen(false)}
+          uploadId={selectedUpload.id}
+          filename={selectedUpload.filename || `Document ${selectedUpload.id}`}
+          currentStatus={selectedUpload.status}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </Container>
   );
 };

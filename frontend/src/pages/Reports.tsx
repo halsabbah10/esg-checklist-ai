@@ -65,7 +65,7 @@ export const Reports: React.FC = () => {
   const kpiData: KPIData[] = [
     {
       label: 'Overall Score',
-      value: dashboardData?.overallScore
+      value: dashboardData?.overallScore !== null && dashboardData?.overallScore !== undefined && !isNaN(dashboardData.overallScore)
         ? `${Math.round(dashboardData.overallScore * 100)}%`
         : '0%',
       trend: 'neutral',
@@ -343,7 +343,7 @@ export const Reports: React.FC = () => {
         <h3>📊 Key Performance Indicators</h3>
         <div class="data-grid">
           <div class="data-item">
-            <strong>Overall Compliance Score:</strong> ${Math.round((dashboardData.overallScore || 0) * 100)}%
+            <strong>Overall Compliance Score:</strong> ${dashboardData?.overallScore !== null && dashboardData?.overallScore !== undefined && !isNaN(dashboardData.overallScore) ? Math.round(dashboardData.overallScore * 100) : 0}%
           </div>
           <div class="data-item">
             <strong>Passed Audits:</strong> ${dashboardData.passedAudits || 0}

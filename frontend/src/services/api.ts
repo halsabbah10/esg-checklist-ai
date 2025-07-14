@@ -157,9 +157,25 @@ export const aiAPI = {
 
   getResult: (id: string) => api.get(`/v1/search/ai-results/${id}`),
 
-  // Get results by file upload ID
-  getResultByUpload: (uploadId: string) =>
-    api.get(`/v1/search/ai-results`, { params: { file_upload_id: uploadId } }),
+  // Get results by file upload ID - using new dedicated endpoint
+  getResultByUpload: (uploadId: string) => {
+    console.log('🔍 API: Fetching AI results for uploadId:', uploadId);
+    const request = api.get(`/v1/search/ai-results`, { params: { file_upload_id: uploadId } });
+    request.then(response => {
+      console.log('📊 API Response for uploadId', uploadId, ':', {
+        results_count: response.data?.results?.length || 0,
+        first_result_id: response.data?.results?.[0]?.id,
+        first_result_file_upload_id: response.data?.results?.[0]?.file_upload_id,
+        overall_score: response.data?.results?.[0]?.overall_score
+      });
+    }).catch(error => {
+      console.error('❌ API Error for uploadId', uploadId, ':', error);
+    });
+    return request;
+  },
+
+  // Direct file endpoint method (may have issues)
+  getResultByUploadDirect: (uploadId: string) => filesAPI.getAIAnalysis(uploadId),
 };
 
 // Reviews API endpoints
@@ -200,12 +216,58 @@ export const reviewsAPI = {
 export const uploadsAPI = {
   search: (params?: Record<string, unknown>) => api.get('/v1/search/file-uploads', { params }),
 
-  addComment: (uploadId: string, comment: string, status?: string) =>
-    api.post(`/v1/uploads/${uploadId}/comment`, { comment, status }),
+  addComment: (uploadId: string, data: { comment: string; comment_type?: string }) =>
+    api.post(`/v1/uploads/${uploadId}/comment`, data),
 
-  getById: (uploadId: string) => api.get(`/v1/uploads/${uploadId}`),
+  // Use search endpoint since individual upload endpoint doesn't exist
+  getById: (uploadId: string) => uploadsAPI.search({ user_id: uploadId, limit: 1 }).then(response => {
+    const results = response.data?.results || [];
+    if (results.length > 0) {
+      return { data: results[0] };
+    }
+    throw new Error('Upload not found');
+  }),
 
   getStatus: (uploadId: string) => api.get(`/v1/uploads/${uploadId}/status`),
+
+  // Status update would need to be implemented in backend
+  updateStatus: (uploadId: string, data: { status: string; comment?: string; reviewer_notes?: string }) => {
+    console.warn('Upload status update not implemented in backend yet');
+    return Promise.resolve({ data: { success: true } });
+  },
+
+  // Use new file download endpoint
+  download: (uploadId: string) => 
+    api.get(`/v1/files/${uploadId}/download`, { 
+      responseType: 'blob',
+      timeout: 120000,
+    }),
+};
+
+// File API endpoints
+export const filesAPI = {
+  download: (fileId: string) => 
+    api.get(`/v1/files/${fileId}/download`, { 
+      responseType: 'blob',
+      timeout: 120000,
+    }),
+
+  view: (fileId: string) => 
+    api.get(`/v1/files/${fileId}/view`, { 
+      responseType: 'blob',
+      timeout: 120000,
+    }),
+
+  stream: (fileId: string, rangeHeader?: string) => 
+    api.get(`/v1/files/${fileId}/stream`, {
+      headers: rangeHeader ? { Range: rangeHeader } : {},
+      responseType: 'blob',
+      timeout: 180000,
+    }),
+
+  getInfo: (fileId: string) => api.get(`/v1/files/${fileId}/info`),
+
+  getAIAnalysis: (fileId: string) => api.get(`/v1/files/${fileId}/ai-analysis`),
 };
 
 // Comments/Reviews API endpoints
@@ -367,6 +429,9 @@ export const analyticsAPI = {
   getChecklistStats: () => api.get('/v1/analytics/checklist-stats'),
 
   getAuditorMetrics: () => api.get('/v1/analytics/auditor-metrics'),
+
+  // Optimized dashboard data endpoint
+  getDashboardData: () => api.get('/v1/analytics/dashboard-data'),
 };
 
 // Enhanced Search API

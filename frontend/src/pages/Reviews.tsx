@@ -28,6 +28,8 @@ import {
 } from '@mui/material';
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
 import { reviewsAPI, uploadsAPI, aiAPI } from '../services/api';
+import { TabbedDocumentViewer } from '../components/TabbedDocumentViewer';
+import { ReviewActions } from '../components/ReviewActions';
 
 interface ReviewItem {
   id: string;
@@ -57,6 +59,8 @@ export const Reviews: React.FC = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [reviewActionsOpen, setReviewActionsOpen] = useState(false);
 
   // Fetch AI analysis for selected file
   const { data: aiAnalysis, isLoading: aiLoading } = useQuery({
@@ -184,12 +188,22 @@ export const Reviews: React.FC = () => {
 
   const handleViewDetails = (review: ReviewItem) => {
     setSelectedReview(review);
-    setViewDialogOpen(true);
+    setDocumentViewerOpen(true);
   };
 
   const handleAddComment = (review: ReviewItem) => {
     setSelectedReview(review);
-    setCommentDialogOpen(true);
+    setReviewActionsOpen(true);
+  };
+
+  const handleViewDetailsLegacy = (review: ReviewItem) => {
+    setSelectedReview(review);
+    setViewDialogOpen(true);
+  };
+
+  const handleStatusChange = (newStatus: string) => {
+    // Refresh data after status change
+    refetch();
   };
 
   const handleCommentSubmit = () => {
@@ -361,8 +375,17 @@ export const Reviews: React.FC = () => {
                         size="small"
                         startIcon={<Visibility />}
                         onClick={() => handleViewDetails(review)}
+                        variant="contained"
                       >
-                        View
+                        View Document
+                      </Button>
+
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleViewDetailsLegacy(review)}
+                      >
+                        Quick View
                       </Button>
 
                       {review.status === 'pending' && (
@@ -392,8 +415,10 @@ export const Reviews: React.FC = () => {
                         size="small"
                         startIcon={<Comment />}
                         onClick={() => handleAddComment(review)}
+                        variant="contained"
+                        color="secondary"
                       >
-                        Comment
+                        Review & Comment
                       </Button>
                     </Box>
                   </ListItem>
@@ -569,6 +594,28 @@ export const Reviews: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Enhanced Tabbed Document Viewer */}
+      {selectedReview && (
+        <TabbedDocumentViewer
+          open={documentViewerOpen}
+          onClose={() => setDocumentViewerOpen(false)}
+          uploadId={parseInt(selectedReview.id)}
+          filename={selectedReview.filename}
+        />
+      )}
+
+      {/* Enhanced Review Actions */}
+      {selectedReview && (
+        <ReviewActions
+          open={reviewActionsOpen}
+          onClose={() => setReviewActionsOpen(false)}
+          uploadId={parseInt(selectedReview.id)}
+          filename={selectedReview.filename}
+          currentStatus={selectedReview.status}
+          onStatusChange={handleStatusChange}
+        />
+      )}
     </Container>
   );
 };

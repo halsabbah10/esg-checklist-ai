@@ -105,11 +105,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
         description: 'Generate and view reports',
       },
       {
-        text: 'File Upload',
+        text: 'AI Analysis',
         icon: <FileUpload />,
-        path: '/checklists/1/upload',
+        path: '/ai-analysis',
         roles: ['admin', 'super_admin', 'auditor'],
-        description: 'Upload and manage documents',
+        description: 'AI-powered ESG document analysis',
       },
     ];
 

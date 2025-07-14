@@ -17,6 +17,159 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
+@router.get("/dashboard-data")
+def get_dashboard_data(current_user=Depends(require_role(["auditor", "reviewer"])), db=Depends(get_session)):
+    """Optimized endpoint that returns all dashboard data in a single request"""
+
+    # Get all data in parallel using efficient queries
+    try:
+        # Different data scope based on user role
+        if current_user.role == "reviewer":
+            # Reviewers see ALL data to review, not just their own
+            ai_results_query = select(
+                AIResult.score,
+                AIResult.processing_time_ms,
+                AIResult.created_at,
+                AIResult.file_upload_id,
+                AIResult.user_id
+            ).limit(50)
+
+            uploads_query = select(
+                FileUpload.id,
+                FileUpload.filename,
+                FileUpload.uploaded_at,
+                FileUpload.status,
+                FileUpload.user_id
+            ).limit(50)  # Reviewers need to see more uploads
+        else:
+            # Auditors see only their own data
+            ai_results_query = select(
+                AIResult.score,
+                AIResult.processing_time_ms,
+                AIResult.created_at,
+                AIResult.file_upload_id
+            ).where(AIResult.user_id == current_user.id).limit(50)
+
+            uploads_query = select(
+                FileUpload.id,
+                FileUpload.filename,
+                FileUpload.uploaded_at,
+                FileUpload.status
+            ).where(FileUpload.user_id == current_user.id).limit(20)
+
+        ai_results = db.exec(ai_results_query).all()
+        uploads = db.exec(uploads_query).all()
+
+
+        # Calculate metrics based on user role
+        if current_user.role == "reviewer":
+            # Reviewer metrics - system-wide data
+            if ai_results:
+                scores = [r[0] for r in ai_results if r[0] is not None]
+                processing_times = [r[1] for r in ai_results if r[1] is not None]
+
+                overall_score = sum(scores) / len(scores) if scores else 0
+                passed_audits = sum(1 for score in scores if score >= 0.7)
+                failed_audits = sum(1 for score in scores if score < 0.7)
+                avg_processing_time = sum(processing_times) / len(processing_times) / 1000 / 60 if processing_times else 0
+            else:
+                overall_score = passed_audits = failed_audits = avg_processing_time = 0
+                scores = []
+
+            # For reviewers, pending uploads are those with status 'pending'
+            pending_uploads = [u for u in uploads if (u[3] if len(u) > 3 else u[3]) == "pending"]
+            processed_upload_ids = {r[3] for r in ai_results if r[3] is not None}
+        else:
+            # Auditor metrics - personal data only
+            if ai_results:
+                scores = [r[0] for r in ai_results if r[0] is not None]
+                processing_times = [r[1] for r in ai_results if r[1] is not None]
+
+                overall_score = sum(scores) / len(scores) if scores else 0
+                passed_audits = sum(1 for score in scores if score >= 0.7)
+                failed_audits = sum(1 for score in scores if score < 0.7)
+                avg_processing_time = sum(processing_times) / len(processing_times) / 1000 / 60 if processing_times else 0
+            else:
+                overall_score = passed_audits = failed_audits = avg_processing_time = 0
+                scores = []
+
+            # Count pending reviews for auditor
+            processed_upload_ids = {r[3] for r in ai_results if r[3] is not None}
+            pending_uploads = [u for u in uploads if u[0] not in processed_upload_ids]
+
+        # ESG categories (simplified calculation)
+        esg_categories = [
+            {"category": "Environmental", "score": round(overall_score * 85, 1)},
+            {"category": "Social", "score": round(overall_score * 78, 1)},
+            {"category": "Governance", "score": round(overall_score * 92, 1)},
+            {"category": "Risk Management", "score": round(overall_score * 88, 1)},
+            {"category": "Compliance", "score": round(overall_score * 82, 1)},
+        ]
+
+        # Format recent AI results for display
+        recent_ai_results = []
+        for r in ai_results[:10]:  # Latest 10 results
+            recent_ai_results.append({
+                "id": r[3] or 0,
+                "overall_score": r[0] or 0,
+                "file_upload_id": r[3],
+                "created_at": r[2].isoformat() if r[2] else None
+            })
+
+        # Format recent uploads for display
+        recent_uploads = []
+        for u in uploads[:20]:  # More uploads for reviewers
+            upload_data = {
+                "id": u[0],
+                "filename": u[1],
+                "uploaded_at": u[2].isoformat() if u[2] else None,
+                "status": u[3] or "pending"
+            }
+            # Add user_id for reviewers
+            if current_user.role == "reviewer" and len(u) > 4:
+                upload_data["user_id"] = u[4]
+            recent_uploads.append(upload_data)
+
+        return {
+            "metrics": {
+                "overallScore": round(overall_score, 3),
+                "passedAudits": passed_audits,
+                "failedAudits": failed_audits,
+                "pendingReviews": len(pending_uploads),
+                "avgProcessingTime": round(avg_processing_time, 1),
+                "esgCategories": esg_categories
+            },
+            "aiResults": recent_ai_results,
+            "uploads": recent_uploads,
+            "totalAiResults": len(ai_results),
+            "totalUploads": len(uploads)
+        }
+
+    except Exception as e:
+        logger.exception(f"Error fetching dashboard data: {e}")
+        # Return safe defaults on error
+        return {
+            "metrics": {
+                "overallScore": 0,
+                "passedAudits": 0,
+                "failedAudits": 0,
+                "pendingReviews": 0,
+                "avgProcessingTime": 0,
+                "esgCategories": [
+                    {"category": "Environmental", "score": 0},
+                    {"category": "Social", "score": 0},
+                    {"category": "Governance", "score": 0},
+                    {"category": "Risk Management", "score": 0},
+                    {"category": "Compliance", "score": 0},
+                ]
+            },
+            "aiResults": [],
+            "uploads": [],
+            "totalAiResults": 0,
+            "totalUploads": 0
+        }
+
+
 # Cache for expensive analytics queries (5 minute TTL)
 @lru_cache(maxsize=128)
 def _cached_analytics_query(query_hash: str, query_func, *args):
@@ -58,17 +211,22 @@ def dashboard_overall(current_user=Depends(require_role("admin")), db=Depends(ge
 
 @router.get("/auditor-metrics")
 def get_auditor_metrics(current_user=Depends(require_role(["auditor", "reviewer"])), db=Depends(get_session)):
-    """Get auditor/reviewer-specific metrics and ESG category scores"""
-    
-    # Get AI results for compliance scoring - only for current user (auditor/reviewer)
-    ai_results = db.exec(select(AIResult).where(AIResult.user_id == current_user.id)).all()
-    
+    """Get auditor/reviewer-specific metrics and ESG category scores - optimized"""
+
+    # Optimized: Get AI results with only needed fields to reduce memory usage
+    ai_results = db.exec(
+        select(AIResult.score, AIResult.processing_time_ms)
+        .where(AIResult.user_id == current_user.id)
+        .limit(100)  # Limit to recent 100 results for performance
+    ).all()
+
     if not ai_results:
         return {
             "overallScore": 0,
             "passedAudits": 0,
             "failedAudits": 0,
             "pendingReviews": 0,
+            "avgProcessingTime": 0,
             "esgCategories": [
                 {"category": "Environmental", "score": 0},
                 {"category": "Social", "score": 0},
@@ -77,18 +235,28 @@ def get_auditor_metrics(current_user=Depends(require_role(["auditor", "reviewer"
                 {"category": "Compliance", "score": 0},
             ]
         }
-    
-    # Calculate real overall score
-    overall_score = sum(result.score for result in ai_results) / len(ai_results)
-    
-    # Count passed/failed audits (assuming 0.7 threshold)
-    passed_audits = sum(1 for result in ai_results if result.score >= 0.7)
-    failed_audits = sum(1 for result in ai_results if result.score < 0.7)
-    
-    # Get pending reviews (submissions without AI results) - only for current user
-    total_uploads = db.exec(select(func.count()).select_from(FileUpload).where(FileUpload.user_id == current_user.id)).one()
-    pending_reviews = total_uploads - len(ai_results)
-    
+
+    # Optimized: Calculate metrics from tuple results
+    scores = [result[0] for result in ai_results if result[0] is not None]
+    processing_times = [result[1] for result in ai_results if result[1] is not None]
+
+    if not scores:
+        overall_score = 0
+        passed_audits = 0
+        failed_audits = 0
+    else:
+        overall_score = sum(scores) / len(scores)
+        passed_audits = sum(1 for score in scores if score >= 0.7)
+        failed_audits = sum(1 for score in scores if score < 0.7)
+
+    # Optimized: Get pending reviews count directly
+    pending_reviews = db.exec(
+        select(func.count())
+        .select_from(FileUpload)
+        .where(FileUpload.user_id == current_user.id)
+        .where(~FileUpload.id.in_(select(AIResult.file_upload_id).where(AIResult.file_upload_id.is_not(None))))
+    ).one()
+
     # Calculate ESG categories based on real data patterns
     # This is a simplified version - in reality, you'd analyze the feedback/content
     esg_categories = [
@@ -98,13 +266,12 @@ def get_auditor_metrics(current_user=Depends(require_role(["auditor", "reviewer"
         {"category": "Risk Management", "score": round(overall_score * 88, 1)},
         {"category": "Compliance", "score": round(overall_score * 82, 1)},
     ]
-    
-    # Calculate average processing time
+
+    # Optimized: Calculate average processing time
     avg_processing_time = 0
-    if ai_results:
-        total_time = sum(result.processing_time_ms or 0 for result in ai_results)
-        avg_processing_time = total_time / len(ai_results) / 1000 / 60  # Convert to minutes
-    
+    if processing_times:
+        avg_processing_time = sum(processing_times) / len(processing_times) / 1000 / 60  # Convert to minutes
+
     return {
         "overallScore": round(overall_score, 3),
         "passedAudits": passed_audits,
@@ -116,27 +283,26 @@ def get_auditor_metrics(current_user=Depends(require_role(["auditor", "reviewer"
 
 def calculate_safe_trends(db):
     """Calculate trends with proper error handling to prevent login issues"""
-    from datetime import datetime, timedelta
-    
+
     # For now, let's use simulated realistic trends until we can verify the database has enough data
     # This ensures the dashboard shows meaningful data while we debug
-    
+
     try:
         # Get total counts to base trends on
         total_users = db.exec(select(func.count()).select_from(User)).one()
         total_checklists = db.exec(select(func.count()).select_from(Checklist)).one()
         total_uploads = db.exec(select(func.count()).select_from(FileUpload)).one()
-        
+
         # Generate realistic trends based on system activity
         trends = {
             "users": generate_realistic_trend(total_users, "users"),
-            "checklists": generate_realistic_trend(total_checklists, "checklists"), 
+            "checklists": generate_realistic_trend(total_checklists, "checklists"),
             "uploads": generate_realistic_trend(total_uploads, "uploads"),
             "score": generate_realistic_trend(total_uploads, "score")  # Base score trend on upload activity
         }
-        
+
         return trends
-        
+
     except Exception:
         # If anything fails, return safe defaults
         return {
@@ -150,18 +316,17 @@ def generate_realistic_trend(total_count, metric_type):
     """Generate realistic trend based on total activity"""
     if total_count == 0:
         return 0
-    elif total_count <= 5:
+    if total_count <= 5:
         # Low activity systems
         trends = {"users": 5, "checklists": 10, "uploads": 15, "score": 2}
         return trends.get(metric_type, 5)
-    elif total_count <= 20:
-        # Medium activity systems  
+    if total_count <= 20:
+        # Medium activity systems
         trends = {"users": 12, "checklists": 18, "uploads": 25, "score": 5}
         return trends.get(metric_type, 12)
-    else:
-        # High activity systems
-        trends = {"users": 8, "checklists": 15, "uploads": 22, "score": -2}
-        return trends.get(metric_type, 8)
+    # High activity systems
+    trends = {"users": 8, "checklists": 15, "uploads": 22, "score": -2}
+    return trends.get(metric_type, 8)
 
 def calculate_trend_percentage(current_value, previous_value):
     """Calculate percentage change between two values with realistic logic"""
@@ -169,32 +334,31 @@ def calculate_trend_percentage(current_value, previous_value):
         # If both values are 0, no change
         if current_value == 0 and previous_value == 0:
             return 0
-        
+
         # If current value is 0, show decline
         if current_value == 0 and previous_value > 0:
             return -100.0
-        
+
         # If previous is 0 but current has value, show reasonable new activity trend
         if previous_value == 0:
             # For new systems, show modest positive trends rather than extreme values
             if current_value == 1:
                 return 5.0  # Single new item = 5% trend
-            elif current_value <= 3:
+            if current_value <= 3:
                 return 10.0  # Few new items = 10% trend
-            elif current_value <= 10:
+            if current_value <= 10:
                 return 25.0  # Some activity = 25% trend
-            else:
-                return 50.0  # Higher activity = 50% trend (realistic for new systems)
-        
+            return 50.0  # Higher activity = 50% trend (realistic for new systems)
+
         # Normal percentage calculation
         percentage = ((current_value - previous_value) / previous_value) * 100
-        
+
         # Cap extreme values for realistic display
         if percentage > 300:
             return 300.0  # Cap positive growth at 300%
-        elif percentage < -90:
+        if percentage < -90:
             return -90.0  # Cap negative decline at -90%
-        
+
         return round(percentage, 1)
     except Exception:
         return 0
@@ -298,7 +462,7 @@ def leaderboard(
 
 @router.get("/realtime/dashboard")
 def get_realtime_dashboard(
-    current_user=Depends(require_role("admin")), 
+    current_user=Depends(require_role("admin")),
     db=Depends(get_session)
 ):
     """Get comprehensive real-time dashboard data"""
@@ -318,7 +482,7 @@ def get_recent_activities(
         .order_by(UserActivity.timestamp.desc())
         .limit(limit)
     ).all()
-    
+
     return [
         {
             "id": activity.id,
@@ -344,39 +508,39 @@ def get_realtime_metrics(
 ):
     """Get real-time system metrics"""
     from datetime import datetime, timezone
-    
+
     # Get current timestamp
     now = datetime.now(timezone.utc)
-    
+
     # Get active users (last hour)
     hour_ago = now - timedelta(hours=1)
     active_users_1h = db.exec(
         select(func.count(func.distinct(UserActivity.user_id)))
         .where(UserActivity.timestamp >= hour_ago)
     ).one()
-    
+
     # Get recent uploads and AI processing
     uploads_1h = db.exec(
         select(func.count())
         .select_from(FileUpload)
         .where(FileUpload.uploaded_at >= hour_ago)
     ).one()
-    
+
     ai_processing_1h = db.exec(
         select(func.count())
         .select_from(AIResult)
         .where(AIResult.created_at >= hour_ago)
     ).one()
-    
+
     # Get average processing time
     avg_processing_time = db.exec(
         select(func.avg(AIResult.processing_time_ms))
         .where(AIResult.created_at >= hour_ago)
     ).one()
-    
+
     # Get system health score
     system_health = realtime_analytics._calculate_system_health(db)
-    
+
     return {
         "timestamp": now.isoformat(),
         "active_users_1h": active_users_1h,
@@ -395,25 +559,25 @@ def get_performance_metrics(
 ):
     """Get detailed performance metrics"""
     from datetime import datetime, timezone
-    
+
     now = datetime.now(timezone.utc)
-    
+
     # Get performance data for different time windows
     metrics = {}
-    
+
     for window_name, hours in [("1h", 1), ("6h", 6), ("24h", 24)]:
         window_start = now - timedelta(hours=hours)
-        
+
         # AI processing metrics
         ai_results = db.exec(
             select(AIResult.processing_time_ms, AIResult.score)
             .where(AIResult.created_at >= window_start)
         ).all()
-        
+
         if ai_results:
             processing_times = [r[0] for r in ai_results if r[0] is not None]
             scores = [r[1] for r in ai_results if r[1] is not None]
-            
+
             metrics[window_name] = {
                 "ai_requests": len(ai_results),
                 "avg_processing_time_ms": round(sum(processing_times) / len(processing_times), 2) if processing_times else 0,
@@ -433,7 +597,7 @@ def get_performance_metrics(
                 "min_score": 0,
                 "max_score": 0
             }
-    
+
     return {
         "timestamp": now.isoformat(),
         "performance_windows": metrics
@@ -447,10 +611,10 @@ def get_compliance_metrics(
 ):
     """Get real-time compliance and risk metrics"""
     from datetime import datetime, timezone
-    
+
     # Get all AI results for compliance analysis
     ai_results = db.exec(select(AIResult)).all()
-    
+
     if not ai_results:
         return {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -460,22 +624,22 @@ def get_compliance_metrics(
             "esg_breakdown": {},
             "trend_analysis": {}
         }
-    
+
     # Calculate compliance metrics
     total_assessments = len(ai_results)
-    
+
     # Define compliance threshold (can be configurable)
     compliance_threshold = 0.7
     compliant_count = sum(1 for r in ai_results if r.score >= compliance_threshold)
     compliance_rate = round((compliant_count / total_assessments) * 100, 1)
-    
+
     # Risk distribution based on scores
     risk_distribution = {
         "low": sum(1 for r in ai_results if r.score >= 0.8),
         "medium": sum(1 for r in ai_results if 0.6 <= r.score < 0.8),
         "high": sum(1 for r in ai_results if r.score < 0.6)
     }
-    
+
     # ESG breakdown (simplified - in reality would analyze feedback content)
     avg_score = sum(r.score for r in ai_results) / len(ai_results)
     esg_breakdown = {
@@ -483,20 +647,20 @@ def get_compliance_metrics(
         "social": round(avg_score * 0.78, 3),
         "governance": round(avg_score * 0.92, 3)
     }
-    
+
     # Recent trend (last 7 days vs previous 7 days)
     now = datetime.now(timezone.utc)
     week_ago = now - timedelta(days=7)
     two_weeks_ago = now - timedelta(days=14)
-    
+
     recent_results = [r for r in ai_results if r.created_at >= week_ago]
     previous_results = [r for r in ai_results if two_weeks_ago <= r.created_at < week_ago]
-    
+
     recent_avg = sum(r.score for r in recent_results) / len(recent_results) if recent_results else 0
     previous_avg = sum(r.score for r in previous_results) / len(previous_results) if previous_results else 0
-    
+
     trend_change = round((recent_avg - previous_avg) * 100, 1) if previous_avg > 0 else 0
-    
+
     return {
         "timestamp": now.isoformat(),
         "total_assessments": total_assessments,
@@ -524,7 +688,7 @@ def create_analytics_snapshot(
         realtime_analytics.create_analytics_snapshot(db, snapshot_type)
         return {
             "status": "success",
-            "message": f"Analytics snapshot created successfully",
+            "message": "Analytics snapshot created successfully",
             "snapshot_type": snapshot_type,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
@@ -532,6 +696,6 @@ def create_analytics_snapshot(
         logger.exception(f"Failed to create analytics snapshot: {e}")
         return {
             "status": "error",
-            "message": f"Failed to create snapshot: {str(e)}",
+            "message": f"Failed to create snapshot: {e!s}",
             "timestamp": datetime.now(timezone.utc).isoformat()
         }

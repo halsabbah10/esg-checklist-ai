@@ -26,11 +26,9 @@ import {
 } from '@mui/material';
 import {
   Assignment,
-  TrendingUp,
   AssessmentOutlined,
   FileDownload,
   Timeline,
-  CheckCircle,
   Warning,
   Error as ErrorIcon,
   BarChart,
@@ -69,11 +67,10 @@ interface StatsCardProps {
   value: number | string;
   icon: React.ReactNode;
   color: 'primary' | 'secondary' | 'success' | 'warning' | 'error';
-  trend?: number;
   subtitle?: string;
 }
 
-const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend, subtitle }) => (
+const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, subtitle }) => (
   <Card elevation={2}>
     <CardContent>
       <Box display="flex" alignItems="center" justifyContent="space-between">
@@ -88,19 +85,6 @@ const StatsCard: React.FC<StatsCardProps> = ({ title, value, icon, color, trend,
             <Typography variant="caption" color="text.secondary">
               {subtitle}
             </Typography>
-          )}
-          {trend && (
-            <Box display="flex" alignItems="center" mt={0.5}>
-              <TrendingUp fontSize="small" color={trend > 0 ? 'success' : 'error'} />
-              <Typography
-                variant="caption"
-                color={trend > 0 ? 'success.main' : 'error.main'}
-                sx={{ ml: 0.5 }}
-              >
-                {trend > 0 ? '+' : ''}
-                {trend}%
-              </Typography>
-            </Box>
           )}
         </Box>
         <Box color={`${color}.main`}>{icon}</Box>
@@ -143,78 +127,128 @@ const ComplianceScore: React.FC<ComplianceScoreProps> = ({ category, score, maxS
   );
 };
 
-export const AuditorDashboard: React.FC = () => {
+export const FallbackAuditorDashboard: React.FC = () => {
   const navigate = useNavigate();
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   
-  // Optimized: Fetch all dashboard data in parallel with better caching
+  // Fallback: Try optimized endpoint first, then fall back to individual endpoints
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError } = useQuery({
+    queryKey: ['dashboard-data', 'auditor'],
+    queryFn: () => analyticsAPI.getDashboardData(),
+    staleTime: 2 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1, // Only retry once before falling back
+  });
+
+  // Fallback queries - only run if optimized endpoint fails
   const { data: auditorMetrics, isLoading: metricsLoading, refetch: refetchMetrics } = useQuery({
     queryKey: ['analytics', 'auditor-metrics'],
     queryFn: () => analyticsAPI.getAuditorMetrics(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 15 * 60 * 1000, // 15 minutes
-    refetchInterval: 2 * 60 * 1000, // Reduced to 2 minutes
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled: !!dashboardError, // Only run if dashboard endpoint failed
   });
 
-  // Optimized: Load AI results with reduced limit and better caching
   const { data: aiResults, isLoading: aiLoading, refetch: refetchAIResults } = useQuery<{ data: { results: AIResult[] } }>({
     queryKey: ['ai-results', 'compliance'],
-    queryFn: () => aiAPI.getResults({ limit: 10 }), // Reduced from 20 to 10
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: 2 * 60 * 1000, // Reduced refetch interval
+    queryFn: () => aiAPI.getResults({ limit: 8 }),
+    staleTime: 3 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled: !!dashboardError, // Only run if dashboard endpoint failed
   });
 
-  // Optimized: Load recent submissions with reduced limit
   const { data: submissions, isLoading: submissionsLoading } = useQuery<{ data: Submission[] }>({
     queryKey: ['submissions', 'recent'],
     queryFn: () => submissionsAPI.getAll(),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+    enabled: !!dashboardError, // Only run if dashboard endpoint failed
   });
 
-  // Improved loading state - show partial content while loading
-  const isInitialLoading = metricsLoading && aiLoading && submissionsLoading;
-  
-  if (isInitialLoading) {
+  // Determine loading state
+  const isLoading = dashboardLoading || (dashboardError && (metricsLoading || aiLoading || submissionsLoading));
+
+  if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress size={60} />
             <Typography variant="h6" sx={{ mt: 2 }}>Loading Dashboard...</Typography>
+            {dashboardError && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Using fallback loading...
+              </Typography>
+            )}
           </Box>
         </Box>
       </Container>
     );
   }
 
-  const aiResultsData = aiResults?.data?.results || [];
-  const submissionsData = submissions?.data || [];
-  const metrics = auditorMetrics?.data || {};
+  // Handle data from either optimized or fallback endpoints
+  let metrics, aiResultsData, submissionsData;
 
-  // Use real metrics from backend
-  const overallScore = metrics.overallScore || 0;
-  const passedAudits = metrics.passedAudits || 0;
-  const failedAudits = metrics.failedAudits || 0;
-  const avgProcessingTime = metrics.avgProcessingTime || 0;
-  const esgCategories = metrics.esgCategories || [];
+  if (dashboardData && !dashboardError) {
+    // Use optimized endpoint data
+    const data = dashboardData.data;
+    metrics = data.metrics;
+    aiResultsData = data.aiResults || [];
+    submissionsData = data.uploads || [];
+  } else {
+    // Use fallback endpoint data
+    const auditorData = auditorMetrics?.data || {};
+    const aiData = aiResults?.data?.results || [];
+    const submissionData = submissions?.data || [];
+    
+    metrics = {
+      overallScore: auditorData.overallScore || 0,
+      passedAudits: auditorData.passedAudits || 0,
+      failedAudits: auditorData.failedAudits || 0,
+      pendingReviews: auditorData.pendingReviews || 0,
+      avgProcessingTime: auditorData.avgProcessingTime || 0,
+      esgCategories: auditorData.esgCategories || []
+    };
+    aiResultsData = aiData;
+    submissionsData = submissionData;
+  }
 
-  // Calculate warning audits (scores between 0.5 and 0.7)
-  const warningAudits = aiResultsData.filter((result: AIResult) => {
-    const score = result.overall_score || 0;
+  // Show error if both optimized and fallback failed
+  if (dashboardError && (!auditorMetrics && !aiResults && !submissions)) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="error">
+          Failed to load dashboard data. Please try refreshing the page.
+          {dashboardError?.message && (
+            <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+              Error: {dashboardError.message}
+            </Typography>
+          )}
+        </Alert>
+      </Container>
+    );
+  }
+
+  // Calculate warning audits
+  const warningAudits = aiResultsData.filter((result: any) => {
+    const score = result.overall_score || result.score || 0;
     return score >= 0.5 && score < 0.7;
   }).length;
 
   // Manual refresh function
   const handleRefresh = async () => {
-    await Promise.all([
-      refetchMetrics(),
-      refetchAIResults(),
-    ]);
+    if (dashboardError) {
+      await Promise.all([
+        refetchMetrics(),
+        refetchAIResults(),
+      ]);
+    } else {
+      // Refresh optimized endpoint (would need to add refetch to that query)
+    }
     setLastRefresh(new Date());
   };
 
@@ -230,17 +264,25 @@ export const AuditorDashboard: React.FC = () => {
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Last updated: {lastRefresh.toLocaleTimeString()}
+            {dashboardError && " (fallback mode)"}
           </Typography>
         </Box>
         <Button
           variant="outlined"
           startIcon={<Refresh />}
           onClick={handleRefresh}
-          disabled={metricsLoading || aiLoading}
+          disabled={isLoading}
         >
           Refresh Data
         </Button>
       </Box>
+
+      {/* Show warning if using fallback */}
+      {dashboardError && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Using fallback data loading. Some features may be limited.
+        </Alert>
+      )}
 
       {/* Key Metrics */}
       <Box
@@ -253,20 +295,20 @@ export const AuditorDashboard: React.FC = () => {
       >
         <StatsCard
           title="Overall Compliance"
-          value={`${Math.round(overallScore * 100)}%`}
+          value={`${Math.round((metrics.overallScore || 0) * 100)}%`}
           icon={<AssessmentOutlined fontSize="large" />}
           color="primary"
         />
         <StatsCard
           title="Passed Audits"
-          value={passedAudits}
-          icon={<CheckCircle fontSize="large" />}
+          value={metrics.passedAudits || 0}
+          icon={<AssessmentOutlined fontSize="large" />}
           color="success"
           subtitle="Score ≥ 70%"
         />
         <StatsCard
           title="Failed Audits"
-          value={failedAudits}
+          value={metrics.failedAudits || 0}
           icon={<ErrorIcon fontSize="large" />}
           color="error"
           subtitle="Score < 50%"
@@ -287,9 +329,13 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               ESG Compliance Scores
             </Typography>
-            {esgCategories.map((item: any) => (
-              <ComplianceScore key={item.category} category={item.category} score={item.score} />
-            ))}
+            {metrics.esgCategories && metrics.esgCategories.length > 0 ? (
+              metrics.esgCategories.map((item: any) => (
+                <ComplianceScore key={item.category} category={item.category} score={item.score} />
+              ))
+            ) : (
+              <Alert severity="info">No ESG category data available</Alert>
+            )}
           </CardContent>
         </Card>
 
@@ -312,11 +358,10 @@ export const AuditorDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {aiResultsData.slice(0, 5).map((result: AIResult) => {
-                      const score = (result.overall_score || 0) * 100;
+                    {aiResultsData.slice(0, 5).map((result: any) => {
+                      const score = ((result.overall_score || result.score || 0) * 100);
                       const status = score >= 70 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail';
-                      const statusColor =
-                        score >= 70 ? 'success' : score >= 50 ? 'warning' : 'error';
+                      const statusColor = score >= 70 ? 'success' : score >= 50 ? 'warning' : 'error';
 
                       return (
                         <TableRow key={result.id}>
@@ -326,7 +371,11 @@ export const AuditorDashboard: React.FC = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2" fontWeight={500} color={statusColor === 'success' ? 'success.main' : statusColor === 'error' ? 'error.main' : 'warning.main'}>
+                            <Typography 
+                              variant="body2" 
+                              fontWeight={500} 
+                              color={statusColor === 'success' ? 'success.main' : statusColor === 'error' ? 'error.main' : 'warning.main'}
+                            >
                               {score.toFixed(1)}%
                             </Typography>
                           </TableCell>
@@ -340,109 +389,6 @@ export const AuditorDashboard: React.FC = () => {
                 </Table>
               </TableContainer>
             )}
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Box
-        sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' }, gap: 3, mt: 3 }}
-      >
-        {/* Compliance Trends */}
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Compliance Activity Overview
-            </Typography>
-            {submissionsData.length === 0 ? (
-              <Alert severity="info">No submission data available</Alert>
-            ) : (
-              <List>
-                {submissionsData.slice(0, 6).map((submission: Submission, index: number) => (
-                  <React.Fragment key={submission.id}>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Assignment color="primary" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={`Checklist ID: ${submission.checklist_id}`}
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              User ID: {submission.user_id}
-                            </Typography>
-                            <Typography variant="caption" display="block">
-                              Submitted:{' '}
-                              {submission.submitted_at
-                                ? new Date(submission.submitted_at).toLocaleDateString()
-                                : 'N/A'}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                      <Chip
-                        label={submission.status}
-                        color={
-                          submission.status === 'approved'
-                            ? 'success'
-                            : submission.status === 'rejected'
-                              ? 'error'
-                              : 'warning'
-                        }
-                        size="small"
-                      />
-                    </ListItem>
-                    {index < submissionsData.length - 1 && (
-                      <Box
-                        component="hr"
-                        sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
-                      />
-                    )}
-                  </React.Fragment>
-                ))}
-              </List>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* System Performance */}
-        <Card elevation={2}>
-          <CardContent>
-            <Typography variant="h6" gutterBottom>
-              Audit Statistics
-            </Typography>
-            <Box sx={{ mb: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                <Typography variant="body2">Total Audits</Typography>
-                <Typography variant="body2" fontWeight={500}>
-                  {aiResultsData.length}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                <Typography variant="body2">Pass Rate</Typography>
-                <Typography variant="body2" fontWeight={500} color="success.main">
-                  {aiResultsData.length > 0
-                    ? Math.round((passedAudits / aiResultsData.length) * 100)
-                    : 0}
-                  %
-                </Typography>
-              </Box>
-            </Box>
-
-            <Box sx={{ mb: 2 }}>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
-                <Typography variant="body2">Avg Processing Time</Typography>
-                <Typography variant="body2" fontWeight={500}>
-                  {avgProcessingTime > 0 ? `${avgProcessingTime} min` : 'N/A'}
-                </Typography>
-              </Box>
-            </Box>
-
-            <Button variant="outlined" fullWidth sx={{ mt: 2 }} startIcon={<FileDownload />}>
-              Export Audit Report
-            </Button>
           </CardContent>
         </Card>
       </Box>

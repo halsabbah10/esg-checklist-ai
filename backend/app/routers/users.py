@@ -18,6 +18,7 @@ from ..auth import (
     require_role,
     verify_password,
 )
+from ..config import is_production
 from ..database import get_session
 from ..models import User
 from ..rate_limiting import api_write_rate_limit
@@ -69,7 +70,7 @@ def login(
         value=token,
         max_age=24 * 60 * 60,  # 24 hours in seconds
         httponly=True,
-        secure=True,  # Only send over HTTPS in production
+        secure=is_production(),  # Only send over HTTPS in production
         samesite="lax",  # CSRF protection
         path="/",
     )

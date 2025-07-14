@@ -1,11 +1,16 @@
+import json
 import logging
 import re
-from typing import Tuple, Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
 from ..config import get_settings
-from .department_configs import get_department_prompt, get_department_config, format_department_context
+from .department_configs import (
+    format_department_context,
+    get_department_config,
+    get_department_prompt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +29,9 @@ class AIScorer:
         self.gemini_api_key = self.settings.GEMINI_API_KEY
         self.gemini_model = self.settings.gemini_model
         self.openai_api_key = self.settings.OPENAI_API_KEY
+        self.deepseek_api_key = self.settings.DEEPSEEK_API_KEY
+        self.deepseek_model = self.settings.DEEPSEEK_MODEL
+        self.deepseek_api_base = self.settings.DEEPSEEK_API_BASE
         self.eand_api_url = self.settings.EAND_API_URL
         self.eand_api_key = self.settings.EAND_API_KEY
 
@@ -36,9 +44,12 @@ class AIScorer:
         if not self.gemini_api_key:
             raise ValueError("GEMINI_API_KEY is required as it serves as the fallback AI provider")
         
-        # Only validate other providers if they're explicitly set and not e&
+        # Only validate other providers if they're explicitly set
         if self.provider == "openai" and not self.openai_api_key:
             raise ValueError("OPENAI_API_KEY is required when AI_SCORER is set to 'openai'")
+        
+        if self.provider == "deepseek" and not self.deepseek_api_key:
+            raise ValueError("DEEPSEEK_API_KEY is required when AI_SCORER is set to 'deepseek'")
         
         # For e& provider, we'll fall back to Gemini if API key is not available
         if self.provider == "eand" and not self.eand_api_key:
@@ -66,6 +77,8 @@ class AIScorer:
                 return self._score_gemini(text)
             if self.provider == "openai":
                 return self._score_openai(text)
+            if self.provider == "deepseek":
+                return self._score_deepseek(text)
             if self.provider == "eand":
                 return self._score_eand(text)
             
@@ -120,8 +133,19 @@ class AIScorer:
                 }
                 return score, feedback, metadata
 
-            # Use Gemini for department-specific analysis (can be extended for other providers)
-            return self._analyze_gemini_department(text, department_name, checklist_items, dept_config)
+            # Use provider-specific department analysis
+            if self.provider == "gemini" or (self.provider == "eand" and not self.eand_api_key):
+                return self._analyze_gemini_department(text, department_name, checklist_items, dept_config)
+            elif self.provider == "deepseek":
+                return self._analyze_deepseek_department(text, department_name, checklist_items, dept_config)
+            elif self.provider == "openai":
+                return self._analyze_openai_department(text, department_name, checklist_items, dept_config)
+            elif self.provider == "eand":
+                return self._analyze_eand_department(text, department_name, checklist_items, dept_config)
+            else:
+                # Fallback to Gemini
+                logger.warning(f"Unknown provider '{self.provider}' for department analysis, using Gemini")
+                return self._analyze_gemini_department(text, department_name, checklist_items, dept_config)
             
         except Exception as e:
             error_str = str(e)
@@ -159,53 +183,73 @@ class AIScorer:
         dept_config: Dict[str, Any]
     ) -> Tuple[float, str, Dict[str, Any]]:
         """Perform department-specific analysis using Gemini AI."""
+        # Truncate text to prevent MAX_TOKENS issues (keep to ~5k chars for safety)
+        if len(text) > 5000:
+            logger.warning(f"Department analysis text too long ({len(text)} chars), truncating to 5000 chars for Gemini")
+            text = text[:5000] + "\n\n[Content truncated for processing...]"
+        
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.gemini_model}:generateContent"
         )
 
         # Get department-specific prompt
-        dept_prompt = get_department_prompt(department_name, checklist_items)
+        dept_prompt = get_department_prompt(department_name, checklist_items or [])
         
-        # Enhanced prompt for department-specific ESG analysis
-        analysis_prompt = f"""
-        {dept_prompt}
-
-        Document text to analyze: {text}
-
-        SCORING GUIDELINES:
-        - 0.9-1.0: Exceptional performance meeting all {department_name} ESG requirements
-        - 0.8-0.89: Strong performance with comprehensive {department_name} practices
-        - 0.7-0.79: Good performance with solid {department_name} implementation
-        - 0.6-0.69: Adequate performance meeting basic {department_name} requirements
-        - 0.5-0.59: Moderate performance with significant {department_name} gaps
-        - 0.3-0.49: Below average performance lacking key {department_name} elements
-        - 0.1-0.29: Poor performance with minimal {department_name} compliance
-        - 0.0-0.09: No meaningful {department_name} ESG content
-
-        Provide your analysis following this exact format:
-        Score: X.XX
-        Department Focus: {department_name}
+        # Check total prompt length and use simplified version if needed
+        full_prompt = f"{dept_prompt}\n\nDocument: {text}\n\nScore 0.0-1.0 for {department_name} ESG compliance."
         
-        [Your detailed department-specific analysis follows here]
+        if len(full_prompt) > 4000:  # Token-conscious approach
+            # Use simplified department prompt for token efficiency
+            analysis_prompt = f"""Analyze this {department_name} ESG document and score 0.0-1.0 based on department-specific requirements:
 
-        RECOMMENDATIONS:
-        - [Department-specific recommendation 1]
-        - [Department-specific recommendation 2]
-        - [Department-specific recommendation 3]
+{text}
 
-        DETAILED COMPLIANCE REPORT:
-        [Insert the detailed per-item analysis as specified in the department instructions above]
-        """
+Score format: Score: X.XX
+Focus: {department_name} department ESG compliance and best practices."""
+        else:
+            # Use full comprehensive prompt when tokens allow
+            analysis_prompt = f"""
+            {dept_prompt}
+
+            Document text to analyze: {text}
+
+            SCORING GUIDELINES:
+            - 0.9-1.0: Exceptional performance meeting all {department_name} ESG requirements
+            - 0.8-0.89: Strong performance with comprehensive {department_name} practices
+            - 0.7-0.79: Good performance with solid {department_name} implementation
+            - 0.6-0.69: Adequate performance meeting basic {department_name} requirements
+            - 0.5-0.59: Moderate performance with significant {department_name} gaps
+            - 0.3-0.49: Below average performance lacking key {department_name} elements
+            - 0.1-0.29: Poor performance with minimal {department_name} compliance
+            - 0.0-0.09: No meaningful {department_name} ESG content
+
+            Provide your analysis following this exact format:
+            Score: X.XX
+            Department Focus: {department_name}
+            
+            [Your detailed department-specific analysis follows here]
+
+            RECOMMENDATIONS:
+            - [Department-specific recommendation 1]
+            - [Department-specific recommendation 2]
+            - [Department-specific recommendation 3]
+
+            DETAILED COMPLIANCE REPORT:
+            [Insert the detailed per-item analysis as specified in the department instructions above]
+            """
 
         payload = {
             "contents": [{"parts": [{"text": analysis_prompt}]}],
             "generationConfig": {
-                "temperature": 0.2,  # Lower temperature for more consistent department analysis
-                "maxOutputTokens": 2000,  # More tokens for detailed department analysis
+                "temperature": 0.2,
+                "maxOutputTokens": 2000,  # Restored for gemini-2.0-flash-exp
                 "topP": 0.8,
                 "topK": 40,
             },
+            "systemInstruction": {
+                "parts": [{"text": "Provide direct department-specific ESG analysis without internal reasoning steps. Focus on clear, actionable assessment."}]
+            }
         }
         headers = {"Content-Type": "application/json"}
 
@@ -218,31 +262,88 @@ class AIScorer:
             )
 
             if response.status_code != 200:
+                logger.error(f"Gemini API HTTP error: {response.status_code}")
+                logger.error(f"Gemini API error response: {response.text}")
                 raise Exception(
                     f"Gemini API request failed: {response.status_code}, {response.text}"
                 )
 
             data = response.json()
+            
+            # Debug log the actual response structure and token usage for department analysis
+            logger.info(f"Department Gemini API response structure: {list(data.keys())}")
+            
+            # Log token usage details if available
+            if "usageMetadata" in data:
+                usage = data["usageMetadata"]
+                logger.info(f"Department token usage: {usage}")
+                if "totalTokenCount" in usage:
+                    logger.info(f"Department total tokens used: {usage['totalTokenCount']}")
+                if "promptTokenCount" in usage:
+                    logger.info(f"Department input tokens: {usage['promptTokenCount']}")
+                if "candidatesTokenCount" in usage:
+                    logger.info(f"Department output tokens: {usage['candidatesTokenCount']}")
+            
+            logger.info(f"Department input text length: {len(text)} characters")
+            if "candidates" in data:
+                logger.info(f"Department candidates structure: {data['candidates'][:1] if data['candidates'] else 'empty'}")
+                if data['candidates'] and "finishReason" in data['candidates'][0]:
+                    logger.info(f"Department finish reason: {data['candidates'][0]['finishReason']}")
 
             if "candidates" not in data or not data["candidates"]:
+                logger.error(f"No candidates in department Gemini response. Full response: {data}")
                 raise Exception("No response candidates received from Gemini API")
 
-            content = data["candidates"][0]["content"]["parts"][0]["text"]
+            candidate = data["candidates"][0]
+            
+            # Check for MAX_TOKENS finish reason first
+            if candidate.get("finishReason") == "MAX_TOKENS":
+                logger.warning("Department Gemini response truncated due to MAX_TOKENS - retrying with shorter text")
+                if len(text) > 2000:
+                    # Try again with much shorter text
+                    shortened_text = text[:2000] + "\n\n[Content shortened for processing]"
+                    score, feedback = self._score_gemini_retry(shortened_text)
+                    # Evaluate checklist completeness with original text
+                    checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+                    metadata = {
+                        "analysis_type": f"department_retry_{department_name.lower().replace(' ', '_')}",
+                        "department": department_name,
+                        "checklist_completeness": checklist_completeness,
+                        "retry_reason": "MAX_TOKENS with shortened text"
+                    }
+                    return score, feedback, metadata
+                else:
+                    # Text is already short, raise exception for AI failure
+                    logger.error("Department MAX_TOKENS issue even with short text - AI analysis failed")
+                    raise Exception("AI analysis failed due to MAX_TOKENS issue even with shortened text")
+            
+            # Handle different response structures for department analysis
+            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+                content = candidate["content"]["parts"][0]["text"]
+            elif "text" in candidate:
+                content = candidate["text"]
+            elif "output" in candidate:
+                content = candidate["output"]
+            else:
+                logger.error(f"Unexpected department candidate structure: {candidate}")
+                raise Exception("AI response parsing failed - unexpected candidate structure")
             score = self._extract_score(content)
 
             # Evaluate checklist completeness
             checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
             
-            # Create metadata
+            # Create enhanced metadata with compliance indicators
             metadata = {
                 "department": department_name,
                 "analysis_type": "department_specific",
                 "audit_context": format_department_context(department_name),
-                "checklist_completeness": checklist_completeness
+                "checklist_completeness": checklist_completeness,
+                "compliance_indicators": self._generate_compliance_indicators(checklist_completeness, score),
+                "category_scores": self._generate_category_scores(checklist_completeness, score)
             }
 
             logger.info(f"Department-specific analysis completed for {department_name} with score: {score}")
-            return score, content, metadata
+            return score, self._format_analysis_content(content), metadata
 
         except requests.exceptions.Timeout:
             raise Exception("Gemini API request timed out")
@@ -251,8 +352,206 @@ class AIScorer:
         except KeyError as e:
             raise Exception(f"Unexpected Gemini API response format: {e!s}")
 
+    def _analyze_deepseek_department(
+        self, 
+        text: str, 
+        department_name: str, 
+        checklist_items: Optional[List[Dict[str, Any]]], 
+        dept_config: Dict[str, Any]
+    ) -> Tuple[float, str, Dict[str, Any]]:
+        """Perform department-specific analysis using DeepSeek R1 model."""
+        # Truncate text to prevent token issues
+        if len(text) > 8000:
+            logger.warning(f"Department analysis text too long ({len(text)} chars), truncating to 8000 chars for DeepSeek")
+            text = text[:8000] + "\n\n[Content truncated for processing...]"
+        
+        url = f"{self.deepseek_api_base}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.deepseek_api_key}",
+            "HTTP-Referer": "https://esg-checklist-ai.com",  # Optional: for OpenRouter analytics
+            "X-Title": "ESG Checklist AI"  # Optional: for OpenRouter analytics
+        }
+
+        # Get department-specific prompt
+        dept_prompt = get_department_prompt(department_name, checklist_items or [])
+        
+        # Check total prompt length and use simplified version if needed
+        full_prompt = f"{dept_prompt}\n\nDocument: {text}\n\nScore 0.0-1.0 for {department_name} ESG compliance."
+        
+        if len(full_prompt) > 6000:  # Token-conscious approach for DeepSeek
+            # Use simplified department prompt for token efficiency
+            analysis_prompt = f"""As a {department_name} ESG specialist, analyze this document and provide a comprehensive assessment:
+
+{text}
+
+Provide:
+1. Overall ESG compliance score (0.0-1.0) for {department_name} department
+2. Detailed analysis focusing on {department_name}-specific ESG requirements
+3. Department-relevant recommendations
+4. Compliance gaps specific to {department_name}
+
+Format: Score: X.XX
+Department Focus: {department_name}
+
+[Your detailed analysis]"""
+        else:
+            # Use comprehensive department prompt when tokens allow
+            analysis_prompt = f"""
+            {dept_prompt}
+
+            Document text to analyze: {text}
+
+            DEPARTMENT-SPECIFIC SCORING for {department_name}:
+            - 0.9-1.0: Exceptional performance meeting all {department_name} ESG requirements
+            - 0.8-0.89: Strong performance with comprehensive {department_name} practices
+            - 0.7-0.79: Good performance with solid {department_name} implementation
+            - 0.6-0.69: Adequate performance meeting basic {department_name} requirements
+            - 0.5-0.59: Moderate performance with significant {department_name} gaps
+            - 0.3-0.49: Below average performance lacking key {department_name} elements
+            - 0.1-0.29: Poor performance with minimal {department_name} compliance
+            - 0.0-0.09: No meaningful {department_name} ESG content
+
+            Provide thorough reasoning and department-specific insights.
+
+            Format your response as:
+            Score: X.XX
+            Department Focus: {department_name}
+            
+            [Your detailed department-specific analysis]
+
+            DEPARTMENT RECOMMENDATIONS:
+            - [Department-specific recommendation 1]
+            - [Department-specific recommendation 2]
+            - [Department-specific recommendation 3]
+
+            COMPLIANCE ASSESSMENT:
+            [Department-specific compliance analysis]
+            """
+
+        payload = {
+            "model": self.deepseek_model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": analysis_prompt
+                }
+            ],
+            "max_tokens": 2500,
+            "temperature": 0.2,
+            "top_p": 0.95
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=180)
+
+            if response.status_code != 200:
+                logger.error(f"DeepSeek API HTTP error: {response.status_code}")
+                logger.error(f"DeepSeek API error response: {response.text}")
+                raise Exception(
+                    f"DeepSeek API request failed: {response.status_code}, {response.text}"
+                )
+
+            data = response.json()
+            
+            # Debug log the response
+            logger.info(f"DeepSeek department API response structure: {list(data.keys())}")
+            
+            if "choices" not in data or not data["choices"]:
+                logger.error(f"No candidates in DeepSeek department response. Full response: {data}")
+                raise Exception("No response choices received from DeepSeek API")
+
+            choice = data["choices"][0]
+            content = choice["message"]["content"]
+            score = self._extract_score(content)
+
+            # Evaluate checklist completeness
+            checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+            
+            # Create enhanced metadata with compliance indicators
+            metadata = {
+                "department": department_name,
+                "analysis_type": "department_specific",
+                "ai_provider": "deepseek",
+                "audit_context": format_department_context(department_name),
+                "checklist_completeness": checklist_completeness,
+                "compliance_indicators": self._generate_compliance_indicators(checklist_completeness, score),
+                "category_scores": self._generate_category_scores(checklist_completeness, score)
+            }
+
+            logger.info(f"DeepSeek department analysis completed for {department_name} with score: {score}")
+            return score, self._format_analysis_content(content), metadata
+
+        except requests.exceptions.Timeout:
+            raise Exception("DeepSeek API request timed out")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"DeepSeek API request failed: {e!s}")
+        except KeyError as e:
+            raise Exception(f"Unexpected DeepSeek API response format: {e!s}")
+
+    def _analyze_openai_department(
+        self, 
+        text: str, 
+        department_name: str, 
+        checklist_items: Optional[List[Dict[str, Any]]], 
+        dept_config: Dict[str, Any]
+    ) -> Tuple[float, str, Dict[str, Any]]:
+        """Perform department-specific analysis using OpenAI GPT model."""
+        # Simplified implementation for OpenAI department analysis
+        score, feedback = self._score_openai(text)
+        checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        
+        # Enhance feedback with department context
+        enhanced_feedback = f"""Department-Specific ESG Analysis: {department_name}
+
+{feedback}
+
+Department Context: This analysis focuses on {department_name}-specific ESG requirements and best practices."""
+        
+        metadata = {
+            "department": department_name,
+            "analysis_type": "department_specific",
+            "ai_provider": "openai",
+            "checklist_completeness": checklist_completeness
+        }
+        
+        return score, enhanced_feedback, metadata
+
+    def _analyze_eand_department(
+        self, 
+        text: str, 
+        department_name: str, 
+        checklist_items: Optional[List[Dict[str, Any]]], 
+        dept_config: Dict[str, Any]
+    ) -> Tuple[float, str, Dict[str, Any]]:
+        """Perform department-specific analysis using e& ChatGPT model."""
+        # Simplified implementation for e& department analysis
+        score, feedback = self._score_eand(text)
+        checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        
+        # Enhance feedback with department context
+        enhanced_feedback = f"""Department-Specific ESG Analysis: {department_name} (e& ChatGPT)
+
+{feedback}
+
+Department Context: This analysis focuses on {department_name}-specific ESG requirements and e& best practices."""
+        
+        metadata = {
+            "department": department_name,
+            "analysis_type": "department_specific",
+            "ai_provider": "eand",
+            "checklist_completeness": checklist_completeness
+        }
+        
+        return score, enhanced_feedback, metadata
+
     def _score_gemini(self, text: str) -> Tuple[float, str]:
         """Score text using Google's Gemini AI model."""
+        # Truncate text to prevent MAX_TOKENS issues (keep to ~5k chars for safety)
+        if len(text) > 5000:
+            logger.warning(f"Text too long ({len(text)} chars), truncating to 5000 chars for Gemini")
+            text = text[:5000] + "\n\n[Content truncated for processing...]"
+        
         url = (
             f"https://generativelanguage.googleapis.com/v1beta/models/"
             f"{self.gemini_model}:generateContent"
@@ -307,11 +606,14 @@ class AIScorer:
         payload = {
             "contents": [{"parts": [{"text": esg_prompt}]}],
             "generationConfig": {
-                "temperature": 0.3,  # Slightly higher for more balanced responses
-                "maxOutputTokens": 1500,  # More tokens for detailed feedback
+                "temperature": 0.3,
+                "maxOutputTokens": 2000,  # Restored for gemini-2.0-flash-exp
                 "topP": 0.8,
                 "topK": 40,
             },
+            "systemInstruction": {
+                "parts": [{"text": "Provide direct ESG analysis without internal reasoning steps. Focus on clear, actionable assessment."}]
+            }
         }
         headers = {"Content-Type": "application/json"}
 
@@ -324,16 +626,62 @@ class AIScorer:
             )
 
             if response.status_code != 200:
+                logger.error(f"Gemini API HTTP error: {response.status_code}")
+                logger.error(f"Gemini API error response: {response.text}")
                 raise Exception(
                     f"Gemini API request failed: {response.status_code}, {response.text}"
                 )
 
             data = response.json()
+            
+            # Debug log the actual response structure and token usage
+            logger.info(f"Gemini API response structure: {list(data.keys())}")
+            
+            # Log token usage details if available
+            if "usageMetadata" in data:
+                usage = data["usageMetadata"]
+                logger.info(f"Token usage: {usage}")
+                if "totalTokenCount" in usage:
+                    logger.info(f"Total tokens used: {usage['totalTokenCount']}")
+                if "promptTokenCount" in usage:
+                    logger.info(f"Input tokens: {usage['promptTokenCount']}")
+                if "candidatesTokenCount" in usage:
+                    logger.info(f"Output tokens: {usage['candidatesTokenCount']}")
+            
+            logger.info(f"Input text length: {len(text)} characters")
+            if "candidates" in data:
+                logger.info(f"Candidates structure: {data['candidates'][:1] if data['candidates'] else 'empty'}")
+                if data['candidates'] and "finishReason" in data['candidates'][0]:
+                    logger.info(f"Finish reason: {data['candidates'][0]['finishReason']}")
 
             if "candidates" not in data or not data["candidates"]:
+                logger.error(f"No candidates in Gemini response. Full response: {data}")
                 raise Exception("No candidates in Gemini response")
 
-            result_text = data["candidates"][0]["content"]["parts"][0]["text"]
+            candidate = data["candidates"][0]
+            
+            # Check for MAX_TOKENS finish reason first
+            if candidate.get("finishReason") == "MAX_TOKENS":
+                logger.warning("Gemini response truncated due to MAX_TOKENS - retrying with shorter text")
+                if len(text) > 2000:
+                    # Try again with much shorter text
+                    shortened_text = text[:2000] + "\n\n[Content shortened for processing]"
+                    return self._score_gemini_retry(shortened_text)
+                else:
+                    # Text is already short, raise exception for AI failure
+                    logger.error("MAX_TOKENS issue even with short text - AI analysis failed")
+                    raise Exception("AI analysis failed due to MAX_TOKENS issue even with shortened text")
+            
+            # Handle different response structures
+            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+                result_text = candidate["content"]["parts"][0]["text"]
+            elif "text" in candidate:
+                result_text = candidate["text"]
+            elif "output" in candidate:
+                result_text = candidate["output"]
+            else:
+                logger.error(f"Unexpected candidate structure: {candidate}")
+                raise Exception("AI response parsing failed - unexpected candidate structure")
             score = self._extract_score(result_text)
             
             # Extract category scores from the response
@@ -351,6 +699,70 @@ class AIScorer:
             raise Exception(f"Gemini API network error: {e!s}")
         except KeyError as e:
             raise Exception(f"Invalid response structure from Gemini: missing key {e!s}")
+
+
+    def _score_gemini_retry(self, text: str) -> Tuple[float, str]:
+        """Retry Gemini scoring with minimal prompt to avoid MAX_TOKENS."""
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.gemini_model}:generateContent"
+        )
+
+        # Minimal prompt to avoid token limits
+        minimal_prompt = f"""Analyze this ESG document and score it 0.0-1.0:
+
+{text}
+
+Provide: Score: X.XX
+Brief ESG analysis."""
+
+        payload = {
+            "contents": [{"parts": [{"text": minimal_prompt}]}],
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 1500,  # Restored for gemini-2.0-flash-exp
+                "topP": 0.8,
+                "topK": 40,
+            },
+            "systemInstruction": {
+                "parts": [{"text": "Provide direct ESG analysis without internal reasoning steps."}]
+            }
+        }
+        headers = {"Content-Type": "application/json"}
+
+        try:
+            response = requests.post(
+                f"{url}?key={self.gemini_api_key}",
+                headers=headers,
+                json=payload,
+                timeout=30,
+            )
+
+            if response.status_code != 200:
+                logger.error(f"Gemini retry API error: {response.status_code} - {response.text}")
+                raise Exception(f"Gemini retry API failed: {response.status_code}")
+
+            data = response.json()
+            
+            if "candidates" not in data or not data["candidates"]:
+                logger.error("No candidates in Gemini retry response")
+                raise Exception(f"Gemini retry API failed: {response.status_code}")
+
+            candidate = data["candidates"][0]
+            
+            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+                result_text = candidate["content"]["parts"][0]["text"]
+                score = self._extract_score(result_text)
+                logger.info(f"Gemini retry scoring successful with score: {score}")
+                return score, result_text
+            else:
+                logger.error("Gemini retry still has response issues")
+                raise Exception(f"Gemini retry API failed: {response.status_code}")
+
+        except Exception as e:
+            logger.exception(f"Gemini retry failed: {e}")
+            raise Exception("Gemini retry response parsing failed")
+
 
     def _score_openai(self, text: str) -> Tuple[float, str]:
         """Score text using OpenAI's GPT model."""
@@ -408,6 +820,106 @@ class AIScorer:
             raise Exception(f"OpenAI API network error: {e!s}")
         except KeyError as e:
             raise Exception(f"Invalid response structure from OpenAI: missing key {e!s}")
+
+    def _score_deepseek(self, text: str) -> Tuple[float, str]:
+        """Score text using DeepSeek model via OpenRouter API."""
+        url = f"{self.deepseek_api_base}/chat/completions"
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.deepseek_api_key}",
+            "HTTP-Referer": "https://esg-checklist-ai.com",  # Optional: for OpenRouter analytics
+            "X-Title": "ESG Checklist AI"  # Optional: for OpenRouter analytics
+        }
+
+        # Enhanced prompt for ESG scoring optimized for DeepSeek R1's reasoning capabilities
+        esg_prompt = f"""
+        As an expert ESG (Environmental, Social, Governance) analyst, analyze the following document and provide a comprehensive assessment.
+
+        Document text: {text}
+
+        ANALYSIS REQUIREMENTS:
+        1. Provide an overall ESG compliance score between 0.0 and 1.0
+        2. Break down scores for Environmental, Social, and Governance aspects
+        3. Identify specific strengths and areas for improvement
+        4. Provide actionable recommendations
+        5. Assess compliance gaps and risks
+
+        SCORING SCALE:
+        - 0.9-1.0: Exceptional ESG performance with comprehensive reporting and best practices
+        - 0.8-0.89: Strong ESG performance with good practices and detailed reporting
+        - 0.7-0.79: Good ESG performance with solid practices, some areas for improvement
+        - 0.6-0.69: Adequate ESG performance, basic compliance with room for enhancement
+        - 0.5-0.59: Moderate ESG performance, basic practices but significant gaps
+        - 0.3-0.49: Below average ESG performance, limited practices and reporting
+        - 0.1-0.29: Poor ESG performance, minimal or inadequate practices
+        - 0.0-0.09: No meaningful ESG content or practices
+
+        FORMAT YOUR RESPONSE EXACTLY AS:
+        Score: X.XX
+        Environmental: X.XX
+        Social: X.XX
+        Governance: X.XX
+
+        [Your detailed analysis follows here]
+
+        RECOMMENDATIONS:
+        - [Specific recommendation 1]
+        - [Specific recommendation 2]
+        - [Specific recommendation 3]
+
+        COMPLIANCE GAPS:
+        - [Gap 1]
+        - [Gap 2]
+
+        Provide thorough reasoning for your assessment, considering both quantitative metrics and qualitative factors.
+        """
+
+        payload = {
+            "model": self.deepseek_model,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": esg_prompt
+                }
+            ],
+            "max_tokens": 2000,
+            "temperature": 0.2,
+            "top_p": 0.95,
+            "frequency_penalty": 0,
+            "presence_penalty": 0
+        }
+
+        try:
+            response = requests.post(url, headers=headers, json=payload, timeout=180)
+            
+            if response.status_code != 200:
+                raise Exception(
+                    f"DeepSeek API request failed: {response.status_code}, {response.text}"
+                )
+
+            data = response.json()
+
+            if "choices" not in data or not data["choices"]:
+                raise Exception("No choices in DeepSeek response")
+
+            result_text = data["choices"][0]["message"]["content"]
+            score = self._extract_score(result_text)
+            
+            # Extract category scores from the response
+            category_scores = self._extract_category_scores(result_text)
+            
+            # Enhanced feedback with category breakdown for DeepSeek
+            enhanced_feedback = self._format_enhanced_feedback(result_text, score, category_scores)
+            
+            logger.info(f"DeepSeek R1 scoring completed successfully with score: {score}")
+            return score, enhanced_feedback
+
+        except requests.exceptions.Timeout:
+            raise Exception("DeepSeek API request timed out")
+        except requests.exceptions.RequestException as e:
+            raise Exception(f"DeepSeek API network error: {e!s}")
+        except KeyError as e:
+            raise Exception(f"Invalid response structure from DeepSeek: missing key {e!s}")
 
     def _score_eand(self, text: str) -> Tuple[float, str]:
         """
@@ -527,55 +1039,9 @@ class AIScorer:
                     logger.debug(f"Failed to parse score with pattern '{pattern}': {e}")
                     continue
 
-        # Fallback: analyze sentiment for approximate scoring with more balanced ranges
-        text_lower = response_text.lower()
-        positive_words = [
-            "excellent",
-            "strong",
-            "good",
-            "compliant",
-            "adequate",
-            "satisfactory",
-            "implemented",
-            "established",
-            "monitored",
-            "tracked",
-            "measured",
-            "reported",
-            "sustainable",
-            "responsible",
-        ]
-        negative_words = [
-            "poor",
-            "weak",
-            "insufficient",
-            "lacking",
-            "non-compliant",
-            "inadequate",
-            "missing",
-            "absent",
-            "failed",
-            "violated",
-        ]
-
-        positive_count = sum(1 for word in positive_words if word in text_lower)
-        negative_count = sum(1 for word in negative_words if word in text_lower)
-
-        # More balanced fallback scoring
-        if positive_count > negative_count:
-            fallback_score = 0.65 + (positive_count - negative_count) * 0.05
-        elif negative_count > positive_count:
-            fallback_score = 0.55 - (negative_count - positive_count) * 0.05
-        else:
-            fallback_score = 0.60  # Default to 60% for neutral content
-
-        # Ensure fallback score is in valid range with reasonable minimum
-        fallback_score = max(0.35, min(0.85, fallback_score))
-
-        logger.warning(
-            f"Could not extract explicit score, using sentiment-based fallback: {fallback_score}"
-        )
-        return fallback_score
+        # No fallback scoring - raise exception if score cannot be extracted
+        logger.error(f"Could not extract score from AI response: {response_text[:200]}...")
+        raise Exception("Failed to extract score from AI response - score pattern not found")
 
     def _extract_category_scores(self, response_text: str) -> dict:
         """Extract category scores for Environmental, Social, and Governance."""
@@ -788,7 +1254,10 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             Dictionary containing completeness evaluation for each item
         """
         if not checklist_items:
+            logger.warning("No checklist items provided for completeness evaluation")
             return {}
+        
+        logger.info(f"Starting completeness evaluation for {len(checklist_items)} checklist items")
         
         completeness_results = {
             "overall_completeness": 0.0,
@@ -809,8 +1278,8 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             category = item.get('category', 'General')
             weight = item.get('weight', 1.0)
             
-            # Evaluate completeness for this item
-            completeness_score, status, evidence_found, gaps, recommendations = self._evaluate_single_item(
+            # Evaluate completeness and quality for this item
+            completeness_score, status, evidence_found, gaps, recommendations, quality_score = self._evaluate_single_item_with_quality(
                 text_lower, question_text, category
             )
             
@@ -820,6 +1289,7 @@ Governance structures demonstrate basic compliance but need strengthening in tra
                 "category": category,
                 "weight": weight,
                 "completeness_score": completeness_score,
+                "quality_score": quality_score,
                 "status": status,  # "complete", "incomplete", "missing"
                 "evidence_found": evidence_found,
                 "gaps_identified": gaps,
@@ -831,77 +1301,373 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             # Update summary counts
             completeness_results["summary"][status] += 1
         
-        # Calculate overall completeness (weighted average)
+        # Calculate overall completeness and quality (weighted average)
         total_weighted_score = sum(item["completeness_score"] * item["weight"] for item in completeness_results["items"])
+        total_quality_score = sum(item["quality_score"] * item["weight"] for item in completeness_results["items"])
         total_weight = sum(item["weight"] for item in completeness_results["items"])
         
         if total_weight > 0:
             completeness_results["overall_completeness"] = total_weighted_score / total_weight
+            completeness_results["overall_quality"] = total_quality_score / total_weight
+        
+        # Calculate proper completion rate (complete items / total items)
+        completion_rate = completeness_results["summary"]["complete"] / len(checklist_items) if len(checklist_items) > 0 else 0.0
+        completeness_results["completion_rate"] = completion_rate
+        
+        # Verify counts and log final summary
+        final_total = completeness_results["summary"]["complete"] + completeness_results["summary"]["incomplete"] + completeness_results["summary"]["missing"]
+        logger.info(f"Completeness evaluation finished:")
+        logger.info(f"  Input items: {len(checklist_items)}")
+        logger.info(f"  Processed items: {len(completeness_results['items'])}")
+        logger.info(f"  Status counts - Complete: {completeness_results['summary']['complete']}, Incomplete: {completeness_results['summary']['incomplete']}, Missing: {completeness_results['summary']['missing']}")
+        logger.info(f"  Total counted: {final_total}")
+        logger.info(f"  Overall completeness: {completeness_results['overall_completeness']:.3f}")
+        logger.info(f"  Overall quality: {completeness_results.get('overall_quality', 0.0):.3f}")
+        logger.info(f"  Completion rate: {completion_rate:.3f}")
+        
+        if final_total != len(checklist_items):
+            logger.warning(f"Count mismatch! Expected {len(checklist_items)} items but counted {final_total}")
+            # Force correct total to ensure consistency
+            completeness_results["summary"]["total"] = len(checklist_items)
         
         return completeness_results
     
-    def _evaluate_single_item(self, text_lower: str, question_text: str, category: str) -> tuple:
+    def _generate_compliance_indicators(self, checklist_completeness: Dict[str, Any], overall_score: float) -> Dict[str, Any]:
+        """Generate compliance indicators for the analysis."""
+        if not checklist_completeness:
+            return {}
+        
+        completion_rate = checklist_completeness.get("completion_rate", 0.0)
+        
+        # Risk level based on completion rate and overall score
+        if completion_rate >= 0.8 and overall_score >= 0.8:
+            risk_level = "Low"
+        elif completion_rate >= 0.6 and overall_score >= 0.6:
+            risk_level = "Medium"
+        else:
+            risk_level = "High"
+        
+        return {
+            "risk_level": risk_level,
+            "compliance_rate": completion_rate,
+            "overall_score": overall_score,
+            "priority_areas": self._identify_priority_areas(checklist_completeness)
+        }
+    
+    def _generate_category_scores(self, checklist_completeness: Dict[str, Any], overall_score: float) -> Dict[str, float]:
+        """Generate category-specific scores."""
+        if not checklist_completeness or not checklist_completeness.get("items"):
+            return {
+                "environmental": overall_score,
+                "social": overall_score,
+                "governance": overall_score
+            }
+        
+        # Categorize items and calculate scores
+        categories = {"environmental": [], "social": [], "governance": []}
+        
+        for item in checklist_completeness["items"]:
+            category = item.get("category", "").lower()
+            score = item.get("completeness_score", 0.0)
+            
+            if "environment" in category or "climate" in category or "carbon" in category:
+                categories["environmental"].append(score)
+            elif "social" in category or "employee" in category or "human" in category or "community" in category:
+                categories["social"].append(score)
+            elif "governance" in category or "board" in category or "management" in category or "compliance" in category:
+                categories["governance"].append(score)
+            else:
+                # Distribute equally if category is unclear
+                categories["environmental"].append(score)
+                categories["social"].append(score)
+                categories["governance"].append(score)
+        
+        # Calculate averages
+        category_scores = {}
+        for cat, scores in categories.items():
+            if scores:
+                category_scores[cat] = sum(scores) / len(scores)
+            else:
+                category_scores[cat] = overall_score
+        
+        return category_scores
+    
+    def _identify_priority_areas(self, checklist_completeness: Dict[str, Any]) -> List[str]:
+        """Identify priority areas that need attention."""
+        priority_areas = []
+        
+        if not checklist_completeness or not checklist_completeness.get("items"):
+            return priority_areas
+        
+        # Find items with low scores
+        for item in checklist_completeness["items"]:
+            if item.get("completeness_score", 0.0) < 0.5:
+                category = item.get("category", "Unknown")
+                if category not in priority_areas:
+                    priority_areas.append(category)
+        
+        return priority_areas[:5]  # Limit to top 5 priority areas
+    
+    def _format_analysis_content(self, content: str) -> str:
+        """Format analysis content to remove markdown artifacts."""
+        if not content:
+            return content
+        
+        # Remove markdown formatting
+        # Remove ** bold formatting
+        content = re.sub(r'\*\*(.*?)\*\*', r'\\1', content)
+        
+        # Remove ### header formatting
+        content = re.sub(r'#{1,6}\s*(.*?)(?=\n|$)', r'\\1', content)
+        
+        # Remove * bullet points and replace with proper formatting
+        content = re.sub(r'^\s*\*\s+', '• ', content, flags=re.MULTILINE)
+        
+        # Clean up extra whitespace
+        content = re.sub(r'\n\s*\n\s*\n', '\n\n', content)
+        
+        return content.strip()
+    
+    def _evaluate_single_item_with_quality(self, text_lower: str, question_text: str, category: str) -> tuple:
         """
-        Evaluate a single checklist item against the document text.
+        Evaluate a single checklist item against the document text with quality analysis.
+        For questionnaire documents, look for actual answers and responses, and evaluate their quality.
         
         Returns:
-            Tuple of (completeness_score, status, evidence_found, gaps, recommendations)
+            Tuple of (completeness_score, status, evidence_found, gaps, recommendations, quality_score)
         """
-        # Extract key terms from the question
         question_lower = question_text.lower()
-        
-        # Define key terms to look for based on common ESG topics
-        esg_keywords = {
-            "environmental": [
-                "environment", "carbon", "emission", "energy", "renewable", "waste", "water",
-                "climate", "sustainability", "green", "pollution", "biodiversity", "ecosystem"
-            ],
-            "social": [
-                "social", "employee", "diversity", "inclusion", "training", "safety", "health",
-                "community", "human rights", "labor", "workforce", "engagement", "welfare"
-            ],
-            "governance": [
-                "governance", "board", "ethics", "compliance", "transparency", "audit", 
-                "risk", "management", "disclosure", "accountability", "oversight", "policy"
-            ]
-        }
-        
-        # Extract specific terms from the question
-        question_terms = [word for word in question_lower.split() if len(word) > 3]
-        
-        # Look for evidence in the text
-        evidence_found = []
-        relevance_score = 0.0
-        
-        # Check for direct keyword matches
-        for term in question_terms:
-            if term in text_lower:
-                evidence_found.append(f"Found reference to '{term}'")
-                relevance_score += 0.1
-        
-        # Check for category-specific keywords
         category_lower = category.lower()
-        for cat, keywords in esg_keywords.items():
-            if cat in category_lower:
-                for keyword in keywords:
-                    if keyword in text_lower:
-                        evidence_found.append(f"Found {cat} indicator: '{keyword}'")
-                        relevance_score += 0.05
+        evidence_found: List[str] = []
+        relevance_score = 0.0
+        quality_score = 0.0
         
-        # Determine completeness score and status
+        # Enhanced keyword extraction from question
+        question_words = [word for word in question_lower.split() if len(word) > 3 and word not in {'does', 'have', 'they', 'there', 'been', 'this', 'that', 'with', 'from', 'what', 'when', 'where', 'which', 'will', 'would', 'could', 'should'}]
+        
+        # Look for question-related keywords and content
+        keyword_matches = 0
+        question_found = False
+        
+        # Check for keyword presence with better scoring
+        for word in question_words[:5]:  # Check up to 5 significant words
+            if word in text_lower:
+                keyword_matches += 1
+                question_found = True
+                
+        # Weight keyword matches
+        if keyword_matches >= 2:
+            relevance_score += 0.3
+        elif keyword_matches == 1:
+            relevance_score += 0.15
+        
+        # Enhanced evidence detection
+        if keyword_matches > 0:
+            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
+            
+        # Look for answer patterns and implementation indicators
+        answer_indicators = [
+            "yes", "no", "implemented", "established", "documented", "policy", "procedure",
+            "annually", "monthly", "quarterly", "regularly", "compliance", "complete",
+            "partial", "in progress", "not applicable", "n/a", "percentage", "%",
+            "training", "monitoring", "review", "assessment", "audit", "report",
+            "management", "system", "process", "framework", "guidelines", "standards"
+        ]
+        
+        answer_count = 0
+        for indicator in answer_indicators:
+            if indicator in text_lower:
+                answer_count += 1
+        
+        # Score based on answer indicators found
+        if answer_count >= 5:
+            relevance_score += 0.4
+            evidence_found.append(f"Strong implementation evidence: {answer_count} indicators")
+        elif answer_count >= 3:
+            relevance_score += 0.25
+            evidence_found.append(f"Moderate implementation evidence: {answer_count} indicators")
+        elif answer_count >= 1:
+            relevance_score += 0.15
+            evidence_found.append(f"Basic implementation evidence: {answer_count} indicators")
+        
+        # Look for substantial content that suggests detailed responses
+        lines = text_lower.split('\n')
+        substantial_content = sum(1 for line in lines if len(line.strip()) > 50)
+        content_density = len(text_lower) / max(1, len(lines))
+        
+        if substantial_content > 10 and content_density > 30:
+            relevance_score += 0.2
+            evidence_found.append(f"Detailed content found: {substantial_content} substantial lines")
+        elif substantial_content > 5:
+            relevance_score += 0.1
+            evidence_found.append(f"Some detailed content: {substantial_content} lines")
+        
+        # QUALITY ANALYSIS - Evaluate answer quality
+        # Look for detailed explanations, specific examples, quantitative data
+        quality_indicators = [
+            "specific", "example", "detail", "metric", "measurement", "target",
+            "achieved", "performance", "result", "outcome", "impact", "evidence",
+            "data", "statistics", "number", "percentage", "increased", "decreased",
+            "improved", "enhanced", "developed", "created", "established",
+            "timeline", "deadline", "milestone", "objective", "goal"
+        ]
+        
+        quality_count = 0
+        for indicator in quality_indicators:
+            if indicator in text_lower:
+                quality_count += 1
+        
+        # Score quality based on indicators
+        if quality_count >= 8:
+            quality_score = 1.0
+            evidence_found.append(f"High quality response: {quality_count} quality indicators")
+        elif quality_count >= 5:
+            quality_score = 0.75
+            evidence_found.append(f"Good quality response: {quality_count} quality indicators")
+        elif quality_count >= 3:
+            quality_score = 0.5
+            evidence_found.append(f"Moderate quality response: {quality_count} quality indicators")
+        elif quality_count >= 1:
+            quality_score = 0.25
+            evidence_found.append(f"Basic quality response: {quality_count} quality indicators")
+        else:
+            quality_score = 0.0
+            evidence_found.append("Low quality response: lacks specific details")
+        
+        # Determine completeness score and status with better thresholds
         if relevance_score >= 0.6:
             status = "complete"
             completeness_score = min(1.0, relevance_score)
-        elif relevance_score >= 0.2:
-            status = "incomplete"
+        elif relevance_score >= 0.25:
+            status = "incomplete" 
             completeness_score = relevance_score
         else:
             status = "missing"
             completeness_score = 0.0
         
         # Generate gaps and recommendations
-        gaps = []
-        recommendations = []
+        gaps: List[str] = []
+        recommendations: List[str] = []
+        
+        if status != "complete":
+            # Identify specific gaps
+            if not evidence_found:
+                gaps.append(f"No evidence found addressing: {question_text}")
+            else:
+                gaps.append(f"Insufficient detail for: {question_text}")
+            
+            # Generate specific recommendations
+            if "policy" in question_lower:
+                recommendations.append("Develop comprehensive policy documentation")
+            if "procedure" in question_lower:
+                recommendations.append("Establish detailed procedures and processes")
+            if "training" in question_lower:
+                recommendations.append("Implement structured training programs")
+            if "monitoring" in question_lower:
+                recommendations.append("Set up monitoring and measurement systems")
+            if "report" in question_lower:
+                recommendations.append("Create regular reporting mechanisms")
+            
+            # Generic recommendations based on status
+            if status == "missing":
+                recommendations.append("Provide comprehensive response to address this requirement")
+            else:
+                recommendations.append("Enhance response with more specific details and evidence")
+        
+        # Quality-specific recommendations
+        if quality_score < 0.5:
+            recommendations.append("Include specific examples and quantitative data")
+            recommendations.append("Provide measurable outcomes and performance metrics")
+        
+        return completeness_score, status, evidence_found, gaps, recommendations, quality_score
+    
+    def _evaluate_single_item(self, text_lower: str, question_text: str, category: str) -> tuple:
+        """
+        Evaluate a single checklist item against the document text.
+        For questionnaire documents, look for actual answers and responses.
+        
+        Returns:
+            Tuple of (completeness_score, status, evidence_found, gaps, recommendations)
+        """
+        question_lower = question_text.lower()
+        category_lower = category.lower()
+        evidence_found: List[str] = []
+        relevance_score = 0.0
+        
+        # Enhanced keyword extraction from question
+        question_words = [word for word in question_lower.split() if len(word) > 3 and word not in {'does', 'have', 'they', 'there', 'been', 'this', 'that', 'with', 'from', 'what', 'when', 'where', 'which', 'will', 'would', 'could', 'should'}]
+        
+        # Look for question-related keywords and content
+        keyword_matches = 0
+        question_found = False
+        
+        # Check for keyword presence with better scoring
+        for word in question_words[:5]:  # Check up to 5 significant words
+            if word in text_lower:
+                keyword_matches += 1
+                question_found = True
+                
+        # Weight keyword matches
+        if keyword_matches >= 2:
+            relevance_score += 0.3
+        elif keyword_matches == 1:
+            relevance_score += 0.15
+        
+        # Enhanced evidence detection
+        if keyword_matches > 0:
+            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
+            
+        # Look for answer patterns and implementation indicators
+        answer_indicators = [
+            "yes", "no", "implemented", "established", "documented", "policy", "procedure",
+            "annually", "monthly", "quarterly", "regularly", "compliance", "complete",
+            "partial", "in progress", "not applicable", "n/a", "percentage", "%",
+            "training", "monitoring", "review", "assessment", "audit", "report",
+            "management", "system", "process", "framework", "guidelines", "standards"
+        ]
+        
+        answer_count = 0
+        for indicator in answer_indicators:
+            if indicator in text_lower:
+                answer_count += 1
+        
+        # Score based on answer indicators found
+        if answer_count >= 5:
+            relevance_score += 0.4
+            evidence_found.append(f"Strong implementation evidence: {answer_count} indicators")
+        elif answer_count >= 3:
+            relevance_score += 0.25
+            evidence_found.append(f"Moderate implementation evidence: {answer_count} indicators")
+        elif answer_count >= 1:
+            relevance_score += 0.15
+            evidence_found.append(f"Basic implementation evidence: {answer_count} indicators")
+        
+        # Look for substantial content that suggests detailed responses
+        lines = text_lower.split('\n')
+        substantial_content = sum(1 for line in lines if len(line.strip()) > 50)
+        content_density = len(text_lower) / max(1, len(lines))
+        
+        if substantial_content > 10 and content_density > 30:
+            relevance_score += 0.2
+            evidence_found.append(f"Detailed content found: {substantial_content} substantial lines")
+        elif substantial_content > 5:
+            relevance_score += 0.1
+            evidence_found.append(f"Some detailed content: {substantial_content} lines")
+        
+        # Determine completeness score and status with better thresholds
+        if relevance_score >= 0.6:
+            status = "complete"
+            completeness_score = min(1.0, relevance_score)
+        elif relevance_score >= 0.25:
+            status = "incomplete" 
+            completeness_score = relevance_score
+        else:
+            status = "missing"
+            completeness_score = 0.0
+        
+        # Generate gaps and recommendations
+        gaps: List[str] = []
+        recommendations: List[str] = []
         
         if status != "complete":
             # Identify specific gaps
@@ -931,6 +1697,89 @@ Governance structures demonstrate basic compliance but need strengthening in tra
                 recommendations.append("Enhance governance frameworks and oversight")
         
         return completeness_score, status, evidence_found, gaps, recommendations
+
+    def check_gemini_api_status(self) -> dict:
+        """Check Gemini API availability and token limits."""
+        if not self.gemini_api_key:
+            return {"status": "error", "message": "No Gemini API key configured"}
+        
+        # Test with minimal request to check API availability
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{self.gemini_model}:generateContent"
+        )
+        
+        test_payload = {
+            "contents": [{"parts": [{"text": "Test"}]}],
+            "generationConfig": {
+                "temperature": 0.1,
+                "maxOutputTokens": 10,
+                "topP": 0.8,
+                "topK": 40,
+            },
+            "systemInstruction": {
+                "parts": [{"text": "Provide direct response without internal reasoning."}]
+            }
+        }
+        headers = {"Content-Type": "application/json"}
+        
+        try:
+            response = requests.post(
+                f"{url}?key={self.gemini_api_key}",
+                json=test_payload,
+                headers=headers,
+                timeout=30,
+            )
+            
+            status_info = {
+                "status_code": response.status_code,
+                "model": self.gemini_model,
+                "api_key_present": bool(self.gemini_api_key),
+                "timestamp": "test"
+            }
+            
+            if response.status_code == 200:
+                data = response.json()
+                status_info["status"] = "success"
+                status_info["response_structure"] = list(data.keys())
+                
+                # Check token usage if available
+                if "usageMetadata" in data:
+                    status_info["token_usage"] = data["usageMetadata"]
+                
+                # Check response content
+                if "candidates" in data and data["candidates"]:
+                    candidate = data["candidates"][0]
+                    status_info["finish_reason"] = candidate.get("finishReason", "unknown")
+                    status_info["response_available"] = True
+                else:
+                    status_info["response_available"] = False
+                    
+            elif response.status_code == 429:
+                status_info["status"] = "quota_exceeded"
+                status_info["message"] = "API quota exceeded - rate limited"
+                status_info["response_text"] = response.text[:200]
+            elif response.status_code == 403:
+                status_info["status"] = "forbidden"
+                status_info["message"] = "API key invalid or insufficient permissions"
+                status_info["response_text"] = response.text[:200]
+            elif response.status_code == 400:
+                status_info["status"] = "bad_request"
+                status_info["message"] = "Invalid request format or model"
+                status_info["response_text"] = response.text[:200]
+            else:
+                status_info["status"] = "error"
+                status_info["message"] = f"HTTP {response.status_code}"
+                status_info["response_text"] = response.text[:200]
+                
+            return status_info
+            
+        except requests.exceptions.Timeout:
+            return {"status": "timeout", "message": "API request timed out"}
+        except requests.exceptions.RequestException as e:
+            return {"status": "network_error", "message": str(e)}
+        except Exception as e:
+            return {"status": "unexpected_error", "message": str(e)}
 
     def get_provider_info(self) -> dict:
         """

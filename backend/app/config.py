@@ -62,10 +62,13 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[str] = Field(default=None, description="Google Gemini API key")
     gemini_model: str = Field(default="gemini-2.0-flash-exp", description="Gemini AI model to use")
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
+    deepseek_api_key: Optional[str] = Field(default=None, description="DeepSeek API key")
+    deepseek_model: str = Field(default="deepseek-reasoner", description="DeepSeek AI model to use")
+    deepseek_api_base: str = Field(default="https://api.deepseek.com", description="DeepSeek API base URL")
 
     # AI Provider Configuration
     ai_scorer: str = Field(
-        default="gemini", description="AI provider to use (gemini, openai, eand)"
+        default="gemini", description="AI provider to use (gemini, openai, deepseek, eand)"
     )
     eand_api_url: Optional[str] = Field(default=None, description="EAND API URL")
     eand_api_key: Optional[str] = Field(default=None, description="EAND API key")
@@ -211,6 +214,21 @@ class Settings(BaseSettings):
     def EAND_API_KEY(self) -> Optional[str]:
         """Backward compatibility for EAND_API_KEY"""
         return self.eand_api_key
+
+    @property
+    def DEEPSEEK_API_KEY(self) -> Optional[str]:
+        """Backward compatibility for DEEPSEEK_API_KEY"""
+        return self.deepseek_api_key
+
+    @property
+    def DEEPSEEK_API_BASE(self) -> str:
+        """Backward compatibility for DEEPSEEK_API_BASE"""
+        return self.deepseek_api_base
+
+    @property
+    def DEEPSEEK_MODEL(self) -> str:
+        """Backward compatibility for DEEPSEEK_MODEL"""
+        return self.deepseek_model
 
     @property
     def OUTLOOK_CLIENT_ID(self) -> Optional[str]:

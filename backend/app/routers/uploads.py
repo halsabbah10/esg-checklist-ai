@@ -123,7 +123,7 @@ def search_uploads(
         query = query.where(FileUpload.user_id == current_user.id)
     elif user_id is not None:
         query = query.where(FileUpload.user_id == user_id)
-    
+
     if checklist_id is not None:
         query = query.where(FileUpload.checklist_id == checklist_id)
     if status is not None:
@@ -146,13 +146,13 @@ def search_uploads(
 
     # Get total count efficiently
     count_query: Any = select(func.count()).select_from(FileUpload)
-    
+
     # For auditors, only show their own uploads
     if current_user.role == "auditor":
         count_query = count_query.where(FileUpload.user_id == current_user.id)
     elif user_id is not None:
         count_query = count_query.where(FileUpload.user_id == user_id)
-    
+
     if checklist_id is not None:
         count_query = count_query.where(FileUpload.checklist_id == checklist_id)
     if status is not None:
@@ -354,7 +354,7 @@ def search_ai_results(
         query = query.where(AIResult.user_id == current_user.id)
     elif user_id is not None:
         query = query.where(AIResult.user_id == user_id)
-    
+
     if file_upload_id is not None:
         query = query.where(AIResult.file_upload_id == file_upload_id)
     if checklist_id is not None:
@@ -390,13 +390,13 @@ def search_ai_results(
 
     # Get total count efficiently
     count_query: Any = select(func.count()).select_from(AIResult)
-    
+
     # For auditors, only show their own AI results
     if current_user.role == "auditor":
         count_query = count_query.where(AIResult.user_id == current_user.id)
     elif user_id is not None:
         count_query = count_query.where(AIResult.user_id == user_id)
-    
+
     if file_upload_id is not None:
         count_query = count_query.where(AIResult.file_upload_id == file_upload_id)
     if checklist_id is not None:

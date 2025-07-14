@@ -4,7 +4,7 @@ Each department has specialized prompts and context for targeted analysis.
 """
 
 import json
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Department-specific AI analysis configurations
 DEPARTMENT_CONFIGS = [
@@ -169,14 +169,14 @@ def get_department_prompt(department_name: str, checklist_items: List[Dict[str, 
     if not config:
         # Fallback to generic prompt if department not found
         return get_generic_prompt(checklist_items)
-    
+
     prompt = config["prompt_for_gemini"]
-    
+
     # Replace placeholder with actual checklist items if provided
     if checklist_items:
         items_str = json.dumps(checklist_items, indent=2)
         prompt = prompt.replace("checklist_items: [ ... ]", f"checklist_items: {items_str}")
-    
+
     return prompt
 
 
@@ -209,7 +209,7 @@ Immediately below Recommendations, insert a new 'Detailed Compliance Report' sho
     if checklist_items:
         items_str = json.dumps(checklist_items, indent=2)
         prompt += f"\n\nChecklist Items: {items_str}"
-    
+
     return prompt
 
 

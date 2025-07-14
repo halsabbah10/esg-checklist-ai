@@ -1,7 +1,7 @@
 import logging
 import warnings
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Union, List
+from typing import List, Optional, Union
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
@@ -151,7 +151,7 @@ def require_role(roles: Union[str, List[str]]):
 
         # Check if any of the required roles match user's permissions
         has_permission = any(role in user_permissions for role in roles)
-        
+
         if not has_permission:
             role_names = "/".join(roles)
             raise HTTPException(

@@ -60,6 +60,7 @@ const SystemConfiguration = lazy(() =>
 const AdvancedFileUpload = lazy(() =>
   import('./pages/AdvancedFileUpload').then(module => ({ default: module.AdvancedFileUpload }))
 );
+const AIAnalysis = lazy(() => import('./pages/AIAnalysis'));
 const Help = lazy(() => import('./pages/Help'));
 const Documentation = lazy(() => 
   import('./pages/Documentation').then(module => ({ default: module.Documentation }))
@@ -356,6 +357,14 @@ function AppContent() {
                 element={
                   <ProtectedRouteWithSuspense routeName="Advanced File Upload">
                     <AdvancedFileUpload />
+                  </ProtectedRouteWithSuspense>
+                }
+              />
+              <Route
+                path="/ai-analysis"
+                element={
+                  <ProtectedRouteWithSuspense routeName="AI Analysis">
+                    <AIAnalysis />
                   </ProtectedRouteWithSuspense>
                 }
               />

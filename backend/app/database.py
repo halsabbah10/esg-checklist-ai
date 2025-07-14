@@ -2,7 +2,7 @@ import logging
 import traceback
 
 from fastapi import HTTPException
-from sqlmodel import Session, SQLModel, create_engine, text, select
+from sqlmodel import Session, SQLModel, create_engine, select, text
 
 from . import models  # noqa: F401 - Import needed to register models with SQLModel
 from .config import get_database_config, get_settings
@@ -57,10 +57,10 @@ def init_database():
         logger.info("Creating database tables...")
         SQLModel.metadata.create_all(engine)
         logger.info("Database tables created successfully")
-        
+
         # Create default data
         create_default_data()
-        
+
         return True
     except Exception as e:
         logger.exception(f"Failed to initialize database: {e}")
@@ -70,23 +70,23 @@ def init_database():
 def create_default_data():
     """Create default data for the application"""
     try:
-        from .models import User, Checklist, ChecklistItem
-        
+        from .models import Checklist, ChecklistItem, User
+
         with Session(engine) as session:
             # Check if we already have data
             existing_checklists = session.exec(select(Checklist)).first()
             if existing_checklists:
                 logger.info("Default data already exists, skipping creation")
                 return
-            
+
             # Create default admin user if it doesn't exist
             admin_user = session.exec(select(User).where(User.email == "admin@esg-checklist.ai")).first()
             if not admin_user:
-                from .auth import get_password_hash
+                from .auth import hash_password
                 admin_user = User(
                     username="admin",
                     email="admin@esg-checklist.ai",
-                    password_hash=get_password_hash("admin123"),
+                    password_hash=hash_password("admin123"),
                     role="admin",
                     is_active=True
                 )
@@ -94,7 +94,7 @@ def create_default_data():
                 session.commit()
                 session.refresh(admin_user)
                 logger.info("Default admin user created")
-            
+
             # Create default checklist
             default_checklist = Checklist(
                 title="Default ESG Checklist",
@@ -106,7 +106,7 @@ def create_default_data():
             session.add(default_checklist)
             session.commit()
             session.refresh(default_checklist)
-            
+
             # Create default checklist items
             default_items = [
                 {"question_text": "Does the organization have a documented environmental policy?", "category": "Environmental", "weight": 1.0},
@@ -119,7 +119,7 @@ def create_default_data():
                 {"question_text": "Are financial statements audited by external auditors?", "category": "Governance", "weight": 1.0},
                 {"question_text": "Is there a risk management framework in place?", "category": "Governance", "weight": 1.0},
             ]
-            
+
             for i, item_data in enumerate(default_items):
                 item = ChecklistItem(
                     checklist_id=default_checklist.id,
@@ -130,10 +130,10 @@ def create_default_data():
                     order_index=i
                 )
                 session.add(item)
-            
+
             session.commit()
             logger.info(f"Default checklist created with ID: {default_checklist.id}")
-            
+
     except Exception as e:
         logger.exception(f"Failed to create default data: {e}")
         # Don't raise here, as this is optional setup

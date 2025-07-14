@@ -211,30 +211,47 @@ async def validate_upload_file(file: UploadFile) -> tuple[str, str]:
     # Validate file extension
     extension = validate_file_extension(secure_name)
 
-    # Read file content for validation
+    # Check if file stream is readable
+    if not hasattr(file.file, "read"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid file stream"
+        )
+
+    # Get current position
+    current_pos = await file.tell() if hasattr(file, "tell") else 0
+
+    # Read file content for validation (only first chunk if file is large)
     content = await file.read()
     file_size = len(content)
 
-    # Reset file pointer for later use
-    await file.seek(0)
-
-    # Validate file size
+    # Validate file size first (before doing expensive operations)
     validate_file_size(file_size)
 
-    # Validate MIME type
-    validate_mime_type(content, extension, file.content_type)
+    # For MIME validation, we only need the first few bytes
+    content_sample = content[:1024] if len(content) > 1024 else content
+
+    # Reset file pointer to original position
+    try:
+        await file.seek(current_pos)
+    except Exception:
+        # If seek fails, we'll handle this in the caller
+        pass
+
+    # Validate MIME type using content sample
+    validate_mime_type(content_sample, extension, file.content_type)
 
     return secure_name, extension
 
 
-def generate_secure_filepath(filename: str, user_id: int, checklist_id: int) -> pathlib.Path:
+def generate_secure_filepath(filename: str, user_id: int, checklist_id: int = None) -> pathlib.Path:
     """
     Generate a secure file path with sanitized components
 
     Args:
         filename: Sanitized filename
         user_id: User ID
-        checklist_id: Checklist ID
+        checklist_id: Checklist ID (optional for ESG document uploads)
 
     Returns:
         Secure file path
@@ -248,13 +265,16 @@ def generate_secure_filepath(filename: str, user_id: int, checklist_id: int) -> 
     # Create full directory path
     full_dir = upload_dir / date_subdir
 
-    # Generate secure filename with user and checklist context
+    # Generate secure filename with user context
     path = pathlib.Path(filename)
     stem = path.stem
     suffix = path.suffix
 
     # Create unique filename to prevent conflicts
     unique_id = str(uuid.uuid4())[:8]
-    secure_filename = f"{user_id}_{checklist_id}_{unique_id}_{stem}{suffix}"
+    
+    # Use checklist_id if provided, otherwise use 'esg-doc' for ESG document uploads
+    doc_type = checklist_id if checklist_id is not None else "esg-doc"
+    secure_filename = f"{user_id}_{doc_type}_{unique_id}_{stem}{suffix}"
 
     return full_dir / secure_filename
