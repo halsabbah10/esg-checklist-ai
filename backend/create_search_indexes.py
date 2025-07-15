@@ -26,24 +26,19 @@ def create_search_indexes():
         "CREATE INDEX IF NOT EXISTS idx_fileupload_composite_search ON fileupload (checklist_id, user_id, uploaded_at DESC)",
         # Status-based searches
         "CREATE INDEX IF NOT EXISTS idx_fileupload_status ON fileupload (status)",
-
         # AI Results search optimization
         "CREATE INDEX IF NOT EXISTS idx_airesult_model_version_lower ON airesult (LOWER(ai_model_version))",
         "CREATE INDEX IF NOT EXISTS idx_airesult_score ON airesult (score)",
         "CREATE INDEX IF NOT EXISTS idx_airesult_created_at ON airesult (created_at DESC)",
         "CREATE INDEX IF NOT EXISTS idx_airesult_processing_time ON airesult (processing_time_ms)",
-
         # Checklist search optimization
         "CREATE INDEX IF NOT EXISTS idx_checklist_title_lower ON checklist (LOWER(title))",
         "CREATE INDEX IF NOT EXISTS idx_checklist_active ON checklist (is_active)",
-
         # User search optimization
         "CREATE INDEX IF NOT EXISTS idx_user_username_lower ON user (LOWER(username))",
         "CREATE INDEX IF NOT EXISTS idx_user_email_lower ON user (LOWER(email))",
-
         # Submission search optimization
         "CREATE INDEX IF NOT EXISTS idx_submission_composite ON submissionanswer (checklist_id, user_id, submitted_at DESC)",
-
         # Cross-table join optimization
         "CREATE INDEX IF NOT EXISTS idx_airesult_file_upload_id ON airesult (file_upload_id)",
         "CREATE INDEX IF NOT EXISTS idx_fileupload_checklist_user ON fileupload (checklist_id, user_id)",

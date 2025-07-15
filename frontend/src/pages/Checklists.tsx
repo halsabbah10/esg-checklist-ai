@@ -42,14 +42,19 @@ import {
   Clear,
   Close,
 } from '@mui/icons-material';
-import { checklistsAPI } from '../services/api';
+import { searchAPI } from '../services/api';
 
-interface Checklist {
+interface AIAnalysis {
   id: number;
-  title: string;
-  description: string;
+  filename: string;
+  score: number;
+  ai_model_version: string;
+  created_at: string;
+  processing_time_ms: number;
+  status: string;
+  user_id: number;
+  file_upload_id: number;
   is_active?: boolean;
-  created_at?: string;
   updated_at?: string;
   items?: Array<{
     id: number;

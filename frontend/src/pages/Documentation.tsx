@@ -16,7 +16,7 @@ import {
   Button,
   Alert,
   Chip,
-  Grid2 as Grid,
+  Grid,
 } from '@mui/material';
 import {
   ExpandMore,

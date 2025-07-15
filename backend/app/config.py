@@ -44,7 +44,7 @@ class Settings(BaseSettings):
     workers: int = Field(default=1, description="Number of worker processes")
 
     # Database Configuration
-    database_url: str = Field(default="sqlite:///./test.db", description="Database URL")
+    database_url: str = Field(default="sqlite:///./esg_checklist.db", description="Database URL")
     database_echo: bool = Field(default=False, description="Echo SQL queries")
     db_pool_size: int = Field(default=10, description="Database connection pool size")
     db_max_overflow: int = Field(default=20, description="Max overflow connections")
@@ -64,7 +64,9 @@ class Settings(BaseSettings):
     openai_api_key: Optional[str] = Field(default=None, description="OpenAI API key")
     deepseek_api_key: Optional[str] = Field(default=None, description="DeepSeek API key")
     deepseek_model: str = Field(default="deepseek-reasoner", description="DeepSeek AI model to use")
-    deepseek_api_base: str = Field(default="https://api.deepseek.com", description="DeepSeek API base URL")
+    deepseek_api_base: str = Field(
+        default="https://api.deepseek.com", description="DeepSeek API base URL"
+    )
 
     # AI Provider Configuration
     ai_scorer: str = Field(
@@ -272,9 +274,24 @@ def validate_required_settings():
     errors = []
 
     if settings.environment.lower() == "production":
-        if not settings.secret_key or settings.secret_key == "your-secret-key-change-in-production":
+        # Security validation
+        if not settings.secret_key or settings.secret_key in [
+            "your-secret-key-change-in-production",
+            "your_very_secure_secret_key_here_min_32_chars_development_only",
+            "CHANGE_THIS_TO_A_SECURE_32_CHAR_SECRET_KEY_FOR_PRODUCTION",
+        ]:
             errors.append("SECRET_KEY must be set to a secure value in production")
 
+        if len(settings.secret_key) < 32:
+            errors.append("SECRET_KEY must be at least 32 characters long")
+
+        # Database validation
+        if settings.database_url.startswith("sqlite:///"):
+            errors.append(
+                "SQLite database not recommended for production. Use PostgreSQL or MySQL."
+            )
+
+        # AI validation
         if (
             settings.enable_ai_features
             and not settings.gemini_api_key
@@ -285,6 +302,7 @@ def validate_required_settings():
                 "must be configured when AI features are enabled"
             )
 
+        # Email validation
         if settings.enable_email_notifications:
             missing_email_config = []
             if not settings.smtp_server:
@@ -298,6 +316,10 @@ def validate_required_settings():
 
             if missing_email_config:
                 errors.append(f"Email configuration missing: {', '.join(missing_email_config)}")
+
+        # CORS validation
+        if "*" in settings.allowed_origins:
+            errors.append("Wildcard (*) in ALLOWED_ORIGINS is not secure for production")
 
     if errors:
         raise ValueError(f"Configuration validation errors: {'; '.join(errors)}")
@@ -493,3 +515,89 @@ def create_directories():
 
     # Create upload directory
     os.makedirs(settings.upload_path, exist_ok=True)
+
+    # Create logs directory if log file is configured
+    if settings.log_file:
+        log_dir = Path(settings.log_file).parent
+        os.makedirs(log_dir, exist_ok=True)
+
+
+def check_production_readiness() -> dict:
+    """Check if the system is ready for production deployment"""
+    checks = {
+        "database": {
+            "status": "pass",
+            "message": "Database configuration is valid",
+            "recommendations": [],
+        },
+        "security": {
+            "status": "pass",
+            "message": "Security configuration is valid",
+            "recommendations": [],
+        },
+        "ai": {"status": "pass", "message": "AI configuration is valid", "recommendations": []},
+        "email": {
+            "status": "pass",
+            "message": "Email configuration is valid",
+            "recommendations": [],
+        },
+        "logging": {
+            "status": "pass",
+            "message": "Logging configuration is valid",
+            "recommendations": [],
+        },
+    }
+
+    # Database checks
+    if settings.database_url.startswith("sqlite:///"):
+        checks["database"]["status"] = "warning"
+        checks["database"]["message"] = "Using SQLite database"
+        checks["database"]["recommendations"].append("Consider using PostgreSQL for production")
+
+    # Security checks
+    if settings.secret_key in [
+        "your-secret-key-change-in-production",
+        "your_very_secure_secret_key_here_min_32_chars_development_only",
+    ]:
+        checks["security"]["status"] = "fail"
+        checks["security"]["message"] = "Default secret key detected"
+        checks["security"]["recommendations"].append("Change SECRET_KEY to a secure value")
+
+    if len(settings.secret_key) < 32:
+        checks["security"]["status"] = "warning"
+        checks["security"]["message"] = "Secret key is shorter than recommended"
+        checks["security"]["recommendations"].append("Use at least 32 characters for SECRET_KEY")
+
+    if "*" in settings.allowed_origins:
+        checks["security"]["status"] = "warning"
+        checks["security"]["message"] = "Wildcard CORS detected"
+        checks["security"]["recommendations"].append("Restrict ALLOWED_ORIGINS for production")
+
+    # AI checks
+    if settings.enable_ai_features:
+        if not settings.gemini_api_key and not settings.openai_api_key:
+            checks["ai"]["status"] = "fail"
+            checks["ai"]["message"] = "No AI API keys configured"
+            checks["ai"]["recommendations"].append("Configure at least one AI API key")
+
+    # Email checks
+    if settings.enable_email_notifications:
+        if not all(
+            [
+                settings.smtp_server,
+                settings.smtp_username,
+                settings.smtp_password,
+                settings.from_email,
+            ]
+        ):
+            checks["email"]["status"] = "fail"
+            checks["email"]["message"] = "Incomplete email configuration"
+            checks["email"]["recommendations"].append("Complete SMTP configuration")
+
+    # Logging checks
+    if not settings.log_file:
+        checks["logging"]["status"] = "warning"
+        checks["logging"]["message"] = "No log file configured"
+        checks["logging"]["recommendations"].append("Configure LOG_FILE for production")
+
+    return checks

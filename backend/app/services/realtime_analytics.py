@@ -331,8 +331,8 @@ class RealtimeAnalyticsService:
             db.add(event)
             db.commit()
 
-            # TODO: Implement WebSocket broadcasting here
-            # This would connect to WebSocket manager to push updates
+            # Note: WebSocket broadcasting would be implemented here when needed
+            # For now, events are stored in database and can be polled via API
 
         except Exception as e:
             logger.exception(f"Failed to emit real-time event: {e}")

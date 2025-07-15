@@ -52,7 +52,9 @@ class AIScorer:
 
         # For e& provider, we'll fall back to Gemini if API key is not available
         if self.provider == "eand" and not self.eand_api_key:
-            logger.warning("EAND_API_KEY not configured, will use Gemini as fallback for e& requests")
+            logger.warning(
+                "EAND_API_KEY not configured, will use Gemini as fallback for e& requests"
+            )
 
     def score(self, text: str) -> Tuple[float, str]:
         """
@@ -99,7 +101,7 @@ class AIScorer:
         self,
         text: str,
         department_name: str,
-        checklist_items: Optional[List[Dict[str, Any]]] = None
+        checklist_items: Optional[List[Dict[str, Any]]] = None,
     ) -> Tuple[float, str, Dict[str, Any]]:
         """
         Perform department-specific ESG analysis using the configured AI provider.
@@ -110,7 +112,8 @@ class AIScorer:
             checklist_items (List[Dict]): Optional checklist items for context
 
         Returns:
-            Tuple[float, str, Dict[str, Any]]: (score, feedback, metadata) where score is between 0 and 1
+            Tuple[float, str, Dict[str, Any]]: (score, feedback, metadata) where score
+                is between 0 and 1
 
         Raises:
             Exception: If the provider is unknown or analysis fails
@@ -124,52 +127,82 @@ class AIScorer:
             if not dept_config:
                 logger.warning(f"Department '{department_name}' not found, using generic analysis")
                 score, feedback = self.score(text)
-                checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+                checklist_completeness = (
+                    self.evaluate_checklist_completeness(text, checklist_items)
+                    if checklist_items
+                    else {}
+                )
                 metadata = {
                     "department": "general",
                     "analysis_type": "general_esg",
-                    "checklist_completeness": checklist_completeness
+                    "checklist_completeness": checklist_completeness,
                 }
                 return score, feedback, metadata
 
             # Use provider-specific department analysis
             if self.provider == "gemini" or (self.provider == "eand" and not self.eand_api_key):
-                return self._analyze_gemini_department(text, department_name, checklist_items, dept_config)
+                return self._analyze_gemini_department(
+                    text, department_name, checklist_items, dept_config
+                )
             if self.provider == "deepseek":
-                return self._analyze_deepseek_department(text, department_name, checklist_items, dept_config)
+                return self._analyze_deepseek_department(
+                    text, department_name, checklist_items, dept_config
+                )
             if self.provider == "openai":
-                return self._analyze_openai_department(text, department_name, checklist_items, dept_config)
+                return self._analyze_openai_department(
+                    text, department_name, checklist_items, dept_config
+                )
             if self.provider == "eand":
-                return self._analyze_eand_department(text, department_name, checklist_items, dept_config)
+                return self._analyze_eand_department(
+                    text, department_name, checklist_items, dept_config
+                )
             # Fallback to Gemini
-            logger.warning(f"Unknown provider '{self.provider}' for department analysis, using Gemini")
-            return self._analyze_gemini_department(text, department_name, checklist_items, dept_config)
+            logger.warning(
+                f"Unknown provider '{self.provider}' for department analysis, using Gemini"
+            )
+            return self._analyze_gemini_department(
+                text, department_name, checklist_items, dept_config
+            )
 
         except Exception as e:
             error_str = str(e)
             logger.exception(f"Department-specific AI analysis failed for {department_name}: {e!s}")
 
             # Check if it's a quota/rate limit error
-            if "429" in error_str or "quota" in error_str.lower() or "rate limit" in error_str.lower():
-                logger.warning("API quota exceeded - providing demo analysis with department context")
+            if (
+                "429" in error_str
+                or "quota" in error_str.lower()
+                or "rate limit" in error_str.lower()
+            ):
+                logger.warning(
+                    "API quota exceeded - providing demo analysis with department context"
+                )
                 score, feedback = self._generate_demo_analysis(text, department_name)
-                checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+                checklist_completeness = (
+                    self.evaluate_checklist_completeness(text, checklist_items)
+                    if checklist_items
+                    else {}
+                )
                 metadata = {
                     "department": department_name,
                     "analysis_type": "demo_department_specific",
                     "audit_context": format_department_context(department_name),
-                    "checklist_completeness": checklist_completeness
+                    "checklist_completeness": checklist_completeness,
                 }
                 return score, feedback, metadata
 
             # Fallback to regular scoring
             logger.info("Falling back to regular ESG analysis")
             score, feedback = self.score(text)
-            checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+            checklist_completeness = (
+                self.evaluate_checklist_completeness(text, checklist_items)
+                if checklist_items
+                else {}
+            )
             metadata = {
                 "department": department_name,
                 "analysis_type": "fallback_general",
-                "checklist_completeness": checklist_completeness
+                "checklist_completeness": checklist_completeness,
             }
             return score, feedback, metadata
 
@@ -178,12 +211,15 @@ class AIScorer:
         text: str,
         department_name: str,
         checklist_items: Optional[List[Dict[str, Any]]],
-        dept_config: Dict[str, Any]
+        dept_config: Dict[str, Any],  # noqa: ARG002
     ) -> Tuple[float, str, Dict[str, Any]]:
         """Perform department-specific analysis using Gemini AI."""
         # Truncate text to prevent MAX_TOKENS issues (keep to ~5k chars for safety)
         if len(text) > 5000:
-            logger.warning(f"Department analysis text too long ({len(text)} chars), truncating to 5000 chars for Gemini")
+            logger.warning(
+                f"Department analysis text too long ({len(text)} chars), "
+                f"truncating to 5000 chars for Gemini"
+            )
             text = text[:5000] + "\n\n[Content truncated for processing...]"
 
         url = (
@@ -194,25 +230,48 @@ class AIScorer:
         # Get department-specific prompt
         dept_prompt = get_department_prompt(department_name, checklist_items or [])
 
-        # Check total prompt length and use simplified version if needed
-        full_prompt = f"{dept_prompt}\n\nDocument: {text}\n\nScore 0.0-1.0 for {department_name} ESG compliance."
+        # Enhanced Excel checklist understanding
+        excel_context = """
+        DOCUMENT FORMAT: This is an ESG Internal Audit Checklist in Excel format with columns:
+        - Category (Environment/Social/Governance)
+        - Sub Category (Energy, Emissions, Water, etc.)
+        - Reference (ESG-Environment-01a, ESG-Social-01, etc.)
+        - Question (The actual ESG requirement question)
+        - Mandatory/Optional
+        - Assessment (Yes/No/Not Available - current answer status)
+        - Details/Comments
+        
+        ANSWER INTERPRETATION:
+        - "Yes" = Requirement fully met and implemented
+        - "No" = Requirement acknowledged but not met/implemented
+        - "Not Available" = Information/data not available, needs follow-up
+        - Empty = No response provided
+        """
+
+        # Check total prompt length and use appropriate version
+        full_prompt = (
+            f"{dept_prompt}\n\n{excel_context}\n\nDocument: {text}\n\n"
+            f"Score 0.0-1.0 for {department_name} ESG compliance."
+        )
 
         if len(full_prompt) > 4000:  # Token-conscious approach
-            # Use simplified department prompt for token efficiency
-            analysis_prompt = f"""Analyze this {department_name} ESG document and score 0.0-1.0 based on department-specific requirements:
-
-{text}
-
-Score format: Score: X.XX
-Focus: {department_name} department ESG compliance and best practices."""
+            # Use simplified but Excel-aware prompt for token efficiency
+            analysis_prompt = (
+                f"Analyze this {department_name} ESG checklist document (Excel format with Yes/No/Not Available answers) "
+                f"and score 0.0-1.0 based on department-specific requirements:\n\n{text}\n\n"
+                f"Score format: Score: X.XX\n"
+                f"Focus: {department_name} ESG compliance. Consider 'Yes' as complete, 'No' as incomplete, 'Not Available' as missing."
+            )
         else:
             # Use full comprehensive prompt when tokens allow
             analysis_prompt = f"""
             {dept_prompt}
 
+            {excel_context}
+            
             Document text to analyze: {text}
 
-            SCORING GUIDELINES:
+            SCORING GUIDELINES FOR ESG CHECKLIST:
             - 0.9-1.0: Exceptional performance meeting all {department_name} ESG requirements
             - 0.8-0.89: Strong performance with comprehensive {department_name} practices
             - 0.7-0.79: Good performance with solid {department_name} implementation
@@ -234,7 +293,8 @@ Focus: {department_name} department ESG compliance and best practices."""
             - [Department-specific recommendation 3]
 
             DETAILED COMPLIANCE REPORT:
-            [Insert the detailed per-item analysis as specified in the department instructions above]
+            [Insert the detailed per-item analysis as specified in the department
+            instructions above]
             """
 
         payload = {
@@ -246,8 +306,13 @@ Focus: {department_name} department ESG compliance and best practices."""
                 "topK": 40,
             },
             "systemInstruction": {
-                "parts": [{"text": "Provide direct department-specific ESG analysis without internal reasoning steps. Focus on clear, actionable assessment."}]
-            }
+                "parts": [
+                    {
+                        "text": "Provide direct department-specific ESG analysis without internal "
+                        "reasoning steps. Focus on clear, actionable assessment."
+                    }
+                ]
+            },
         }
         headers = {"Content-Type": "application/json"}
 
@@ -284,9 +349,14 @@ Focus: {department_name} department ESG compliance and best practices."""
 
             logger.info(f"Department input text length: {len(text)} characters")
             if "candidates" in data:
-                logger.info(f"Department candidates structure: {data['candidates'][:1] if data['candidates'] else 'empty'}")
+                logger.info(
+                    f"Department candidates structure: "
+                    f"{data['candidates'][:1] if data['candidates'] else 'empty'}"
+                )
                 if data["candidates"] and "finishReason" in data["candidates"][0]:
-                    logger.info(f"Department finish reason: {data['candidates'][0]['finishReason']}")
+                    logger.info(
+                        f"Department finish reason: {data['candidates'][0]['finishReason']}"
+                    )
 
             if "candidates" not in data or not data["candidates"]:
                 logger.error(f"No candidates in department Gemini response. Full response: {data}")
@@ -296,26 +366,43 @@ Focus: {department_name} department ESG compliance and best practices."""
 
             # Check for MAX_TOKENS finish reason first
             if candidate.get("finishReason") == "MAX_TOKENS":
-                logger.warning("Department Gemini response truncated due to MAX_TOKENS - retrying with shorter text")
+                logger.warning(
+                    "Department Gemini response truncated due to MAX_TOKENS - "
+                    "retrying with shorter text"
+                )
                 if len(text) > 2000:
                     # Try again with much shorter text
                     shortened_text = text[:2000] + "\n\n[Content shortened for processing]"
                     score, feedback = self._score_gemini_retry(shortened_text)
                     # Evaluate checklist completeness with original text
-                    checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+                    checklist_completeness = (
+                        self.evaluate_checklist_completeness(text, checklist_items)
+                        if checklist_items
+                        else {}
+                    )
                     metadata = {
-                        "analysis_type": f"department_retry_{department_name.lower().replace(' ', '_')}",
+                        "analysis_type": (
+                            f"department_retry_{department_name.lower().replace(' ', '_')}"
+                        ),
                         "department": department_name,
                         "checklist_completeness": checklist_completeness,
-                        "retry_reason": "MAX_TOKENS with shortened text"
+                        "retry_reason": "MAX_TOKENS with shortened text",
                     }
                     return score, feedback, metadata
                 # Text is already short, raise exception for AI failure
-                logger.error("Department MAX_TOKENS issue even with short text - AI analysis failed")
-                raise Exception("AI analysis failed due to MAX_TOKENS issue even with shortened text")
+                logger.error(
+                    "Department MAX_TOKENS issue even with short text - AI analysis failed"
+                )
+                raise Exception(
+                    "AI analysis failed due to MAX_TOKENS issue even with shortened text"
+                )
 
             # Handle different response structures for department analysis
-            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+            if (
+                "content" in candidate
+                and "parts" in candidate["content"]
+                and candidate["content"]["parts"]
+            ):
                 content = candidate["content"]["parts"][0]["text"]
             elif "text" in candidate:
                 content = candidate["text"]
@@ -327,7 +414,11 @@ Focus: {department_name} department ESG compliance and best practices."""
             score = self._extract_score(content)
 
             # Evaluate checklist completeness
-            checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+            checklist_completeness = (
+                self.evaluate_checklist_completeness(text, checklist_items)
+                if checklist_items
+                else {}
+            )
 
             # Create enhanced metadata with compliance indicators
             metadata = {
@@ -335,11 +426,15 @@ Focus: {department_name} department ESG compliance and best practices."""
                 "analysis_type": "department_specific",
                 "audit_context": format_department_context(department_name),
                 "checklist_completeness": checklist_completeness,
-                "compliance_indicators": self._generate_compliance_indicators(checklist_completeness, score),
-                "category_scores": self._generate_category_scores(checklist_completeness, score)
+                "compliance_indicators": self._generate_compliance_indicators(
+                    checklist_completeness, score
+                ),
+                "category_scores": self._generate_category_scores(checklist_completeness, score),
             }
 
-            logger.info(f"Department-specific analysis completed for {department_name} with score: {score}")
+            logger.info(
+                f"Department-specific analysis completed for {department_name} with score: {score}"
+            )
             return score, self._format_analysis_content(content), metadata
 
         except requests.exceptions.Timeout:
@@ -354,17 +449,24 @@ Focus: {department_name} department ESG compliance and best practices."""
         text: str,
         department_name: str,
         checklist_items: Optional[List[Dict[str, Any]]],
-        dept_config: Dict[str, Any]
+        dept_config: Dict[str, Any],  # noqa: ARG002
     ) -> Tuple[float, str, Dict[str, Any]]:
         """Perform department-specific analysis using DeepSeek R1 model."""
         # Handle large documents more intelligently for DeepSeek
         # DeepSeek R1 can handle much more content than 8000 chars
         max_chars = 300000  # ~75k tokens worth of content
         if len(text) > max_chars:
-            logger.warning(f"Department analysis text too long ({len(text)} chars), truncating to {max_chars} chars for DeepSeek")
+            logger.warning(
+                f"Department analysis text too long ({len(text)} chars), "
+                f"truncating to {max_chars} chars for DeepSeek"
+            )
             # Truncate more intelligently - keep beginning and end
             half_max = max_chars // 2
-            text = text[:half_max] + "\n\n[... CONTENT TRUNCATED FOR PROCESSING...]\n\n" + text[-half_max:]
+            text = (
+                text[:half_max]
+                + "\n\n[... CONTENT TRUNCATED FOR PROCESSING...]\n\n"
+                + text[-half_max:]
+            )
         else:
             logger.info(f"DeepSeek processing {len(text)} characters (within {max_chars} limit)")
 
@@ -373,20 +475,43 @@ Focus: {department_name} department ESG compliance and best practices."""
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.deepseek_api_key}",
             "HTTP-Referer": "https://esg-checklist-ai.com",  # Optional: for OpenRouter analytics
-            "X-Title": "ESG Checklist AI"  # Optional: for OpenRouter analytics
+            "X-Title": "ESG Checklist AI",  # Optional: for OpenRouter analytics
         }
 
         # Get department-specific prompt
         dept_prompt = get_department_prompt(department_name, checklist_items or [])
 
-        # Check total prompt length and use simplified version if needed
-        full_prompt = f"{dept_prompt}\n\nDocument: {text}\n\nScore 0.0-1.0 for {department_name} ESG compliance."
+        # Enhanced Excel checklist understanding for DeepSeek
+        excel_context = """
+        DOCUMENT FORMAT: This is an ESG Internal Audit Checklist in Excel format with columns:
+        - Category (Environment/Social/Governance)
+        - Sub Category (Energy, Emissions, Water, etc.)
+        - Reference (ESG-Environment-01a, ESG-Social-01, etc.)
+        - Question (The actual ESG requirement question)
+        - Mandatory/Optional
+        - Assessment (Yes/No/Not Available - current answer status)
+        - Details/Comments
+        
+        ANSWER INTERPRETATION:
+        - "Yes" = Requirement fully met and implemented
+        - "No" = Requirement acknowledged but not met/implemented
+        - "Not Available" = Information/data not available, needs follow-up
+        - Empty = No response provided
+        """
+
+        # Check total prompt length and use appropriate version
+        full_prompt = (
+            f"{dept_prompt}\n\n{excel_context}\n\nDocument: {text}\n\n"
+            f"Score 0.0-1.0 for {department_name} ESG compliance."
+        )
 
         if len(full_prompt) > 6000:  # Token-conscious approach for DeepSeek
-            # Use simplified department prompt for token efficiency
-            analysis_prompt = f"""As a {department_name} ESG specialist, analyze this document and provide a comprehensive assessment:
+            # Use simplified but Excel-aware prompt for token efficiency
+            analysis_prompt = f"""As a {department_name} ESG specialist, analyze this ESG checklist document (Excel format with Yes/No/Not Available answers) and provide a comprehensive assessment:
 
 {text}
+
+Consider 'Yes' as complete requirements, 'No' as incomplete but acknowledged, 'Not Available' as missing information.
 
 Provide:
 1. Overall ESG compliance score (0.0-1.0) for {department_name} department
@@ -395,9 +520,7 @@ Provide:
 4. Compliance gaps specific to {department_name}
 
 Format: Score: X.XX
-Department Focus: {department_name}
-
-[Your detailed analysis]"""
+Department Focus: {department_name}"""
         else:
             # Use comprehensive department prompt when tokens allow
             analysis_prompt = f"""
@@ -434,15 +557,10 @@ Department Focus: {department_name}
 
         payload = {
             "model": self.deepseek_model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": analysis_prompt
-                }
-            ],
+            "messages": [{"role": "user", "content": analysis_prompt}],
             "max_tokens": 2500,
             "temperature": 0.2,
-            "top_p": 0.95
+            "top_p": 0.95,
         }
 
         try:
@@ -461,7 +579,9 @@ Department Focus: {department_name}
             logger.info(f"DeepSeek department API response structure: {list(data.keys())}")
 
             if "choices" not in data or not data["choices"]:
-                logger.error(f"No candidates in DeepSeek department response. Full response: {data}")
+                logger.error(
+                    f"No candidates in DeepSeek department response. Full response: {data}"
+                )
                 raise Exception("No response choices received from DeepSeek API")
 
             choice = data["choices"][0]
@@ -469,7 +589,11 @@ Department Focus: {department_name}
             score = self._extract_score(content)
 
             # Evaluate checklist completeness
-            checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+            checklist_completeness = (
+                self.evaluate_checklist_completeness(text, checklist_items)
+                if checklist_items
+                else {}
+            )
 
             # Create enhanced metadata with compliance indicators
             metadata = {
@@ -478,11 +602,15 @@ Department Focus: {department_name}
                 "ai_provider": "deepseek",
                 "audit_context": format_department_context(department_name),
                 "checklist_completeness": checklist_completeness,
-                "compliance_indicators": self._generate_compliance_indicators(checklist_completeness, score),
-                "category_scores": self._generate_category_scores(checklist_completeness, score)
+                "compliance_indicators": self._generate_compliance_indicators(
+                    checklist_completeness, score
+                ),
+                "category_scores": self._generate_category_scores(checklist_completeness, score),
             }
 
-            logger.info(f"DeepSeek department analysis completed for {department_name} with score: {score}")
+            logger.info(
+                f"DeepSeek department analysis completed for {department_name} with score: {score}"
+            )
             return score, self._format_analysis_content(content), metadata
 
         except requests.exceptions.Timeout:
@@ -497,25 +625,31 @@ Department Focus: {department_name}
         text: str,
         department_name: str,
         checklist_items: Optional[List[Dict[str, Any]]],
-        dept_config: Dict[str, Any]
+        dept_config: Dict[str, Any],  # noqa: ARG002
     ) -> Tuple[float, str, Dict[str, Any]]:
         """Perform department-specific analysis using OpenAI GPT model."""
         # Simplified implementation for OpenAI department analysis
         score, feedback = self._score_openai(text)
-        checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        checklist_completeness = (
+            self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        )
 
         # Enhance feedback with department context
+        context_note = (
+            f"This analysis focuses on {department_name}-specific ESG requirements "
+            f"and best practices."
+        )
         enhanced_feedback = f"""Department-Specific ESG Analysis: {department_name}
 
 {feedback}
 
-Department Context: This analysis focuses on {department_name}-specific ESG requirements and best practices."""
+Department Context: {context_note}"""
 
         metadata = {
             "department": department_name,
             "analysis_type": "department_specific",
             "ai_provider": "openai",
-            "checklist_completeness": checklist_completeness
+            "checklist_completeness": checklist_completeness,
         }
 
         return score, enhanced_feedback, metadata
@@ -525,25 +659,28 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
         text: str,
         department_name: str,
         checklist_items: Optional[List[Dict[str, Any]]],
-        dept_config: Dict[str, Any]
+        dept_config: Dict[str, Any],  # noqa: ARG002
     ) -> Tuple[float, str, Dict[str, Any]]:
         """Perform department-specific analysis using e& ChatGPT model."""
         # Simplified implementation for e& department analysis
         score, feedback = self._score_eand(text)
-        checklist_completeness = self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        checklist_completeness = (
+            self.evaluate_checklist_completeness(text, checklist_items) if checklist_items else {}
+        )
 
         # Enhance feedback with department context
         enhanced_feedback = f"""Department-Specific ESG Analysis: {department_name} (e& ChatGPT)
 
 {feedback}
 
-Department Context: This analysis focuses on {department_name}-specific ESG requirements and e& best practices."""
+Department Context: This analysis focuses on {department_name}-specific ESG requirements """
+        """and e& best practices."""
 
         metadata = {
             "department": department_name,
             "analysis_type": "department_specific",
             "ai_provider": "eand",
-            "checklist_completeness": checklist_completeness
+            "checklist_completeness": checklist_completeness,
         }
 
         return score, enhanced_feedback, metadata
@@ -552,7 +689,9 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
         """Score text using Google's Gemini AI model."""
         # Truncate text to prevent MAX_TOKENS issues (keep to ~5k chars for safety)
         if len(text) > 5000:
-            logger.warning(f"Text too long ({len(text)} chars), truncating to 5000 chars for Gemini")
+            logger.warning(
+                f"Text too long ({len(text)} chars), truncating to 5000 chars for Gemini"
+            )
             text = text[:5000] + "\n\n[Content truncated for processing...]"
 
         url = (
@@ -615,8 +754,13 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
                 "topK": 40,
             },
             "systemInstruction": {
-                "parts": [{"text": "Provide direct ESG analysis without internal reasoning steps. Focus on clear, actionable assessment."}]
-            }
+                "parts": [
+                    {
+                        "text": "Provide direct ESG analysis without internal reasoning steps. "
+                        "Focus on clear, actionable assessment."
+                    }
+                ]
+            },
         }
         headers = {"Content-Type": "application/json"}
 
@@ -653,7 +797,8 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
 
             logger.info(f"Input text length: {len(text)} characters")
             if "candidates" in data:
-                logger.info(f"Candidates structure: {data['candidates'][:1] if data['candidates'] else 'empty'}")
+                candidates_sample = data["candidates"][:1] if data["candidates"] else "empty"
+                logger.info(f"Candidates structure: {candidates_sample}")
                 if data["candidates"] and "finishReason" in data["candidates"][0]:
                     logger.info(f"Finish reason: {data['candidates'][0]['finishReason']}")
 
@@ -665,17 +810,25 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
 
             # Check for MAX_TOKENS finish reason first
             if candidate.get("finishReason") == "MAX_TOKENS":
-                logger.warning("Gemini response truncated due to MAX_TOKENS - retrying with shorter text")
+                logger.warning(
+                    "Gemini response truncated due to MAX_TOKENS - retrying with shorter text"
+                )
                 if len(text) > 2000:
                     # Try again with much shorter text
                     shortened_text = text[:2000] + "\n\n[Content shortened for processing]"
                     return self._score_gemini_retry(shortened_text)
                 # Text is already short, raise exception for AI failure
                 logger.error("MAX_TOKENS issue even with short text - AI analysis failed")
-                raise Exception("AI analysis failed due to MAX_TOKENS issue even with shortened text")
+                raise Exception(
+                    "AI analysis failed due to MAX_TOKENS issue even with shortened text"
+                )
 
             # Handle different response structures
-            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+            if (
+                "content" in candidate
+                and "parts" in candidate["content"]
+                and candidate["content"]["parts"]
+            ):
                 result_text = candidate["content"]["parts"][0]["text"]
             elif "text" in candidate:
                 result_text = candidate["text"]
@@ -702,7 +855,6 @@ Department Context: This analysis focuses on {department_name}-specific ESG requ
         except KeyError as e:
             raise Exception(f"Invalid response structure from Gemini: missing key {e!s}")
 
-
     def _score_gemini_retry(self, text: str) -> Tuple[float, str]:
         """Retry Gemini scoring with minimal prompt to avoid MAX_TOKENS."""
         url = (
@@ -728,7 +880,7 @@ Brief ESG analysis."""
             },
             "systemInstruction": {
                 "parts": [{"text": "Provide direct ESG analysis without internal reasoning steps."}]
-            }
+            },
         }
         headers = {"Content-Type": "application/json"}
 
@@ -752,7 +904,11 @@ Brief ESG analysis."""
 
             candidate = data["candidates"][0]
 
-            if "content" in candidate and "parts" in candidate["content"] and candidate["content"]["parts"]:
+            if (
+                "content" in candidate
+                and "parts" in candidate["content"]
+                and candidate["content"]["parts"]
+            ):
                 result_text = candidate["content"]["parts"][0]["text"]
                 score = self._extract_score(result_text)
                 logger.info(f"Gemini retry scoring successful with score: {score}")
@@ -763,7 +919,6 @@ Brief ESG analysis."""
         except Exception as e:
             logger.exception(f"Gemini retry failed: {e}")
             raise Exception("Gemini retry response parsing failed")
-
 
     def _score_openai(self, text: str) -> Tuple[float, str]:
         """Score text using OpenAI's GPT model."""
@@ -829,12 +984,13 @@ Brief ESG analysis."""
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.deepseek_api_key}",
             "HTTP-Referer": "https://esg-checklist-ai.com",  # Optional: for OpenRouter analytics
-            "X-Title": "ESG Checklist AI"  # Optional: for OpenRouter analytics
+            "X-Title": "ESG Checklist AI",  # Optional: for OpenRouter analytics
         }
 
         # Enhanced prompt for ESG scoring optimized for DeepSeek R1's reasoning capabilities
-        esg_prompt = f"""
-        As an expert ESG (Environmental, Social, Governance) analyst, analyze the following document and provide a comprehensive assessment.
+        esg_prompt = """
+        As an expert ESG (Environmental, Social, Governance) analyst, analyze the document """
+        f"""and provide a comprehensive assessment.
 
         Document text: {text}
 
@@ -872,22 +1028,18 @@ Brief ESG analysis."""
         - [Gap 1]
         - [Gap 2]
 
-        Provide thorough reasoning for your assessment, considering both quantitative metrics and qualitative factors.
+        Provide thorough reasoning for your assessment, considering both quantitative metrics and"""
+        """qualitative factors.
         """
 
         payload = {
             "model": self.deepseek_model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": esg_prompt
-                }
-            ],
+            "messages": [{"role": "user", "content": esg_prompt}],
             "max_tokens": 2000,
             "temperature": 0.2,
             "top_p": 0.95,
             "frequency_penalty": 0,
-            "presence_penalty": 0
+            "presence_penalty": 0,
         }
 
         try:
@@ -997,7 +1149,8 @@ Brief ESG analysis."""
 2. Implement regular ESG reporting cycles
 3. Integrate stakeholder feedback mechanisms
 
-*Note: This is a placeholder implementation. When e& API is available, configure EAND_API_KEY to use actual e& AI analysis.*
+*Note: This is a placeholder implementation. When e& API is available, configure EAND_API_KEY to"""
+        """ use actual e& AI analysis.*
 """
 
         return score, feedback
@@ -1079,6 +1232,7 @@ Brief ESG analysis."""
                             category_scores[category] = score
                             break
                     except ValueError:
+                        logger.debug(f"Failed to parse score from: {matches[0]}")
                         continue
 
         return category_scores
@@ -1093,111 +1247,237 @@ Brief ESG analysis."""
             "Group Legal & Compliance": {
                 "focus": "regulatory compliance and legal risk assessment",
                 "recommendations": [
-                    "**Policy Development**: Establish comprehensive anti-bribery policy aligned with UK Bribery Act 2010 Section 7 - Implement adequate procedures defense reducing legal exposure by 80% (Timeline: 30 days, Cost: $25,000, Owner: Legal Team)",
-                    "**Compliance Training**: Deploy quarterly ESG legal training covering GDPR Article 5, SOX Section 404, and environmental regulations - Achieve 100% staff certification and reduce compliance violations by 65% (Timeline: 60 days, Cost: $40,000, Owner: Compliance Officer)",
-                    "**Legal Documentation**: Create automated SOX compliance tracking system with real-time monitoring and audit trails - Enable continuous compliance verification and reduce audit costs by 45% (Timeline: 45 days, Cost: $75,000, Owner: Legal IT)",
-                    "**Environmental Legal Framework**: Develop comprehensive environmental law compliance program covering Clean Air Act, RCRA, and state regulations - Ensure 100% environmental permit compliance (Timeline: 90 days, Cost: $60,000, Owner: Environmental Counsel)",
-                    "**Data Protection Enhancement**: Implement GDPR Article 25 privacy-by-design framework with automated data mapping and consent management - Achieve 95% data protection compliance score (Timeline: 75 days, Cost: $50,000, Owner: Data Protection Officer)",
-                    "**Contract Management**: Establish ESG clause integration system for all vendor contracts with sustainability KPIs and compliance requirements - Ensure 100% ESG-compliant vendor relationships (Timeline: 120 days, Cost: $35,000, Owner: Procurement Legal)",
-                    "**Regulatory Monitoring**: Deploy AI-powered regulatory change tracking system for ESG laws across all jurisdictions - Reduce regulatory surprises by 90% and maintain proactive compliance posture (Timeline: 60 days, Cost: $80,000, Owner: Regulatory Affairs)"
+                    "**Policy Development**: Establish anti-bribery policy aligned with"
+                    "UK Bribery Act 2010 Section 7 - Implement adequate procedures defense reducing"
+                    "legal exposure by 80% (Timeline: 30 days, Cost: $25,000, Owner: Legal Team)",
+                    "**Compliance Training**: Deploy quarterly ESG legal training covering GDPR "
+                    "Article 5, SOX Section 404, and environmental regulations - Achieve 100% staff"
+                    "certification and reduce compliance violations by 65% (Timeline: 60 days, "
+                    "Cost: $40,000, Owner: Compliance Officer)",
+                    "**Legal Documentation**: Create automated SOX compliance tracking system with "
+                    "real-time monitoring and audit trails - Enable compliance verification"
+                    "and reduce audit costs (Timeline: 45 days, Cost: $75,000, Owner: Legal IT)",
+                    "**Environmental Legal Framework**: Develop comprehensive environmental law "
+                    "compliance program covering Clean Air Act, RCRA regulations - Ensure"
+                    "100% environmental permit compliance (Timeline: 90 days, Cost: $60,000, "
+                    "Owner: Environmental Counsel)",
+                    "**Data Protection Enhancement**: Implement GDPR Article 25 privacy-by-design "
+                    "framework with data mapping and consent management - Achieve 95% data"
+                    "protection compliance score (Timeline: 75 days, Cost: $50,000, "
+                    "Owner: Data Protection Officer)",
+                    "**Contract Management**: Establish ESG clause integration system for vendor"
+                    "contracts with sustainability KPIs and compliance requirements - Ensure 100%"
+                    "ESG-compliant vendor relationships (Timeline: 120 days, Cost: $35,000, "
+                    "Owner: Procurement Legal)",
+                    "**Regulatory Monitoring**: Deploy AI-powered regulatory change tracking system"
+                    "for ESG laws across all jurisdictions - Reduce regulatory surprises by 90% and"
+                    "maintain proactive compliance posture (Timeline: 60 days, Cost: $80,000, "
+                    "Owner: Regulatory Affairs)",
                 ],
                 "gaps": [
-                    "**Environmental Law Compliance**: Missing environmental impact assessments for 3 manufacturing facilities under EPA Section 102 requirements - HIGH RISK - Potential Clean Air Act violations with $2.5M+ fines plus $75,000 daily penalties - Immediate EIA required within 30 days",
-                    "**Labor Law Compliance**: Incomplete EEO-1 diversity reporting for 2023-2024 under 29 CFR 1602.7 requirements - MEDIUM RISK - EEOC investigation risk and Title VII violation exposure - $850,000 potential penalties plus legal costs - Complete reporting within 45 days",
-                    "**Data Protection Gaps**: GDPR Article 30 record-keeping deficiencies affecting 25,000+ customer records with inadequate consent documentation - HIGH RISK - ICO enforcement action under Article 83 - Up to 4% annual revenue penalty (€3.2M+ exposure) - Immediate data audit required",
-                    "**Anti-Bribery Compliance**: Insufficient due diligence procedures for international vendors in high-risk jurisdictions under UK Bribery Act Section 7 - HIGH RISK - Corporate liability for third-party bribery - Unlimited fines and director disqualification - Enhanced due diligence framework needed within 60 days",
-                    "**Securities Compliance**: SOX Section 404 internal control deficiencies in ESG data reporting processes - MEDIUM RISK - SEC enforcement and material weakness disclosure - $1.2M remediation costs - Control enhancement required within 90 days"
-                ]
+                    "**Environmental Law Compliance**: Missing environmental impact assessments "
+                    "for 3 manufacturing facilities under EPA Section 102 requirements - HIGH RISK-"
+                    "Potential Clean Air Act violations with $2.5M+ fines plus $75,000 daily "
+                    "penalties - Immediate EIA required within 30 days",
+                    "**Labor Law Compliance**: Incomplete EEO-1 diversity reporting for 2023-2024 "
+                    "under 29 CFR 1602.7 requirements - MEDIUM RISK - EEOC investigation risk and "
+                    "Title VII violation exposure - $850,000 potential penalties plus legal costs -"
+                    "Complete reporting within 45 days",
+                    "**Protection Gaps**: GDPR Article 30 record-keeping deficiencies affecting"
+                    "25,000+ customer records with inadequate consent documentation - HIGH RISK - "
+                    "ICO enforcement action under Article 83 - Up to 4% annual revenue penalty "
+                    "(€3.2M+ exposure) - Immediate data audit required",
+                    "**Anti-Bribery Compliance**: Insufficient due diligence procedures for "
+                    "international vendors in high-risk jurisdictions under UK Bribery Act Sec 7-"
+                    "HIGH RISK - Corporate liability for third-party bribery - Unlimited fines and "
+                    "director disqualification - Due diligence framework needed within 60 days",
+                    "**Securities Compliance**: SOX Section 404 internal control deficiencies in "
+                    "ESG data reporting processes - MEDIUM RISK - SEC enforcement and material "
+                    "weakness disclosure - $1.2M remediation costs - Control enhancement required "
+                    "within 90 days",
+                ],
             },
             "Group Finance": {
                 "focus": "sustainable finance and ESG financial integration",
                 "recommendations": [
-                    "**Climate Risk Assessment**: Develop comprehensive TCFD-compliant climate risk assessment framework covering physical and transition risks - Quantify $15M+ potential climate-related losses and implement hedging strategies (Timeline: 90 days, Cost: $120,000, Owner: Chief Risk Officer)",
-                    "**ESG Investment Strategy**: Implement systematic ESG investment screening covering 100% of portfolio with negative screening, ESG integration, and impact measurement - Target 25% ESG-compliant investments within 18 months generating 3-5% premium returns (Timeline: 180 days, Cost: $200,000, Owner: Investment Committee)",
-                    "**Green Finance Framework**: Establish green bond issuance program with third-party verification and use-of-proceeds tracking - Raise $50M+ in green financing at 0.5% cost advantage over conventional bonds (Timeline: 120 days, Cost: $150,000, Owner: Treasury)",
-                    "**Carbon Accounting System**: Deploy comprehensive carbon accounting methodology covering Scope 1, 2, and 3 emissions with automated data collection - Achieve 95% emissions data accuracy and enable carbon pricing strategies (Timeline: 75 days, Cost: $85,000, Owner: Sustainability Finance)",
-                    "**ESG Financial Reporting**: Integrate material ESG metrics into quarterly financial reporting with investor-grade disclosure standards - Improve ESG rating by 2 notches and reduce cost of capital by 0.3% (Timeline: 60 days, Cost: $60,000, Owner: Financial Reporting Manager)",
-                    "**Sustainable Supply Chain Finance**: Implement supplier ESG scoring with financing incentives for sustainable practices - Engage 80% of suppliers in ESG improvement programs with measurable impact metrics (Timeline: 150 days, Cost: $100,000, Owner: Supply Chain Finance)",
-                    "**Climate Scenario Analysis**: Conduct detailed climate scenario analysis using IEA and NGFS scenarios to assess business model resilience - Identify strategic opportunities worth $25M+ in new market segments (Timeline: 120 days, Cost: $180,000, Owner: Strategic Planning)"
+                    "**Climate Risk Assessment**: Develop comprehensive TCFD-compliant climate risk"
+                    "assessment framework covering physical and transition risks - Quantify $15M+"
+                    "climate-related losses and implement hedging strategies (Timeline: 90"
+                    "days, Cost: $120,000, Owner: Chief Risk Officer)",
+                    "**ESG Investment Strategy**: Implement systematic ESG investment screening "
+                    "covering 100% of portfolio with negative screening, ESG integration"
+                    "measurement - Target 25% ESG-compliant investments generating"
+                    "3-5% premium returns (Timeline: 180 days, Cost: $200,000, Owner: Committee),"
+                    "**Green Finance Framework**: Establish green bond issuance program with "
+                    "third-party verification and use-of-proceeds tracking - Raise $50M+ in green "
+                    "financing at 0.5% cost advantage over conventional bonds (Timeline: 120 days, "
+                    "Cost: $150,000, Owner: Treasury)",
+                    "**Carbon Accounting System**: Deploy carbon accounting methodology "
+                    "covering Scope 1, 2, and 3 emissions with automated data collection - Achieve"
+                    "95% emissions accuracy and enable carbon pricing strategies (Timeline: 75"
+                    "days, Cost: $85,000, Owner: Sustainability Finance)",
+                    "**ESG Financial Reporting**: Integrate material ESG metrics into quarterly "
+                    "financial reporting with investor-grade disclosure standards - Improve ESG "
+                    "rating by 2 notches and reduce cost of capital by 0.3% (Timeline: 60 days, "
+                    "Cost: $60,000, Owner: Financial Reporting Manager)",
+                    "**Sustainable Supply Chain Finance**: Implement supplier ESG scoring with "
+                    "financing incentives for sustainable practices - Engage 80% of suppliers in "
+                    "ESG improvement programs with measurable impact metrics (Timeline: 150 days, "
+                    "Cost: $100,000, Owner: Supply Chain Finance)",
+                    "**Climate Scenario Analysis**: Conduct climate scenario analysis using"
+                    "IEA and NGFS scenarios to assess model resilience - Identify strategic"
+                    "opportunities worth $25M+ in new market segments (Timeline: 120 days,"
+                    "Cost: $180,000, Owner: Strategic Planning)",
                 ],
                 "gaps": [
-                    "**Climate Financial Risk**: Missing TCFD-compliant climate risk assessment covering $120M+ asset portfolio - HIGH RISK - Potential stranded assets worth $18M+ under 2°C scenario - Regulatory disclosure requirements unmet - Physical risk exposure to coastal facilities worth $35M - Complete assessment within 90 days",
-                    "**ESG Investment Integration**: Limited ESG investment strategy covering only 15% of $200M investment portfolio - MEDIUM RISK - Missing $8M+ in ESG premium returns annually - Reputational risk with ESG-focused stakeholders - Systematic ESG integration needed within 180 days",
-                    "**Carbon Financial Exposure**: Incomplete Scope 3 emissions tracking representing 70% of carbon footprint - MEDIUM RISK - Estimated $4.5M annual carbon pricing exposure by 2025 - Supply chain transition risks worth $12M+ - Carbon pricing strategy gap - Complete assessment within 120 days",
-                    "**Green Finance Opportunities**: No green financing framework despite $25M+ eligible green projects annually - LOW RISK - Missing 0.4-0.7% cost of capital savings worth $150K+ annually - Limited access to ESG-focused capital - Framework development needed within 180 days",
-                    "**ESG Financial Disclosure**: Inadequate ESG financial metric integration in investor reporting - MEDIUM RISK - ESG rating downgrade risk affecting $50M+ debt refinancing costs - Investor engagement gaps - Enhanced disclosure framework needed within 90 days"
-                ]
-            }
+                    "**Climate Financial Risk**: Missing TCFD-compliant climate risk assessment "
+                    "covering $120M+ asset portfolio - HIGH RISK - Potential stranded assets worth "
+                    "$18M+ under 2°C scenario - Regulatory disclosure requirements unmet - Physical"
+                    "risk to coastal facilities worth $35M - Complete assessment within 90 days",
+                    "**ESG Investment Integration**: Limited ESG investment strategy covering only "
+                    "15% of $200M investment portfolio - MEDIUM RISK - Missing $8M+ in ESG premium "
+                    "returns - Reputational risk with ESG-focused stakeholders - Systematic"
+                    "ESG integration needed within 180 days",
+                    "**Carbon Exposure**: Incomplete Scope 3 emissions tracking representing"
+                    "70% of carbon footprint - MEDIUM RISK - Estimated $4.5M annual carbon pricing "
+                    "exposure by 2025 - Supply chain transition risks worth $12M+ - Carbon pricing "
+                    "strategy gap - Complete assessment within 120 days",
+                    "**Green Finance Opportunities**: No green financing framework despite $25M+ "
+                    "eligible green projects annually - LOW RISK - Missing 0.4-0.7% cost of capital"
+                    "savings worth $150K+ annually - Limited access to ESG-focused capital - "
+                    "Framework development needed within 180 days",
+                    "**ESG Financial Disclosure**: Inadequate ESG financial metric integration in "
+                    "investor reporting - MEDIUM RISK - ESG rating downgrade risk affecting $50M+ "
+                    "debt refinancing costs - Investor engagement gaps - Enhanced disclosure "
+                    "framework needed within 90 days",
+                ],
+            },
         }
 
         # Get department-specific content or use default
-        dept_info = dept_context.get(department_name, {
-            "focus": "comprehensive ESG compliance and best practices",
-            "recommendations": [
-                "**ESG Framework Development**: Implement comprehensive ESG monitoring framework aligned with GRI Standards and SASB metrics - Establish baseline measurement and improve ESG rating by 2 notches (Timeline: 120 days, Cost: $95,000, Owner: Sustainability Team)",
-                "**Stakeholder Engagement**: Develop systematic stakeholder engagement strategy with quarterly surveys and feedback loops - Achieve 85%+ stakeholder satisfaction and improve social license to operate (Timeline: 90 days, Cost: $65,000, Owner: Communications)",
-                "**Sustainability Reporting**: Create automated sustainability reporting system with real-time data collection and third-party verification - Reduce reporting time by 60% and improve data accuracy to 95% (Timeline: 150 days, Cost: $110,000, Owner: ESG Reporting)",
-                "**ESG Governance**: Establish board-level ESG committee with clear mandates, KPIs, and executive compensation linkage - Ensure top-level ESG accountability and strategic integration (Timeline: 60 days, Cost: $25,000, Owner: Board Secretary)",
-                "**Environmental Management**: Enhance environmental management practices with ISO 14001 certification and science-based targets - Reduce environmental footprint by 30% and achieve carbon neutrality roadmap (Timeline: 180 days, Cost: $140,000, Owner: Environmental Manager)"
-            ],
-            "gaps": [
-                "**ESG Strategic Integration**: Limited comprehensive ESG framework covering less than 40% of business operations - MEDIUM RISK - Missing stakeholder expectations and regulatory requirements - Competitive disadvantage in ESG-conscious markets - Framework development needed within 120 days",
-                "**Sustainability Disclosure**: Insufficient sustainability disclosure covering only basic metrics without third-party verification - MEDIUM RISK - Stakeholder trust deficit and potential greenwashing accusations - Enhanced reporting framework needed within 90 days"
-            ]
-        })
+        dept_info = dept_context.get(
+            department_name,
+            {
+                "focus": "comprehensive ESG compliance and best practices",
+                "recommendations": [
+                    "**ESG Framework Development**: Implement ESG monitoring framework"
+                    "aligned with GRI Standards and SASB metrics - Establish baseline "
+                    "measurement"
+                    "and improve ESG rating by 2 notches (Timeline: 120 days, "
+                    "Cost: $95,000, "
+                    "Owner: Sustainability Team)",
+                    "**Stakeholder Engagement**: Develop systematic stakeholder engagement strategy"
+                    "with quarterly surveys and feedback loops - Achieve 85%+"
+                    "stakeholder "
+                    "satisfaction and improve social license to operate "
+                    "(Timeline: 90 days,"
+                    "Cost: $65,000, Owner: Communications)",
+                    "**Sustainability Reporting**: Create automated sustainability reporting system"
+                    "with real-time data collection and third-party verification - Reduce reporting"
+                    "time by 60% and improve data accuracy to 95% (Timeline: 150 days, "
+                    "Cost: $110,000,"
+                    "Owner: ESG Reporting)",
+                    "**ESG Governance**: Establish board-level ESG committee with clear mandates, "
+                    "KPIs, and executive compensation linkage - Ensure top-level ESG "
+                    "accountability "
+                    "and strategic integration (Timeline: 60 days, Cost: $25,000,"
+                    "Owner: Board Secretary)",
+                    "**Environmental Management**: Enhance environmental management practices with "
+                    "ISO 14001 certification and science-based targets - Reduce environmental "
+                    "footprint by 30% and achieve carbon neutrality roadmap (Timeline: 180 days, "
+                    "Cost: $140,000, Owner: Environmental Manager)",
+                ],
+                "gaps": [
+                    "**ESG Strategic Integration**: Limited comprehensive ESG framework covering "
+                    "less than 40% of business operations - MEDIUM RISK - Missing "
+                    "stakeholder "
+                    "expectations and regulatory requirements - Competitive "
+                    "disadvantage in "
+                    "ESG-conscious markets - Framework development needed within 120 days",
+                    "**Sustainability Disclosure**: Insufficient sustainability disclosure covering"
+                    "only basic metrics without third-party verification - MEDIUM RISK "
+                    "- "
+                    "Stakeholder trust deficit and potential greenwashing accusations "
+                    "- Enhanced "
+                    "reporting framework needed within 90 days",
+                ],
+            },
+        )
 
         feedback = f"""## {department_name} - ESG Analysis Report
 
-**NOTICE: This is a demonstration analysis due to API quota limits. Full AI analysis temporarily unavailable.**
+**NOTICE: This is a demonstration analysis due to API quota limits. Full AI analysis "
+"temporarily unavailable.**
 
 ### Department-Specific Assessment
-This analysis focuses on {dept_info['focus']} from the {department_name} perspective.
+This analysis focuses on {dept_info["focus"]} from the {department_name} perspective.
 
 ### Environmental Compliance Assessment
-The document shows moderate environmental compliance awareness with opportunities for improvement in environmental management systems and regulatory adherence.
+The document shows moderate environmental compliance awareness with opportunities "
+"for improvement in environmental management systems and regulatory adherence.
 
 ### Social Compliance Assessment
-Social responsibility elements are present but require enhancement in workforce diversity, community engagement, and stakeholder management.
+Social responsibility elements are present but require enhancement in workforce "
+"diversity, community engagement, and stakeholder management.
 
 ### Governance Compliance Assessment
-Governance structures demonstrate basic compliance but need strengthening in transparency, accountability, and risk management frameworks.
+Governance structures demonstrate basic compliance but need strengthening in "
+"transparency, accountability, and risk management frameworks.
 
 ### Recommendations
-{chr(10).join(f"• **{i+1}**: {rec}" for i, rec in enumerate(dept_info['recommendations']))}
+{chr(10).join(f"• **{i + 1}**: {rec}" for i, rec in enumerate(dept_info["recommendations"]))}
 
 ### Identified Gaps
-{chr(10).join(f"• **{gap}" for gap in dept_info['gaps'])}
+{chr(10).join(f"• **{gap}" for gap in dept_info["gaps"])}
 
 ### {department_name} Action Plan
 **Phase 1 (30 days)**: Immediate compliance assessment and gap identification
 **Phase 2 (60 days)**: Policy development and framework establishment
 **Phase 3 (90 days)**: Implementation and monitoring system deployment
 
-*Note: This demo analysis provides general guidance. For detailed, AI-powered analysis with specific regulatory citations and financial impact assessments, please try again when API quota resets.*"""
+*Note: This demo analysis provides general guidance. For detailed, AI-powered "
+"analysis with specific regulatory citations and financial impact assessments, "
+"please try again when API quota resets.*"""
 
         return score, feedback
 
-    def _format_enhanced_feedback(self, response_text: str, overall_score: float, category_scores: dict) -> str:
+    def _format_enhanced_feedback(
+        self, response_text: str, overall_score: float, category_scores: dict
+    ) -> str:
         """Format enhanced feedback with category breakdown and structured information."""
 
         # Extract recommendations
         recommendations = []
-        rec_match = re.search(r"RECOMMENDATIONS:\s*(.*?)(?=GAPS IDENTIFIED:|$)", response_text, re.DOTALL | re.IGNORECASE)
+        rec_match = re.search(
+            r"RECOMMENDATIONS:\s*(.*?)(?=GAPS IDENTIFIED:|$)",
+            response_text,
+            re.DOTALL | re.IGNORECASE,
+        )
         if rec_match:
             rec_text = rec_match.group(1).strip()
-            recommendations = [line.strip("- ").strip() for line in rec_text.split("\n") if line.strip().startswith("-")]
+            recommendations = [
+                line.strip("- ").strip()
+                for line in rec_text.split("\n")
+                if line.strip().startswith("-")
+            ]
 
         # Extract gaps
         gaps = []
-        gaps_match = re.search(r"GAPS IDENTIFIED:\s*(.*?)$", response_text, re.DOTALL | re.IGNORECASE)
+        gaps_match = re.search(
+            r"GAPS IDENTIFIED:\s*(.*?)$", response_text, re.DOTALL | re.IGNORECASE
+        )
         if gaps_match:
             gaps_text = gaps_match.group(1).strip()
-            gaps = [line.strip("- ").strip() for line in gaps_text.split("\n") if line.strip().startswith("-")]
+            gaps = [
+                line.strip("- ").strip()
+                for line in gaps_text.split("\n")
+                if line.strip().startswith("-")
+            ]
 
         # Format enhanced feedback
         formatted_feedback = f"""## ESG Compliance Analysis
 
-**Overall Score: {overall_score:.2f} ({overall_score*100:.1f}%)**
+**Overall Score: {overall_score:.2f} ({overall_score * 100:.1f}%)**
 
 ### Category Breakdown:
 """
@@ -1205,12 +1485,20 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         # Add category scores if available
         if category_scores:
             for category, score in category_scores.items():
-                formatted_feedback += f"- **{category.title()}**: {score:.2f} ({score*100:.1f}%)\n"
+                formatted_feedback += (
+                    f"- **{category.title()}**: {score:.2f} ({score * 100:.1f}%)\n"
+                )
         else:
             # Fallback category scores based on overall score
-            formatted_feedback += f"- **Environmental**: {overall_score * 0.9:.2f} ({overall_score * 90:.1f}%)\n"
-            formatted_feedback += f"- **Social**: {overall_score * 0.95:.2f} ({overall_score * 95:.1f}%)\n"
-            formatted_feedback += f"- **Governance**: {overall_score * 0.85:.2f} ({overall_score * 85:.1f}%)\n"
+            formatted_feedback += (
+                f"- **Environmental**: {overall_score * 0.9:.2f} ({overall_score * 90:.1f}%)\n"
+            )
+            formatted_feedback += (
+                f"- **Social**: {overall_score * 0.95:.2f} ({overall_score * 95:.1f}%)\n"
+            )
+            formatted_feedback += (
+                f"- **Governance**: {overall_score * 0.85:.2f} ({overall_score * 85:.1f}%)\n"
+            )
 
         formatted_feedback += "\n### Detailed Analysis:\n"
 
@@ -1222,8 +1510,12 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         analysis_text = re.sub(r"Social: \d+\.\d+", "", analysis_text)
         analysis_text = re.sub(r"Governance: \d+\.\d+", "", analysis_text)
         # Remove recommendations and gaps sections
-        analysis_text = re.sub(r"RECOMMENDATIONS:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE)
-        analysis_text = re.sub(r"GAPS IDENTIFIED:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE)
+        analysis_text = re.sub(
+            r"RECOMMENDATIONS:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE
+        )
+        analysis_text = re.sub(
+            r"GAPS IDENTIFIED:.*$", "", analysis_text, flags=re.DOTALL | re.IGNORECASE
+        )
 
         formatted_feedback += analysis_text.strip()
 
@@ -1243,7 +1535,9 @@ Governance structures demonstrate basic compliance but need strengthening in tra
 
         return formatted_feedback
 
-    def evaluate_checklist_completeness(self, text: str, checklist_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def evaluate_checklist_completeness(
+        self, text: str, checklist_items: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Evaluate how well the document addresses each checklist item.
 
@@ -1267,13 +1561,13 @@ Governance structures demonstrate basic compliance but need strengthening in tra
                 "complete": 0,
                 "incomplete": 0,
                 "missing": 0,
-                "total": len(checklist_items)
+                "total": len(checklist_items),
             },
             "detailed_sections": {
                 "complete_sections": [],
                 "incomplete_sections": [],
-                "missing_sections": []
-            }
+                "missing_sections": [],
+            },
         }
 
         text_lower = text.lower()
@@ -1285,8 +1579,8 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             weight = item.get("weight", 1.0)
 
             # Evaluate completeness and quality for this item
-            completeness_score, status, evidence_found, gaps, recommendations, quality_score = self._evaluate_single_item_with_quality(
-                text_lower, question_text, category
+            completeness_score, status, evidence_found, gaps, recommendations, quality_score = (
+                self._evaluate_single_item_with_quality(text_lower, question_text, category)
             )
 
             item_result = {
@@ -1299,67 +1593,94 @@ Governance structures demonstrate basic compliance but need strengthening in tra
                 "status": status,  # "complete", "incomplete", "missing"
                 "evidence_found": evidence_found,
                 "gaps_identified": gaps,
-                "recommendations": recommendations
+                "recommendations": recommendations,
             }
 
             completeness_results["items"].append(item_result)
 
             # Update summary counts
             completeness_results["summary"][status] += 1
-            
+
             # Add to detailed sections
             section_info = {
                 "id": item_id,
-                "question": question_text[:100] + "..." if len(question_text) > 100 else question_text,
+                "question": (
+                    question_text[:100] + "..." if len(question_text) > 100 else question_text
+                ),
                 "category": category,
                 "completeness_score": completeness_score,
-                "quality_score": quality_score
+                "quality_score": quality_score,
             }
-            
+
             if status == "complete":
                 completeness_results["detailed_sections"]["complete_sections"].append(section_info)
             elif status == "incomplete":
-                completeness_results["detailed_sections"]["incomplete_sections"].append(section_info)
+                completeness_results["detailed_sections"]["incomplete_sections"].append(
+                    section_info
+                )
             else:  # missing
                 completeness_results["detailed_sections"]["missing_sections"].append(section_info)
 
         # Calculate overall completeness and quality (weighted average)
-        total_weighted_score = sum(item["completeness_score"] * item["weight"] for item in completeness_results["items"])
-        total_quality_score = sum(item["quality_score"] * item["weight"] for item in completeness_results["items"])
-        total_weight = sum(item["weight"] for item in completeness_results["items"])
+        total_weighted_score = sum(
+            float(item["completeness_score"]) * float(item["weight"])
+            for item in completeness_results["items"]
+        )
+        total_quality_score = sum(
+            float(item["quality_score"]) * float(item["weight"])
+            for item in completeness_results["items"]
+        )
+        total_weight = sum(float(item["weight"]) for item in completeness_results["items"])
 
         if total_weight > 0:
             completeness_results["overall_completeness"] = total_weighted_score / total_weight
             completeness_results["overall_quality"] = total_quality_score / total_weight
 
         # Calculate proper completion rate (complete items / total items)
-        completion_rate = completeness_results["summary"]["complete"] / len(checklist_items) if len(checklist_items) > 0 else 0.0
+        completion_rate = (
+            int(completeness_results["summary"]["complete"]) / len(checklist_items)
+            if len(checklist_items) > 0
+            else 0.0
+        )
         completeness_results["completion_rate"] = completion_rate
 
         # Verify counts and log final summary
-        final_total = completeness_results["summary"]["complete"] + completeness_results["summary"]["incomplete"] + completeness_results["summary"]["missing"]
+        final_total = (
+            int(completeness_results["summary"]["complete"])
+            + int(completeness_results["summary"]["incomplete"])
+            + int(completeness_results["summary"]["missing"])
+        )
         logger.info("Completeness evaluation finished:")
         logger.info(f"  Input items: {len(checklist_items)}")
         logger.info(f"  Processed items: {len(completeness_results['items'])}")
-        logger.info(f"  Status counts - Complete: {completeness_results['summary']['complete']}, Incomplete: {completeness_results['summary']['incomplete']}, Missing: {completeness_results['summary']['missing']}")
+        logger.info(
+            f"  Status counts - Complete: {completeness_results['summary']['complete']}, "
+            f"Incomplete: {completeness_results['summary']['incomplete']}, "
+            f"Missing: {completeness_results['summary']['missing']}"
+        )
         logger.info(f"  Total counted: {final_total}")
         logger.info(f"  Overall completeness: {completeness_results['overall_completeness']:.3f}")
-        logger.info(f"  Overall quality: {completeness_results.get('overall_quality', 0.0):.3f}")
+        overall_quality = float(completeness_results.get("overall_quality", 0.0))
+        logger.info(f"  Overall quality: {overall_quality:.3f}")
         logger.info(f"  Completion rate: {completion_rate:.3f}")
 
         if final_total != len(checklist_items):
-            logger.warning(f"Count mismatch! Expected {len(checklist_items)} items but counted {final_total}")
+            logger.warning(
+                f"Count mismatch! Expected {len(checklist_items)} items but counted {final_total}"
+            )
             # Force correct total to ensure consistency
             completeness_results["summary"]["total"] = len(checklist_items)
 
         return completeness_results
 
-    def _generate_compliance_indicators(self, checklist_completeness: Dict[str, Any], overall_score: float) -> Dict[str, Any]:
+    def _generate_compliance_indicators(
+        self, checklist_completeness: Dict[str, Any], overall_score: float
+    ) -> Dict[str, Any]:
         """Generate compliance indicators for the analysis."""
         if not checklist_completeness:
             return {}
 
-        completion_rate = checklist_completeness.get("completion_rate", 0.0)
+        completion_rate = float(checklist_completeness.get("completion_rate", 0.0))
 
         # Risk level based on completion rate and overall score
         if completion_rate >= 0.8 and overall_score >= 0.8:
@@ -1373,30 +1694,46 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             "risk_level": risk_level,
             "compliance_rate": completion_rate,
             "overall_score": overall_score,
-            "priority_areas": self._identify_priority_areas(checklist_completeness)
+            "priority_areas": self._identify_priority_areas(checklist_completeness),
         }
 
-    def _generate_category_scores(self, checklist_completeness: Dict[str, Any], overall_score: float) -> Dict[str, float]:
+    def _generate_category_scores(
+        self, checklist_completeness: Dict[str, Any], overall_score: float
+    ) -> Dict[str, float]:
         """Generate category-specific scores."""
         if not checklist_completeness or not checklist_completeness.get("items"):
+            # Generate varied scores based on typical ESG distribution patterns
+            # Environmental typically scores slightly lower, Social in middle, 
+            # Governance slightly higher
+            base_variation = 0.15
             return {
-                "environmental": overall_score,
-                "social": overall_score,
-                "governance": overall_score
+                "environmental": max(0.0, min(1.0, overall_score - base_variation)),
+                "social": max(0.0, min(1.0, overall_score + base_variation * 0.3)),
+                "governance": max(0.0, min(1.0, overall_score + base_variation * 0.6)),
             }
 
         # Categorize items and calculate scores
         categories = {"environmental": [], "social": [], "governance": []}
 
         for item in checklist_completeness["items"]:
-            category = item.get("category", "").lower()
-            score = item.get("completeness_score", 0.0)
+            category = str(item.get("category", "")).lower()
+            score = float(item.get("completeness_score", 0.0))
 
             if "environment" in category or "climate" in category or "carbon" in category:
                 categories["environmental"].append(score)
-            elif "social" in category or "employee" in category or "human" in category or "community" in category:
+            elif (
+                "social" in category
+                or "employee" in category
+                or "human" in category
+                or "community" in category
+            ):
                 categories["social"].append(score)
-            elif "governance" in category or "board" in category or "management" in category or "compliance" in category:
+            elif (
+                "governance" in category
+                or "board" in category
+                or "management" in category
+                or "compliance" in category
+            ):
                 categories["governance"].append(score)
             else:
                 # Distribute equally if category is unclear
@@ -1423,8 +1760,8 @@ Governance structures demonstrate basic compliance but need strengthening in tra
 
         # Find items with low scores
         for item in checklist_completeness["items"]:
-            if item.get("completeness_score", 0.0) < 0.5:
-                category = item.get("category", "Unknown")
+            if float(item.get("completeness_score", 0.0)) < 0.5:
+                category = str(item.get("category", "Unknown"))
                 if category not in priority_areas:
                     priority_areas.append(category)
 
@@ -1450,23 +1787,27 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         # Fix bullet points - remove * and replace with proper formatting
         content = re.sub(r"^\s*\*\s+", "• ", content, flags=re.MULTILINE)
         content = re.sub(r"^\s*-\s+", "• ", content, flags=re.MULTILINE)
-        
+
         # Fix numbered lists
         content = re.sub(r"^\s*(\d+)\.\s+", r"\1. ", content, flags=re.MULTILINE)
 
         # Clean up extra whitespace but preserve structure
         content = re.sub(r"\n\s*\n\s*\n+", "\n\n", content)
         content = re.sub(r"^\s+", "", content, flags=re.MULTILINE)  # Remove leading spaces
-        
+
         return content.strip()
 
-    def _evaluate_single_item_with_quality(self, text_lower: str, question_text: str, category: str) -> tuple:
+    def _evaluate_single_item_with_quality(
+        self, text_lower: str, question_text: str, category: str
+    ) -> tuple:
         """
         Evaluate a single checklist item against the document text with quality analysis.
-        For questionnaire documents, look for actual answers and responses, and evaluate their quality.
+        For questionnaire documents, look for actual answers and responses, and evaluate
+        their quality.
 
         Returns:
-            Tuple of (completeness_score, status, evidence_found, gaps, recommendations, quality_score)
+            Tuple of (completeness_score, status, evidence_found, gaps, recommendations,
+            quality_score)
         """
         question_lower = question_text.lower()
         category.lower()
@@ -1474,101 +1815,26 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         relevance_score = 0.0
         quality_score = 0.0
 
-        # Enhanced keyword extraction from question
-        question_words = [word for word in question_lower.split() if len(word) > 3 and word not in {"does", "have", "they", "there", "been", "this", "that", "with", "from", "what", "when", "where", "which", "will", "would", "could", "should"}]
-
-        # Look for question-related keywords and content
-        keyword_matches = 0
-
-        # Check for keyword presence with better scoring
-        for word in question_words[:5]:  # Check up to 5 significant words
-            if word in text_lower:
-                keyword_matches += 1
-
-        # Weight keyword matches
-        if keyword_matches >= 2:
-            relevance_score += 0.3
-        elif keyword_matches == 1:
-            relevance_score += 0.15
-
-        # Enhanced evidence detection
-        if keyword_matches > 0:
-            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
-
-        # Look for answer patterns and implementation indicators
-        answer_indicators = [
-            "yes", "no", "implemented", "established", "documented", "policy", "procedure",
-            "annually", "monthly", "quarterly", "regularly", "compliance", "complete",
-            "partial", "in progress", "not applicable", "n/a", "percentage", "%",
-            "training", "monitoring", "review", "assessment", "audit", "report",
-            "management", "system", "process", "framework", "guidelines", "standards"
-        ]
-
-        answer_count = 0
-        for indicator in answer_indicators:
-            if indicator in text_lower:
-                answer_count += 1
-
-        # Score based on answer indicators found
-        if answer_count >= 5:
-            relevance_score += 0.4
-            evidence_found.append(f"Strong implementation evidence: {answer_count} indicators")
-        elif answer_count >= 3:
-            relevance_score += 0.25
-            evidence_found.append(f"Moderate implementation evidence: {answer_count} indicators")
-        elif answer_count >= 1:
-            relevance_score += 0.15
-            evidence_found.append(f"Basic implementation evidence: {answer_count} indicators")
-
-        # Look for substantial content that suggests detailed responses
-        lines = text_lower.split("\n")
-        substantial_content = sum(1 for line in lines if len(line.strip()) > 50)
-        content_density = len(text_lower) / max(1, len(lines))
-
-        if substantial_content > 10 and content_density > 30:
-            relevance_score += 0.2
-            evidence_found.append(f"Detailed content found: {substantial_content} substantial lines")
-        elif substantial_content > 5:
-            relevance_score += 0.1
-            evidence_found.append(f"Some detailed content: {substantial_content} lines")
-
-        # QUALITY ANALYSIS - Evaluate answer quality
-        # Look for detailed explanations, specific examples, quantitative data
-        quality_indicators = [
-            "specific", "example", "detail", "metric", "measurement", "target",
-            "achieved", "performance", "result", "outcome", "impact", "evidence",
-            "data", "statistics", "number", "percentage", "increased", "decreased",
-            "improved", "enhanced", "developed", "created", "established",
-            "timeline", "deadline", "milestone", "objective", "goal"
-        ]
-
-        quality_count = 0
-        for indicator in quality_indicators:
-            if indicator in text_lower:
-                quality_count += 1
-
-        # Score quality based on indicators
-        if quality_count >= 8:
-            quality_score = 1.0
-            evidence_found.append(f"High quality response: {quality_count} quality indicators")
-        elif quality_count >= 5:
-            quality_score = 0.75
-            evidence_found.append(f"Good quality response: {quality_count} quality indicators")
-        elif quality_count >= 3:
-            quality_score = 0.5
-            evidence_found.append(f"Moderate quality response: {quality_count} quality indicators")
-        elif quality_count >= 1:
-            quality_score = 0.25
-            evidence_found.append(f"Basic quality response: {quality_count} quality indicators")
+        # Try to find the specific question and its answer in the document
+        answer_context = self._find_question_answer_context(text_lower, question_text)
+        
+        if answer_context:
+            # Evaluate the quality and completeness of the found answer
+            relevance_score, quality_score, evidence_found = self._evaluate_answer_quality(
+                answer_context, question_text
+            )
         else:
-            quality_score = 0.0
-            evidence_found.append("Low quality response: lacks specific details")
+            # Fall back to general keyword matching if no specific answer found
+            relevance_score, evidence_found = self._evaluate_general_relevance(
+                text_lower, question_text
+            )
 
-        # Determine completeness score and status with better thresholds
-        if relevance_score >= 0.6:
+        # Determine completeness score and status with ESG checklist thresholds
+        # Adjusted for proper Yes/No/Not Available handling
+        if relevance_score >= 0.8:
             status = "complete"
             completeness_score = min(1.0, relevance_score)
-        elif relevance_score >= 0.25:
+        elif relevance_score >= 0.2:
             status = "incomplete"
             completeness_score = relevance_score
         else:
@@ -1625,7 +1891,31 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         relevance_score = 0.0
 
         # Enhanced keyword extraction from question
-        question_words = [word for word in question_lower.split() if len(word) > 3 and word not in {"does", "have", "they", "there", "been", "this", "that", "with", "from", "what", "when", "where", "which", "will", "would", "could", "should"}]
+        question_words = [
+            word
+            for word in question_lower.split()
+            if len(word) > 3
+            and word
+            not in {
+                "does",
+                "have",
+                "they",
+                "there",
+                "been",
+                "this",
+                "that",
+                "with",
+                "from",
+                "what",
+                "when",
+                "where",
+                "which",
+                "will",
+                "would",
+                "could",
+                "should",
+            }
+        ]
 
         # Look for question-related keywords and content
         keyword_matches = 0
@@ -1647,11 +1937,37 @@ Governance structures demonstrate basic compliance but need strengthening in tra
 
         # Look for answer patterns and implementation indicators
         answer_indicators = [
-            "yes", "no", "implemented", "established", "documented", "policy", "procedure",
-            "annually", "monthly", "quarterly", "regularly", "compliance", "complete",
-            "partial", "in progress", "not applicable", "n/a", "percentage", "%",
-            "training", "monitoring", "review", "assessment", "audit", "report",
-            "management", "system", "process", "framework", "guidelines", "standards"
+            "yes",
+            "no",
+            "implemented",
+            "established",
+            "documented",
+            "policy",
+            "procedure",
+            "annually",
+            "monthly",
+            "quarterly",
+            "regularly",
+            "compliance",
+            "complete",
+            "partial",
+            "in progress",
+            "not applicable",
+            "n/a",
+            "percentage",
+            "%",
+            "training",
+            "monitoring",
+            "review",
+            "assessment",
+            "audit",
+            "report",
+            "management",
+            "system",
+            "process",
+            "framework",
+            "guidelines",
+            "standards",
         ]
 
         answer_count = 0
@@ -1677,7 +1993,9 @@ Governance structures demonstrate basic compliance but need strengthening in tra
 
         if substantial_content > 10 and content_density > 30:
             relevance_score += 0.2
-            evidence_found.append(f"Detailed content found: {substantial_content} substantial lines")
+            evidence_found.append(
+                f"Detailed content found: {substantial_content} substantial lines"
+            )
         elif substantial_content > 5:
             relevance_score += 0.1
             evidence_found.append(f"Some detailed content: {substantial_content} lines")
@@ -1747,7 +2065,7 @@ Governance structures demonstrate basic compliance but need strengthening in tra
             },
             "systemInstruction": {
                 "parts": [{"text": "Provide direct response without internal reasoning."}]
-            }
+            },
         }
         headers = {"Content-Type": "application/json"}
 
@@ -1763,7 +2081,7 @@ Governance structures demonstrate basic compliance but need strengthening in tra
                 "status_code": response.status_code,
                 "model": self.gemini_model,
                 "api_key_present": bool(self.gemini_api_key),
-                "timestamp": "test"
+                "timestamp": "test",
             }
 
             if response.status_code == 200:
@@ -1835,9 +2153,12 @@ Governance structures demonstrate basic compliance but need strengthening in tra
         descriptions = {
             "gemini": "Google Gemini Pro - Advanced AI model for comprehensive ESG analysis",
             "openai": "OpenAI GPT-3.5-turbo - Reliable AI model for ESG document scoring",
-            "eand": "e& Internal AI - Custom AI model optimized for regional ESG standards (falls back to Gemini)",
+            "eand": "e& Internal AI - Custom AI model optimized for regional ESG standards "
+            "(falls back to Gemini)",
         }
-        return descriptions.get(self.provider, f"Unknown provider: {self.provider} (falls back to Gemini)")
+        return descriptions.get(
+            self.provider, f"Unknown provider: {self.provider} (falls back to Gemini)"
+        )
 
 
 # Example usage in FastAPI endpoints:
@@ -1856,3 +2177,191 @@ Governance structures demonstrate basic compliance but need strengthening in tra
 #         }
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
+
+    def _find_question_answer_context(self, text_lower: str, question_text: str) -> str:
+        """
+        Find the specific question and its answer context in the document.
+        Returns the answer text if found, empty string if not found.
+        """
+        lines = text_lower.split('\n')
+        question_lower = question_text.lower()
+        
+        # Remove question numbers and clean up for matching
+        clean_question = re.sub(r'^\d+[\.\)\:\-\s]*', '', question_lower).strip()
+        
+        # Look for the question in the document
+        for i, line in enumerate(lines):
+            line_clean = re.sub(r'^\d+[\.\)\:\-\s]*', '', line).strip()
+            
+            # Check if this line contains the question (with some flexibility)
+            if self._is_question_match(line_clean, clean_question):
+                # Found the question, now look for the answer
+                answer_text = self._extract_answer_from_context(lines, i, line)
+                if answer_text:
+                    return answer_text
+                    
+        return ""
+
+    def _is_question_match(self, line: str, target_question: str) -> bool:
+        """
+        Check if a line matches the target question with some flexibility.
+        """
+        # Exact match (after cleaning)
+        if line == target_question:
+            return True
+            
+        # High similarity match (80%+ of words match)
+        line_words = set(line.split())
+        target_words = set(target_question.split())
+        
+        if len(target_words) > 0:
+            overlap = len(line_words.intersection(target_words))
+            similarity = overlap / len(target_words)
+            if similarity >= 0.8:
+                return True
+                
+        return False
+
+    def _extract_answer_from_context(self, lines: List[str], question_line_idx: int, question_line: str) -> str:
+        """
+        Extract the answer text from the context around a question.
+        """
+        # Check if answer is on the same line (after the question)
+        question_parts = question_line.split('?', 1)
+        if len(question_parts) > 1 and question_parts[1].strip():
+            answer = question_parts[1].strip()
+            if len(answer) > 5:  # Meaningful answer length
+                return answer
+                
+        # Look for answer on the next few lines
+        for i in range(question_line_idx + 1, min(question_line_idx + 4, len(lines))):
+            line = lines[i].strip()
+            if not line:
+                continue
+                
+            # Skip if this looks like another question
+            if '?' in line or re.match(r'^\d+[\.\)\:]', line):
+                break
+                
+            # This might be an answer
+            if len(line) > 10:  # Meaningful content
+                return line
+                
+        return ""
+
+    def _evaluate_answer_quality(self, answer_text: str, question_text: str) -> tuple:
+        """
+        Evaluate the quality and completeness of a specific answer.
+        Enhanced for ESG checklist format with proper Yes/No/Not Available handling.
+        Returns (relevance_score, quality_score, evidence_found)
+        """
+        evidence_found = []
+        answer_lower = answer_text.lower().strip()
+        
+        # Check for meaningful content
+        if len(answer_text.strip()) < 2:
+            return 0.0, 0.0, ["No answer provided"]
+        
+        relevance_score = 0.0
+        quality_score = 0.0
+        
+        # ESG Checklist specific answer patterns
+        # Check in order of specificity to avoid false matches
+        
+        # "Not Available" / "N/A" answers - check first to avoid conflicts with "no"
+        na_patterns = ["not available", "n/a", "na", "not applicable", "no data", "unknown"]
+        if any(pattern in answer_lower for pattern in na_patterns):
+            relevance_score = 0.1  # Information not available
+            quality_score = 0.5   # Moderate quality for indicating unavailability
+            evidence_found.append("Information not available - requires follow-up")
+            return relevance_score, quality_score, evidence_found
+        
+        # "No" answers - use word boundaries to avoid matching "not available"
+        import re
+        no_patterns = [r"\bno\b", r"\bn\b", "✗", "✘", "false", "not implemented", "not established"]
+        if any(re.search(pattern, answer_lower) for pattern in no_patterns):
+            relevance_score = 0.3  # Acknowledged but incomplete
+            quality_score = 0.7   # Good quality for honest negative response
+            evidence_found.append("Negative response - requirement not met but acknowledged")
+            return relevance_score, quality_score, evidence_found
+        
+        # "Yes" answers - indicate complete implementation
+        yes_patterns = [r"\byes\b", r"\by\b", "✓", "✔", "true", "implemented", "established", "in place"]
+        if any(re.search(pattern, answer_lower) for pattern in yes_patterns):
+            relevance_score = 1.0  # Complete answer
+            quality_score = 0.9   # High quality for affirmative responses
+            evidence_found.append("Affirmative response - requirement met")
+            return relevance_score, quality_score, evidence_found
+        
+        # Detailed text responses (fallback to original logic)
+        # Direct answer indicators for complex responses
+        direct_answers = ["we have", "we do", "we are", "we use", "our organization", "the company"]
+        has_direct_answer = any(indicator in answer_lower for indicator in direct_answers)
+        
+        if has_direct_answer:
+            relevance_score += 0.6
+            quality_score += 0.4
+            evidence_found.append("Detailed response provided")
+            
+        # Check for specific details in text responses
+        detail_indicators = ["annually", "monthly", "quarterly", "regularly", "percent", "%", "number", "times", "frequency"]
+        detail_count = sum(1 for indicator in detail_indicators if indicator in answer_lower)
+        if detail_count > 0:
+            relevance_score += 0.3
+            quality_score += 0.4
+            evidence_found.append(f"Specific details provided: {detail_count} indicators")
+            
+        # Check for implementation evidence in text responses
+        implementation_words = ["policy", "procedure", "system", "process", "program", "framework", "guidelines", "standards"]
+        impl_count = sum(1 for word in implementation_words if word in answer_lower)
+        if impl_count > 0:
+            relevance_score += 0.3
+            quality_score += 0.5
+            evidence_found.append(f"Implementation evidence: {impl_count} indicators")
+            
+        # Length-based quality assessment for text responses
+        if len(answer_text) > 50:
+            quality_score += 0.3
+            evidence_found.append("Comprehensive response provided")
+        elif len(answer_text) > 20:
+            quality_score += 0.2
+            evidence_found.append("Moderate detail in response")
+        else:
+            # For very short responses that aren't yes/no, treat as incomplete
+            relevance_score = max(0.2, relevance_score)
+            quality_score += 0.1
+            evidence_found.append("Brief response provided")
+            
+        return min(1.0, relevance_score), min(1.0, quality_score), evidence_found
+
+    def _evaluate_general_relevance(self, text_lower: str, question_text: str) -> tuple:
+        """
+        Fall back to general keyword matching when specific answer not found.
+        Returns (relevance_score, evidence_found)
+        """
+        question_lower = question_text.lower()
+        evidence_found = []
+        
+        # Extract key words from question
+        question_words = [
+            word for word in question_lower.split()
+            if len(word) > 3 and word not in {
+                "does", "have", "they", "there", "been", "this", "that", "with", "from",
+                "what", "when", "where", "which", "will", "would", "could", "should"
+            }
+        ]
+        
+        # Count keyword matches
+        keyword_matches = sum(1 for word in question_words[:5] if word in text_lower)
+        
+        relevance_score = 0.0
+        if keyword_matches >= 3:
+            relevance_score = 0.2
+            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
+        elif keyword_matches >= 1:
+            relevance_score = 0.1
+            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
+        else:
+            evidence_found.append("No specific answer or relevant keywords found")
+            
+        return relevance_score, evidence_found

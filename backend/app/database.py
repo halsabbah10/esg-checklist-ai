@@ -80,15 +80,18 @@ def create_default_data():
                 return
 
             # Create default admin user if it doesn't exist
-            admin_user = session.exec(select(User).where(User.email == "admin@esg-checklist.ai")).first()
+            admin_user = session.exec(
+                select(User).where(User.email == "admin@esg-checklist.ai")
+            ).first()
             if not admin_user:
                 from .auth import hash_password
+
                 admin_user = User(
                     username="admin",
                     email="admin@esg-checklist.ai",
                     password_hash=hash_password("admin123"),
                     role="admin",
-                    is_active=True
+                    is_active=True,
                 )
                 session.add(admin_user)
                 session.commit()
@@ -101,7 +104,7 @@ def create_default_data():
                 description="A comprehensive ESG checklist for general compliance assessment",
                 created_by=admin_user.id,
                 is_active=True,
-                version=1
+                version=1,
             )
             session.add(default_checklist)
             session.commit()
@@ -109,15 +112,51 @@ def create_default_data():
 
             # Create default checklist items
             default_items = [
-                {"question_text": "Does the organization have a documented environmental policy?", "category": "Environmental", "weight": 1.0},
-                {"question_text": "Are carbon emissions monitored and reported?", "category": "Environmental", "weight": 1.0},
-                {"question_text": "Is there a waste reduction program in place?", "category": "Environmental", "weight": 1.0},
-                {"question_text": "Does the organization promote diversity and inclusion?", "category": "Social", "weight": 1.0},
-                {"question_text": "Are health and safety protocols documented and followed?", "category": "Social", "weight": 1.0},
-                {"question_text": "Is there a code of conduct for employees?", "category": "Social", "weight": 1.0},
-                {"question_text": "Is there an independent board of directors?", "category": "Governance", "weight": 1.0},
-                {"question_text": "Are financial statements audited by external auditors?", "category": "Governance", "weight": 1.0},
-                {"question_text": "Is there a risk management framework in place?", "category": "Governance", "weight": 1.0},
+                {
+                    "question_text": "Does the organization have a documented environmental policy?",
+                    "category": "Environmental",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Are carbon emissions monitored and reported?",
+                    "category": "Environmental",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Is there a waste reduction program in place?",
+                    "category": "Environmental",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Does the organization promote diversity and inclusion?",
+                    "category": "Social",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Are health and safety protocols documented and followed?",
+                    "category": "Social",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Is there a code of conduct for employees?",
+                    "category": "Social",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Is there an independent board of directors?",
+                    "category": "Governance",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Are financial statements audited by external auditors?",
+                    "category": "Governance",
+                    "weight": 1.0,
+                },
+                {
+                    "question_text": "Is there a risk management framework in place?",
+                    "category": "Governance",
+                    "weight": 1.0,
+                },
             ]
 
             for i, item_data in enumerate(default_items):
@@ -127,7 +166,7 @@ def create_default_data():
                     category=item_data["category"],
                     weight=item_data["weight"],
                     is_required=True,
-                    order_index=i
+                    order_index=i,
                 )
                 session.add(item)
 

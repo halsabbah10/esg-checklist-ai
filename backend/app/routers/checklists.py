@@ -262,7 +262,7 @@ async def upload_file(
             filepath=str(secure_filepath),
             file_size=file_size,
             file_type=file_type,
-            processing_status="pending"
+            processing_status="pending",
         )
 
         # Use transaction to ensure atomicity
@@ -308,7 +308,9 @@ async def upload_file(
                 # First try to find the "ESG Questionnaires" tab specifically
                 target_sheet = None
                 for ws in wb.worksheets:
-                    if "esg" in ws.title.lower() and ("questionnaire" in ws.title.lower() or "question" in ws.title.lower()):
+                    if "esg" in ws.title.lower() and (
+                        "questionnaire" in ws.title.lower() or "question" in ws.title.lower()
+                    ):
                         target_sheet = ws
                         logger.info(f"Found ESG questionnaires sheet: '{ws.title}'")
                         break
@@ -316,7 +318,9 @@ async def upload_file(
                 # If no ESG questionnaires sheet found, use all sheets (fallback)
                 if target_sheet:
                     worksheets_to_process = [target_sheet]
-                    logger.info(f"Processing only the ESG questionnaires sheet: '{target_sheet.title}'")
+                    logger.info(
+                        f"Processing only the ESG questionnaires sheet: '{target_sheet.title}'"
+                    )
                 else:
                     worksheets_to_process = wb.worksheets
                     logger.info("No ESG questionnaires sheet found, processing all sheets")
@@ -348,34 +352,43 @@ async def upload_file(
 
         try:
             # Fetch checklist items for completeness evaluation
-            checklist_items_query = db.exec(select(ChecklistItem).where(ChecklistItem.checklist_id == checklist_id)).all()
+            checklist_items_query = db.exec(
+                select(ChecklistItem).where(ChecklistItem.checklist_id == checklist_id)
+            ).all()
             checklist_items = [
                 {
                     "id": item.id,
                     "question_text": item.question_text,
                     "category": item.category,
-                    "weight": item.weight
+                    "weight": item.weight,
                 }
                 for item in checklist_items_query
             ]
 
             # Import AIScorer once at the top
             from app.ai.scorer import AIScorer
+
             scorer = AIScorer()
 
             if department:
                 # Use department-specific analysis
-                score, feedback, analysis_metadata = scorer.analyze_by_department(raw_text, department, checklist_items)
+                score, feedback, analysis_metadata = scorer.analyze_by_department(
+                    raw_text, department, checklist_items
+                )
                 logger.info(f"Department-specific analysis completed for {department}")
             else:
                 # Use general ESG analysis with the same scorer instance
                 score, feedback = scorer.score(raw_text)
                 logger.info(f"General ESG analysis completed with score: {score}")
                 # Create metadata for general analysis with completeness evaluation
-                checklist_completeness = scorer.evaluate_checklist_completeness(raw_text, checklist_items) if checklist_items else {}
+                checklist_completeness = (
+                    scorer.evaluate_checklist_completeness(raw_text, checklist_items)
+                    if checklist_items
+                    else {}
+                )
                 analysis_metadata = {
                     "analysis_type": "general_esg",
-                    "checklist_completeness": checklist_completeness
+                    "checklist_completeness": checklist_completeness,
                 }
                 logger.info("General ESG analysis completed")
 
@@ -400,7 +413,10 @@ async def upload_file(
             logger.exception(f"AI scoring failed for file {secure_filename}: {e}")
             # Provide FILE-SPECIFIC fallback score and feedback
             import hashlib
-            file_hash = hashlib.md5(f"{secure_filename}_{file_record.id}_{current_user.id}".encode()).hexdigest()[:8]
+
+            file_hash = hashlib.md5(
+                f"{secure_filename}_{file_record.id}_{current_user.id}".encode()
+            ).hexdigest()[:8]
 
             # Generate file-specific score based on content characteristics
             content_length = len(raw_text)
@@ -457,7 +473,7 @@ Based on file characteristics:
                 "filename": secure_filename,
                 "content_length": content_length,
                 "generated_at": datetime.now(timezone.utc).isoformat(),
-                "checklist_completeness": {}
+                "checklist_completeness": {},
             }
             # Calculate processing time even for failed attempts
             ai_end_time = datetime.now(timezone.utc)
@@ -472,11 +488,16 @@ Based on file characteristics:
             feedback = feedback[:max_text_length] + "...[truncated]"
 
         # Store AI result in DB with department context if specified
-        ai_model_version = f"gemini-{department.lower().replace(' ', '-')}" if department else "gemini-general"
+        ai_model_version = (
+            f"gemini-{department.lower().replace(' ', '-')}" if department else "gemini-general"
+        )
 
         # Convert metadata to JSON string for database storage
         import json
-        analysis_metadata_str = json.dumps(analysis_metadata) if "analysis_metadata" in locals() else None
+
+        analysis_metadata_str = (
+            json.dumps(analysis_metadata) if "analysis_metadata" in locals() else None
+        )
 
         ai_result = AIResult(
             file_upload_id=file_record.id,  # Now guaranteed to be int
@@ -487,7 +508,7 @@ Based on file characteristics:
             feedback=feedback,
             ai_model_version=ai_model_version,
             processing_time_ms=processing_time_ms,
-            analysis_metadata=analysis_metadata_str
+            analysis_metadata=analysis_metadata_str,
         )
         db.add(ai_result)
         db.commit()

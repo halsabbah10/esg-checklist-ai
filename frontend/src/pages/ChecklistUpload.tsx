@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import type { FileUploadData } from '../services/api';
+
+// ============================================================================
+// NOTE: ESG QUESTIONNAIRE PARSING IS NOW HANDLED BY BACKEND
+// All ESG types and parsing logic have been moved to backend API endpoints
+// ============================================================================
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import {
@@ -692,6 +697,11 @@ export const ChecklistUpload: React.FC = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
+
+  // ============================================================================
+  // NOTE: ESG QUESTIONNAIRE PARSING IS NOW HANDLED BY BACKEND
+  // All parsing logic has been moved to backend API endpoints for production use
+  // ============================================================================
 
   // Generate comprehensive completeness analysis for ChecklistUpload (similar to TabbedDocumentViewer)
   const generateCompletenessAnalysisForUpload = (feedback: string, filename: string, overallScore: number, departmentContext?: any, selectedDepartment?: string, uploadId?: string) => {

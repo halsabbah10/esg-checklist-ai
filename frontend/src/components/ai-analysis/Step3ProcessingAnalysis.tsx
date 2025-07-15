@@ -67,6 +67,7 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
       setTimeout(() => {
         onComplete({
           analysisId: response.data.analysis_id,
+          fileId: response.data.file_id,
           results: response.data.results
         });
       }, 1000);

@@ -213,10 +213,7 @@ async def validate_upload_file(file: UploadFile) -> tuple[str, str]:
 
     # Check if file stream is readable
     if not hasattr(file.file, "read"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid file stream"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid file stream")
 
     # Get current position
     current_pos = await file.tell() if hasattr(file, "tell") else 0
@@ -244,7 +241,9 @@ async def validate_upload_file(file: UploadFile) -> tuple[str, str]:
     return secure_name, extension
 
 
-def generate_secure_filepath(filename: str, user_id: int, checklist_id: Optional[int] = None) -> pathlib.Path:
+def generate_secure_filepath(
+    filename: str, user_id: int, checklist_id: Optional[int] = None
+) -> pathlib.Path:
     """
     Generate a secure file path with sanitized components
 

@@ -26,24 +26,31 @@ router = APIRouter(prefix="/departments", tags=["departments"])
 
 class DepartmentAnalysisRequest(BaseModel):
     """Request model for department-specific analysis."""
+
     text: str = Field(..., min_length=1, description="Text content to analyze")
     department_name: str = Field(..., description="Department name for specialized analysis")
-    checklist_items: Optional[List[Dict[str, Any]]] = Field(None, description="Optional checklist items for context")
+    checklist_items: Optional[List[Dict[str, Any]]] = Field(
+        None, description="Optional checklist items for context"
+    )
     file_upload_id: Optional[int] = Field(None, description="Optional file upload ID for tracking")
     checklist_id: Optional[int] = Field(None, description="Optional checklist ID for context")
 
 
 class DepartmentAnalysisResponse(BaseModel):
     """Response model for department-specific analysis."""
+
     score: float = Field(..., ge=0.0, le=1.0, description="ESG compliance score")
     feedback: str = Field(..., description="Detailed analysis feedback")
     department_name: str = Field(..., description="Department that performed the analysis")
     audit_context: Dict[str, Any] = Field(..., description="Department-specific audit context")
-    analysis_type: str = Field(default="department_specific", description="Type of analysis performed")
+    analysis_type: str = Field(
+        default="department_specific", description="Type of analysis performed"
+    )
 
 
 class DepartmentInfo(BaseModel):
     """Department information model."""
+
     department_name: str
     mandate: str
     focus_areas: List[str]
@@ -68,14 +75,12 @@ def get_departments_public():
         logger.exception(f"Error retrieving departments: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve departments"
+            detail="Failed to retrieve departments",
         )
 
 
 @router.get("/", response_model=List[str])
-def get_departments(
-    current_user=Depends(require_role(["admin", "reviewer", "auditor"]))
-):
+def get_departments(current_user=Depends(require_role(["admin", "reviewer", "auditor"]))):
     """
     Get list of all available departments for analysis.
     Requires authentication.
@@ -91,14 +96,13 @@ def get_departments(
         logger.exception(f"Error retrieving departments: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve departments"
+            detail="Failed to retrieve departments",
         )
 
 
 @router.get("/{department_name}/info")
 def get_department_info(
-    department_name: str,
-    current_user=Depends(require_role(["admin", "reviewer", "auditor"]))
+    department_name: str, current_user=Depends(require_role(["admin", "reviewer", "auditor"]))
 ):
     """
     Get detailed information about a specific department.
@@ -114,7 +118,7 @@ def get_department_info(
         if not config:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Department '{department_name}' not found"
+                detail=f"Department '{department_name}' not found",
             )
 
         audit_context = config.get("audit_context", {})
@@ -129,7 +133,7 @@ def get_department_info(
             "Branding & Communications": "ESG disclosures, internal and external communications",
             "Admin & Contracts": "Sustainable procurement, vendor management, and administrative ESG practices",
             "Group Risk & Internal Audit": "Risk assessment, ESG internal controls, and audit practices",
-            "Technology": "Digital sustainability, data management, and system resilience"
+            "Technology": "Digital sustainability, data management, and system resilience",
         }
 
         return {
@@ -137,19 +141,19 @@ def get_department_info(
             "mandate": mandate_mapping.get(department_name, "ESG compliance and management"),
             "focus_areas": audit_context.get("focus_areas", []),
             "frameworks": (
-                audit_context.get("compliance_frameworks", []) or
-                audit_context.get("financial_frameworks", []) or
-                audit_context.get("strategic_frameworks", []) or
-                audit_context.get("operational_frameworks", []) or
-                audit_context.get("hr_frameworks", []) or
-                audit_context.get("communication_frameworks", []) or
-                audit_context.get("procurement_frameworks", []) or
-                audit_context.get("risk_frameworks", []) or
-                audit_context.get("technology_frameworks", [])
+                audit_context.get("compliance_frameworks", [])
+                or audit_context.get("financial_frameworks", [])
+                or audit_context.get("strategic_frameworks", [])
+                or audit_context.get("operational_frameworks", [])
+                or audit_context.get("hr_frameworks", [])
+                or audit_context.get("communication_frameworks", [])
+                or audit_context.get("procurement_frameworks", [])
+                or audit_context.get("risk_frameworks", [])
+                or audit_context.get("technology_frameworks", [])
             ),
             "key_metrics": audit_context.get("key_metrics", []),
             "ui_config": config.get("ui_config", {}),
-            "audit_context": audit_context
+            "audit_context": audit_context,
         }
 
     except HTTPException:
@@ -158,7 +162,7 @@ def get_department_info(
         logger.exception(f"Error retrieving department info for {department_name}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve department information"
+            detail="Failed to retrieve department information",
         )
 
 
@@ -166,7 +170,7 @@ def get_department_info(
 def analyze_by_department(
     request: DepartmentAnalysisRequest,
     db: Session = Depends(get_session),
-    current_user=Depends(require_role(["admin", "reviewer", "auditor"]))
+    current_user=Depends(require_role(["admin", "reviewer", "auditor"])),
 ):
     """
     Perform department-specific ESG analysis on provided text.
@@ -185,7 +189,7 @@ def analyze_by_department(
         if not dept_config:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Department '{request.department_name}' not found"
+                detail=f"Department '{request.department_name}' not found",
             )
 
         # Initialize AI scorer
@@ -196,7 +200,7 @@ def analyze_by_department(
         score, feedback = scorer.analyze_by_department(
             text=request.text,
             department_name=request.department_name,
-            checklist_items=request.checklist_items
+            checklist_items=request.checklist_items,
         )
 
         # Store result in database if file_upload_id is provided
@@ -212,8 +216,8 @@ def analyze_by_department(
                 metadata={
                     "department": request.department_name,
                     "analysis_type": "department_specific",
-                    "audit_context": dept_config.get("audit_context", {})
-                }
+                    "audit_context": dept_config.get("audit_context", {}),
+                },
             )
             db.add(ai_result)
             db.commit()
@@ -228,22 +232,19 @@ def analyze_by_department(
             feedback=feedback,
             department_name=request.department_name,
             audit_context=audit_context,
-            analysis_type="department_specific"
+            analysis_type="department_specific",
         )
 
     except HTTPException:
         raise
     except ValueError as e:
         logger.warning(f"Invalid input for department analysis: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.exception(f"Department analysis failed: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Analysis failed. Please try again later."
+            detail="Analysis failed. Please try again later.",
         )
 
 
@@ -253,7 +254,7 @@ def get_department_analysis_history(
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_session),
-    current_user=Depends(require_role(["admin", "reviewer"]))
+    current_user=Depends(require_role(["admin", "reviewer"])),
 ):
     """
     Get analysis history for a specific department.
@@ -273,25 +274,31 @@ def get_department_analysis_history(
         if not get_department_config(department_name):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Department '{department_name}' not found"
+                detail=f"Department '{department_name}' not found",
             )
 
         # Query analysis results with department metadata
-        results = db.query(AIResult).filter(
-            AIResult.metadata.op("->>")(department_name).isnot(None)
-        ).offset(offset).limit(limit).all()
+        results = (
+            db.query(AIResult)
+            .filter(AIResult.metadata.op("->>")(department_name).isnot(None))
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
         return [
             {
                 "id": result.id,
                 "score": result.score,
-                "feedback": result.feedback[:200] + "..." if len(result.feedback) > 200 else result.feedback,
+                "feedback": (
+                    result.feedback[:200] + "..." if len(result.feedback) > 200 else result.feedback
+                ),
                 "created_at": result.created_at,
                 "user_id": result.user_id,
                 "file_upload_id": result.file_upload_id,
                 "checklist_id": result.checklist_id,
                 "department": department_name,
-                "ai_model_version": result.ai_model_version
+                "ai_model_version": result.ai_model_version,
             }
             for result in results
         ]
@@ -302,5 +309,5 @@ def get_department_analysis_history(
         logger.exception(f"Error retrieving analysis history for {department_name}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve analysis history"
+            detail="Failed to retrieve analysis history",
         )

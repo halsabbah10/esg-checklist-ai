@@ -21,8 +21,8 @@ const Login = lazy(() => import('./pages/Login').then(module => ({ default: modu
 const Dashboard = lazy(() =>
   import('./pages/Dashboard').then(module => ({ default: module.Dashboard }))
 );
-const Checklists = lazy(() =>
-  import('./pages/Checklists').then(module => ({ default: module.Checklists }))
+const AnalysisHistory = lazy(() =>
+  import('./pages/AnalysisHistory').then(module => ({ default: module.AnalysisHistory }))
 );
 const ChecklistDetail = lazy(() =>
   import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail }))
@@ -241,10 +241,10 @@ function AppContent() {
                 }
               />
               <Route
-                path="/checklists"
+                path="/analysis-history"
                 element={
-                  <ProtectedRouteWithSuspense routeName="Checklists">
-                    <Checklists />
+                  <ProtectedRouteWithSuspense routeName="Analysis History">
+                    <AnalysisHistory />
                   </ProtectedRouteWithSuspense>
                 }
               />

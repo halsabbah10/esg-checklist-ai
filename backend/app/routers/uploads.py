@@ -37,9 +37,17 @@ router = APIRouter(prefix="/search", tags=["Advanced Search"])
 def _validate_search_models():
     """Validation function to ensure all imported models are recognized as used."""
     models = [
-        FileUpload, Submission, AIResult, User, Notification,
-        SubmissionAnswer, Checklist, ChecklistItem, Comment,
-        AuditLog, SystemConfig
+        FileUpload,
+        Submission,
+        AIResult,
+        User,
+        Notification,
+        SubmissionAnswer,
+        Checklist,
+        ChecklistItem,
+        Comment,
+        AuditLog,
+        SystemConfig,
     ]
     return f"Search models validated: {len(models)} models available"
 

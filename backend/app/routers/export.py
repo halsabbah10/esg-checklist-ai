@@ -18,6 +18,7 @@ try:
     from docx import Document
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.shared import Inches
+
     DOCX_AVAILABLE = True
 except ImportError:
     DOCX_AVAILABLE = False
@@ -119,14 +120,18 @@ def export_all_checklists(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("ESG Checklists Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Checklists: {len(data)}", summary_style))
             story.append(Spacer(1, 20))
 
@@ -134,27 +139,39 @@ def export_all_checklists(
             if data:
                 table_data = [["ID", "Title", "Description", "Status", "Created"]]
                 for row in data:
-                    table_data.append([
-                        str(row["id"]),
-                        row["title"][:30] + "..." if len(row["title"]) > 30 else row["title"],
-                        row["description"][:40] + "..." if row["description"] and len(row["description"]) > 40 else (row["description"] or ""),
-                        "Active" if row["is_active"] else "Inactive",
-                        row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else ""
-                    ])
+                    table_data.append(
+                        [
+                            str(row["id"]),
+                            row["title"][:30] + "..." if len(row["title"]) > 30 else row["title"],
+                            (
+                                row["description"][:40] + "..."
+                                if row["description"] and len(row["description"]) > 40
+                                else (row["description"] or "")
+                            ),
+                            "Active" if row["is_active"] else "Inactive",
+                            row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "",
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[0.8*inch, 2*inch, 2.5*inch, 1*inch, 1*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data, colWidths=[0.8 * inch, 2 * inch, 2.5 * inch, 1 * inch, 1 * inch]
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -162,13 +179,14 @@ def export_all_checklists(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename=checklists_{timestamp}.pdf"
-                },
+                headers={"Content-Disposition": f"attachment; filename=checklists_{timestamp}.pdf"},
             )
         if format == "docx":
             if not DOCX_AVAILABLE:
-                raise HTTPException(status_code=500, detail="Word document generation not available. Missing python-docx dependency.")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Word document generation not available. Missing python-docx dependency.",
+                )
 
             docx_buf = BytesIO()
             doc = Document()
@@ -199,10 +217,22 @@ def export_all_checklists(
                 for row_data in data:
                     row_cells = table.add_row().cells
                     row_cells[0].text = str(row_data["id"])
-                    row_cells[1].text = row_data["title"][:40] + "..." if len(row_data["title"]) > 40 else row_data["title"]
-                    row_cells[2].text = (row_data["description"] or "")[:50] + "..." if row_data["description"] and len(row_data["description"]) > 50 else (row_data["description"] or "")
+                    row_cells[1].text = (
+                        row_data["title"][:40] + "..."
+                        if len(row_data["title"]) > 40
+                        else row_data["title"]
+                    )
+                    row_cells[2].text = (
+                        (row_data["description"] or "")[:50] + "..."
+                        if row_data["description"] and len(row_data["description"]) > 50
+                        else (row_data["description"] or "")
+                    )
                     row_cells[3].text = "Active" if row_data["is_active"] else "Inactive"
-                    row_cells[4].text = row_data["created_at"].strftime("%Y-%m-%d") if row_data["created_at"] else ""
+                    row_cells[4].text = (
+                        row_data["created_at"].strftime("%Y-%m-%d")
+                        if row_data["created_at"]
+                        else ""
+                    )
 
             doc.save(docx_buf)
             docx_buf.seek(0)
@@ -324,14 +354,18 @@ def export_ai_results(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("AI Analysis Results Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total AI Results: {len(data)}", summary_style))
             if checklist_id:
                 story.append(Paragraph(f"Filtered by Checklist ID: {checklist_id}", summary_style))
@@ -343,27 +377,47 @@ def export_ai_results(
             if data:
                 table_data = [["File", "User", "Score", "Checklist", "Date"]]
                 for row in data:
-                    table_data.append([
-                        row["filename"][:25] + "..." if len(row["filename"]) > 25 else row["filename"],
-                        row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                        f"{row['ai_score']:.1%}" if row["ai_score"] is not None else "N/A",
-                        row["checklist_title"][:20] + "..." if len(row["checklist_title"]) > 20 else row["checklist_title"],
-                        row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else ""
-                    ])
+                    table_data.append(
+                        [
+                            (
+                                row["filename"][:25] + "..."
+                                if len(row["filename"]) > 25
+                                else row["filename"]
+                            ),
+                            (
+                                row["username"][:15] + "..."
+                                if len(row["username"]) > 15
+                                else row["username"]
+                            ),
+                            f"{row['ai_score']:.1%}" if row["ai_score"] is not None else "N/A",
+                            (
+                                row["checklist_title"][:20] + "..."
+                                if len(row["checklist_title"]) > 20
+                                else row["checklist_title"]
+                            ),
+                            row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "",
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[2*inch, 1.5*inch, 1*inch, 1.5*inch, 1*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1.5 * inch, 1 * inch]
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -371,13 +425,14 @@ def export_ai_results(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename=ai_results_{timestamp}.pdf"
-                },
+                headers={"Content-Disposition": f"attachment; filename=ai_results_{timestamp}.pdf"},
             )
         if format == "docx":
             if not DOCX_AVAILABLE:
-                raise HTTPException(status_code=500, detail="Word document generation not available. Missing python-docx dependency.")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Word document generation not available. Missing python-docx dependency.",
+                )
 
             docx_buf = BytesIO()
             doc = Document()
@@ -411,11 +466,29 @@ def export_ai_results(
                 # Data rows
                 for row_data in data:
                     row_cells = table.add_row().cells
-                    row_cells[0].text = row_data["filename"][:30] + "..." if len(row_data["filename"]) > 30 else row_data["filename"]
-                    row_cells[1].text = row_data["username"][:20] + "..." if len(row_data["username"]) > 20 else row_data["username"]
-                    row_cells[2].text = f"{row_data['ai_score']:.1%}" if row_data["ai_score"] is not None else "N/A"
-                    row_cells[3].text = row_data["checklist_title"][:25] + "..." if len(row_data["checklist_title"]) > 25 else row_data["checklist_title"]
-                    row_cells[4].text = row_data["created_at"].strftime("%Y-%m-%d") if row_data["created_at"] else ""
+                    row_cells[0].text = (
+                        row_data["filename"][:30] + "..."
+                        if len(row_data["filename"]) > 30
+                        else row_data["filename"]
+                    )
+                    row_cells[1].text = (
+                        row_data["username"][:20] + "..."
+                        if len(row_data["username"]) > 20
+                        else row_data["username"]
+                    )
+                    row_cells[2].text = (
+                        f"{row_data['ai_score']:.1%}" if row_data["ai_score"] is not None else "N/A"
+                    )
+                    row_cells[3].text = (
+                        row_data["checklist_title"][:25] + "..."
+                        if len(row_data["checklist_title"]) > 25
+                        else row_data["checklist_title"]
+                    )
+                    row_cells[4].text = (
+                        row_data["created_at"].strftime("%Y-%m-%d")
+                        if row_data["created_at"]
+                        else ""
+                    )
 
             doc.save(docx_buf)
             docx_buf.seek(0)
@@ -529,14 +602,18 @@ def export_users(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("Users Directory Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Users: {len(data)}", summary_style))
             if role:
                 story.append(Paragraph(f"Filtered by Role: {role}", summary_style))
@@ -547,38 +624,73 @@ def export_users(
                 if include_stats:
                     table_data = [["Username", "Email", "Role", "Uploads", "Avg Score", "Status"]]
                     for row in data:
-                        table_data.append([
-                            row["username"][:20] + "..." if len(row["username"]) > 20 else row["username"],
-                            row["email"][:25] + "..." if len(row["email"]) > 25 else row["email"],
-                            row["role"].title(),
-                            str(row.get("total_uploads", 0)),
-                            f"{row.get('avg_ai_score', 0):.1%}" if row.get("avg_ai_score") else "N/A",
-                            "Active" if row["is_active"] else "Inactive"
-                        ])
+                        table_data.append(
+                            [
+                                (
+                                    row["username"][:20] + "..."
+                                    if len(row["username"]) > 20
+                                    else row["username"]
+                                ),
+                                (
+                                    row["email"][:25] + "..."
+                                    if len(row["email"]) > 25
+                                    else row["email"]
+                                ),
+                                row["role"].title(),
+                                str(row.get("total_uploads", 0)),
+                                (
+                                    f"{row.get('avg_ai_score', 0):.1%}"
+                                    if row.get("avg_ai_score")
+                                    else "N/A"
+                                ),
+                                "Active" if row["is_active"] else "Inactive",
+                            ]
+                        )
                 else:
                     table_data = [["Username", "Email", "Role", "Created", "Status"]]
                     for row in data:
-                        table_data.append([
-                            row["username"][:20] + "..." if len(row["username"]) > 20 else row["username"],
-                            row["email"][:30] + "..." if len(row["email"]) > 30 else row["email"],
-                            row["role"].title(),
-                            row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "",
-                            "Active" if row["is_active"] else "Inactive"
-                        ])
+                        table_data.append(
+                            [
+                                (
+                                    row["username"][:20] + "..."
+                                    if len(row["username"]) > 20
+                                    else row["username"]
+                                ),
+                                (
+                                    row["email"][:30] + "..."
+                                    if len(row["email"]) > 30
+                                    else row["email"]
+                                ),
+                                row["role"].title(),
+                                row["created_at"].strftime("%Y-%m-%d") if row["created_at"] else "",
+                                "Active" if row["is_active"] else "Inactive",
+                            ]
+                        )
 
-                table = Table(table_data, colWidths=[1.5*inch, 2*inch, 1*inch, 1*inch, 1*inch, 0.8*inch] if include_stats else [1.8*inch, 2.5*inch, 1*inch, 1.2*inch, 1*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data,
+                    colWidths=(
+                        [1.5 * inch, 2 * inch, 1 * inch, 1 * inch, 1 * inch, 0.8 * inch]
+                        if include_stats
+                        else [1.8 * inch, 2.5 * inch, 1 * inch, 1.2 * inch, 1 * inch]
+                    ),
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -586,9 +698,7 @@ def export_users(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={
-                    "Content-Disposition": f"attachment; filename=users_{timestamp}.pdf"
-                },
+                headers={"Content-Disposition": f"attachment; filename=users_{timestamp}.pdf"},
             )
 
     except Exception as e:
@@ -612,9 +722,7 @@ def export_submissions(
         # Build query with joins
         query: Any = (
             select(SubmissionAnswer, Checklist, User)
-            .join(
-                Checklist, SubmissionAnswer.checklist_id == Checklist.id
-            )
+            .join(Checklist, SubmissionAnswer.checklist_id == Checklist.id)
             .join(User, SubmissionAnswer.user_id == User.id)
         )
 
@@ -700,14 +808,18 @@ def export_submissions(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("User Submissions Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Submissions: {len(data)}", summary_style))
             if checklist_id:
                 story.append(Paragraph(f"Filtered by Checklist ID: {checklist_id}", summary_style))
@@ -719,28 +831,48 @@ def export_submissions(
             if data:
                 table_data = [["User", "Checklist", "Question ID", "Answer Preview", "Date"]]
                 for row in data:
-                    answer_preview = row["answer_text"][:40] + "..." if len(row["answer_text"]) > 40 else row["answer_text"]
-                    table_data.append([
-                        row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                        row["checklist_title"][:20] + "..." if len(row["checklist_title"]) > 20 else row["checklist_title"],
-                        str(row["question_id"]),
-                        answer_preview,
-                        row["submitted_at"].strftime("%Y-%m-%d") if row["submitted_at"] else ""
-                    ])
+                    answer_preview = (
+                        row["answer_text"][:40] + "..."
+                        if len(row["answer_text"]) > 40
+                        else row["answer_text"]
+                    )
+                    table_data.append(
+                        [
+                            (
+                                row["username"][:15] + "..."
+                                if len(row["username"]) > 15
+                                else row["username"]
+                            ),
+                            (
+                                row["checklist_title"][:20] + "..."
+                                if len(row["checklist_title"]) > 20
+                                else row["checklist_title"]
+                            ),
+                            str(row["question_id"]),
+                            answer_preview,
+                            row["submitted_at"].strftime("%Y-%m-%d") if row["submitted_at"] else "",
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[1.2*inch, 1.8*inch, 0.8*inch, 2.5*inch, 1*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data, colWidths=[1.2 * inch, 1.8 * inch, 0.8 * inch, 2.5 * inch, 1 * inch]
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -783,24 +915,21 @@ def export_analytics_data(
             # Get user's uploads
             user_uploads = db.exec(
                 select(FileUpload).where(
-                    FileUpload.user_id == user.id,
-                    FileUpload.uploaded_at >= cutoff_date
+                    FileUpload.user_id == user.id, FileUpload.uploaded_at >= cutoff_date
                 )
             ).all()
 
             # Get user's AI results
             user_ai_results = db.exec(
                 select(AIResult).where(
-                    AIResult.user_id == user.id,
-                    AIResult.created_at >= cutoff_date
+                    AIResult.user_id == user.id, AIResult.created_at >= cutoff_date
                 )
             ).all()
 
             # Get user activities
             user_activities = db.exec(
                 select(UserActivity).where(
-                    UserActivity.user_id == user.id,
-                    UserActivity.timestamp >= cutoff_date
+                    UserActivity.user_id == user.id, UserActivity.timestamp >= cutoff_date
                 )
             ).all()
 
@@ -817,22 +946,26 @@ def export_analytics_data(
                 else 0
             )
 
-            data.append({
-                "user_id": user.id,
-                "username": user.username,
-                "email": user.email,
-                "role": user.role,
-                "created_at": user.created_at,
-                "last_login": user.last_login,
-                "is_active": user.is_active,
-                "total_uploads": len(user_uploads),
-                "total_ai_analyses": len(user_ai_results),
-                "avg_ai_score": round(avg_score, 3) if include_scores else None,
-                "avg_processing_time_ms": round(avg_processing_time, 2),
-                "total_activities": len(user_activities),
-                "most_recent_activity": max([a.timestamp for a in user_activities]) if user_activities else None,
-                "activity_types": list({a.action_type for a in user_activities}),
-            })
+            data.append(
+                {
+                    "user_id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "role": user.role,
+                    "created_at": user.created_at,
+                    "last_login": user.last_login,
+                    "is_active": user.is_active,
+                    "total_uploads": len(user_uploads),
+                    "total_ai_analyses": len(user_ai_results),
+                    "avg_ai_score": round(avg_score, 3) if include_scores else None,
+                    "avg_processing_time_ms": round(avg_processing_time, 2),
+                    "total_activities": len(user_activities),
+                    "most_recent_activity": (
+                        max([a.timestamp for a in user_activities]) if user_activities else None
+                    ),
+                    "activity_types": list({a.action_type for a in user_activities}),
+                }
+            )
 
         df = pd.DataFrame(data)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -876,14 +1009,18 @@ def export_analytics_data(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("Analytics Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Users Analyzed: {len(data)}", summary_style))
             story.append(Paragraph(f"Data Period: Last {days} days", summary_style))
             story.append(Spacer(1, 20))
@@ -891,41 +1028,64 @@ def export_analytics_data(
             # Data table
             if data:
                 if include_scores:
-                    table_data = [["User", "Role", "Uploads", "AI Analyses", "Avg Score", "Activities"]]
+                    table_data = [
+                        ["User", "Role", "Uploads", "AI Analyses", "Avg Score", "Activities"]
+                    ]
                     for row in data:
-                        table_data.append([
-                            row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                            row["role"].title(),
-                            str(row["total_uploads"]),
-                            str(row["total_ai_analyses"]),
-                            f"{row['avg_ai_score']:.1%}" if row["avg_ai_score"] else "N/A",
-                            str(row["total_activities"])
-                        ])
+                        table_data.append(
+                            [
+                                (
+                                    row["username"][:15] + "..."
+                                    if len(row["username"]) > 15
+                                    else row["username"]
+                                ),
+                                row["role"].title(),
+                                str(row["total_uploads"]),
+                                str(row["total_ai_analyses"]),
+                                f"{row['avg_ai_score']:.1%}" if row["avg_ai_score"] else "N/A",
+                                str(row["total_activities"]),
+                            ]
+                        )
                 else:
-                    table_data = [["User", "Role", "Uploads", "AI Analyses", "Activities", "Status"]]
+                    table_data = [
+                        ["User", "Role", "Uploads", "AI Analyses", "Activities", "Status"]
+                    ]
                     for row in data:
-                        table_data.append([
-                            row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                            row["role"].title(),
-                            str(row["total_uploads"]),
-                            str(row["total_ai_analyses"]),
-                            str(row["total_activities"]),
-                            "Active" if row["is_active"] else "Inactive"
-                        ])
+                        table_data.append(
+                            [
+                                (
+                                    row["username"][:15] + "..."
+                                    if len(row["username"]) > 15
+                                    else row["username"]
+                                ),
+                                row["role"].title(),
+                                str(row["total_uploads"]),
+                                str(row["total_ai_analyses"]),
+                                str(row["total_activities"]),
+                                "Active" if row["is_active"] else "Inactive",
+                            ]
+                        )
 
-                table = Table(table_data, colWidths=[1.3*inch, 1*inch, 0.8*inch, 1*inch, 0.8*inch, 0.8*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data,
+                    colWidths=[1.3 * inch, 1 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 0.8 * inch],
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -967,15 +1127,17 @@ def export_system_metrics(
         # Prepare data
         data = []
         for metric in metrics:
-            data.append({
-                "id": metric.id,
-                "metric_name": metric.metric_name,
-                "metric_value": metric.metric_value,
-                "metric_unit": metric.metric_unit,
-                "category": metric.category,
-                "recorded_at": metric.recorded_at,
-                "additional_data": metric.additional_data,
-            })
+            data.append(
+                {
+                    "id": metric.id,
+                    "metric_name": metric.metric_name,
+                    "metric_value": metric.metric_value,
+                    "metric_unit": metric.metric_unit,
+                    "category": metric.category,
+                    "recorded_at": metric.recorded_at,
+                    "additional_data": metric.additional_data,
+                }
+            )
 
         df = pd.DataFrame(data)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -987,7 +1149,9 @@ def export_system_metrics(
             return StreamingResponse(
                 iter([csv_buf.getvalue()]),
                 media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.csv"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.csv"
+                },
             )
         if format == "excel":
             excel_buf = BytesIO()
@@ -996,7 +1160,9 @@ def export_system_metrics(
             return StreamingResponse(
                 iter([excel_buf.getvalue()]),
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers={"Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.xlsx"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.xlsx"
+                },
             )
         if format == "json":
             json_buf = StringIO()
@@ -1005,7 +1171,9 @@ def export_system_metrics(
             return StreamingResponse(
                 iter([json_buf.getvalue()]),
                 media_type="application/json",
-                headers={"Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.json"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.json"
+                },
             )
         if format == "pdf":
             pdf_buf = BytesIO()
@@ -1019,14 +1187,18 @@ def export_system_metrics(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("System Metrics Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Metrics: {len(data)}", summary_style))
             story.append(Paragraph(f"Data Period: Last {days} days", summary_style))
             if category:
@@ -1037,27 +1209,47 @@ def export_system_metrics(
             if data:
                 table_data = [["Metric Name", "Value", "Unit", "Category", "Recorded"]]
                 for row in data:
-                    table_data.append([
-                        row["metric_name"][:25] + "..." if len(row["metric_name"]) > 25 else row["metric_name"],
-                        str(row["metric_value"])[:15] + "..." if len(str(row["metric_value"])) > 15 else str(row["metric_value"]),
-                        row["metric_unit"] or "",
-                        row["category"] or "",
-                        row["recorded_at"].strftime("%Y-%m-%d %H:%M") if row["recorded_at"] else ""
-                    ])
+                    table_data.append(
+                        [
+                            (
+                                row["metric_name"][:25] + "..."
+                                if len(row["metric_name"]) > 25
+                                else row["metric_name"]
+                            ),
+                            (
+                                str(row["metric_value"])[:15] + "..."
+                                if len(str(row["metric_value"])) > 15
+                                else str(row["metric_value"])
+                            ),
+                            row["metric_unit"] or "",
+                            row["category"] or "",
+                            (
+                                row["recorded_at"].strftime("%Y-%m-%d %H:%M")
+                                if row["recorded_at"]
+                                else ""
+                            ),
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[2*inch, 1.2*inch, 0.8*inch, 1.2*inch, 1.3*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data, colWidths=[2 * inch, 1.2 * inch, 0.8 * inch, 1.2 * inch, 1.3 * inch]
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -1065,7 +1257,9 @@ def export_system_metrics(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.pdf"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=system_metrics_{timestamp}.pdf"
+                },
             )
 
     except Exception as e:
@@ -1107,21 +1301,23 @@ def export_user_activities(
         # Prepare data
         data = []
         for activity, username, email in activities:
-            data.append({
-                "id": activity.id,
-                "user_id": activity.user_id,
-                "username": username,
-                "email": email,
-                "session_id": activity.session_id,
-                "action_type": activity.action_type,
-                "resource_type": activity.resource_type,
-                "resource_id": activity.resource_id,
-                "duration_ms": activity.duration_ms,
-                "ip_address": activity.ip_address,
-                "user_agent": activity.user_agent,
-                "timestamp": activity.timestamp,
-                "action_details": activity.action_details,
-            })
+            data.append(
+                {
+                    "id": activity.id,
+                    "user_id": activity.user_id,
+                    "username": username,
+                    "email": email,
+                    "session_id": activity.session_id,
+                    "action_type": activity.action_type,
+                    "resource_type": activity.resource_type,
+                    "resource_id": activity.resource_id,
+                    "duration_ms": activity.duration_ms,
+                    "ip_address": activity.ip_address,
+                    "user_agent": activity.user_agent,
+                    "timestamp": activity.timestamp,
+                    "action_details": activity.action_details,
+                }
+            )
 
         df = pd.DataFrame(data)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1133,7 +1329,9 @@ def export_user_activities(
             return StreamingResponse(
                 iter([csv_buf.getvalue()]),
                 media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename=user_activities_{timestamp}.csv"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=user_activities_{timestamp}.csv"
+                },
             )
         if format == "excel":
             excel_buf = BytesIO()
@@ -1142,7 +1340,9 @@ def export_user_activities(
             return StreamingResponse(
                 iter([excel_buf.getvalue()]),
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers={"Content-Disposition": f"attachment; filename=user_activities_{timestamp}.xlsx"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=user_activities_{timestamp}.xlsx"
+                },
             )
         if format == "json":
             json_buf = StringIO()
@@ -1151,7 +1351,9 @@ def export_user_activities(
             return StreamingResponse(
                 iter([json_buf.getvalue()]),
                 media_type="application/json",
-                headers={"Content-Disposition": f"attachment; filename=user_activities_{timestamp}.json"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=user_activities_{timestamp}.json"
+                },
             )
         if format == "pdf":
             pdf_buf = BytesIO()
@@ -1165,14 +1367,18 @@ def export_user_activities(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("User Activities Export Report", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Activities: {len(data)}", summary_style))
             story.append(Paragraph(f"Data Period: Last {days} days", summary_style))
             if user_id:
@@ -1186,28 +1392,50 @@ def export_user_activities(
                 table_data = [["User", "Action", "Resource", "Duration", "Timestamp"]]
                 for row in data:
                     duration_ms = row["duration_ms"] or 0
-                    duration_str = f"{duration_ms}ms" if duration_ms < 1000 else f"{duration_ms/1000:.1f}s"
-                    table_data.append([
-                        row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                        row["action_type"][:15] + "..." if len(row["action_type"]) > 15 else row["action_type"],
-                        row["resource_type"][:15] + "..." if row["resource_type"] and len(row["resource_type"]) > 15 else (row["resource_type"] or ""),
-                        duration_str,
-                        row["timestamp"].strftime("%m-%d %H:%M") if row["timestamp"] else ""
-                    ])
+                    duration_str = (
+                        f"{duration_ms}ms" if duration_ms < 1000 else f"{duration_ms/1000:.1f}s"
+                    )
+                    table_data.append(
+                        [
+                            (
+                                row["username"][:15] + "..."
+                                if len(row["username"]) > 15
+                                else row["username"]
+                            ),
+                            (
+                                row["action_type"][:15] + "..."
+                                if len(row["action_type"]) > 15
+                                else row["action_type"]
+                            ),
+                            (
+                                row["resource_type"][:15] + "..."
+                                if row["resource_type"] and len(row["resource_type"]) > 15
+                                else (row["resource_type"] or "")
+                            ),
+                            duration_str,
+                            row["timestamp"].strftime("%m-%d %H:%M") if row["timestamp"] else "",
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[1.2*inch, 1.5*inch, 1.2*inch, 1*inch, 1.6*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data, colWidths=[1.2 * inch, 1.5 * inch, 1.2 * inch, 1 * inch, 1.6 * inch]
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -1215,7 +1443,9 @@ def export_user_activities(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename=user_activities_{timestamp}.pdf"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=user_activities_{timestamp}.pdf"
+                },
             )
 
     except Exception as e:
@@ -1257,32 +1487,33 @@ def export_compliance_report(
             # Determine compliance status
             compliance_status = "Compliant" if ai_result.score >= 0.7 else "Non-Compliant"
             risk_level = (
-                "Low" if ai_result.score >= 0.8
-                else "Medium" if ai_result.score >= 0.6
-                else "High"
+                "Low" if ai_result.score >= 0.8 else "Medium" if ai_result.score >= 0.6 else "High"
             )
 
-            data.append({
-                "assessment_id": ai_result.id,
-                "checklist_id": checklist.id,
-                "checklist_title": checklist.title,
-                "file_id": file_upload.id,
-                "filename": file_upload.filename,
-                "user_id": user.id,
-                "username": user.username,
-                "user_role": user.role,
-                "compliance_score": ai_result.score,
-                "compliance_status": compliance_status,
-                "risk_level": risk_level,
-                "ai_model_version": ai_result.ai_model_version,
-                "processing_time_ms": ai_result.processing_time_ms,
-                "assessment_date": ai_result.created_at,
-                "file_upload_date": file_upload.uploaded_at,
-                "feedback_summary": (
-                    ai_result.feedback[:200] + "..." if len(ai_result.feedback) > 200
-                    else ai_result.feedback
-                ),
-            })
+            data.append(
+                {
+                    "assessment_id": ai_result.id,
+                    "checklist_id": checklist.id,
+                    "checklist_title": checklist.title,
+                    "file_id": file_upload.id,
+                    "filename": file_upload.filename,
+                    "user_id": user.id,
+                    "username": user.username,
+                    "user_role": user.role,
+                    "compliance_score": ai_result.score,
+                    "compliance_status": compliance_status,
+                    "risk_level": risk_level,
+                    "ai_model_version": ai_result.ai_model_version,
+                    "processing_time_ms": ai_result.processing_time_ms,
+                    "assessment_date": ai_result.created_at,
+                    "file_upload_date": file_upload.uploaded_at,
+                    "feedback_summary": (
+                        ai_result.feedback[:200] + "..."
+                        if len(ai_result.feedback) > 200
+                        else ai_result.feedback
+                    ),
+                }
+            )
 
         df = pd.DataFrame(data)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1294,7 +1525,9 @@ def export_compliance_report(
             return StreamingResponse(
                 iter([csv_buf.getvalue()]),
                 media_type="text/csv",
-                headers={"Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.csv"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.csv"
+                },
             )
         if format == "excel":
             excel_buf = BytesIO()
@@ -1303,7 +1536,9 @@ def export_compliance_report(
             return StreamingResponse(
                 iter([excel_buf.getvalue()]),
                 media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                headers={"Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.xlsx"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.xlsx"
+                },
             )
         if format == "json":
             json_buf = StringIO()
@@ -1312,7 +1547,9 @@ def export_compliance_report(
             return StreamingResponse(
                 iter([json_buf.getvalue()]),
                 media_type="application/json",
-                headers={"Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.json"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.json"
+                },
             )
         if format == "pdf":
             pdf_buf = BytesIO()
@@ -1326,14 +1563,18 @@ def export_compliance_report(
                 parent=styles["Heading1"],
                 fontSize=24,
                 spaceAfter=30,
-                textColor=colors.HexColor("#1976d2")
+                textColor=colors.HexColor("#1976d2"),
             )
             story.append(Paragraph("Compliance Report Export", title_style))
             story.append(Spacer(1, 12))
 
             # Summary
             summary_style = styles["Normal"]
-            story.append(Paragraph(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style))
+            story.append(
+                Paragraph(
+                    f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", summary_style
+                )
+            )
             story.append(Paragraph(f"Total Assessments: {len(data)}", summary_style))
             story.append(Paragraph(f"Data Period: Last {days} days", summary_style))
             story.append(Paragraph(f"Minimum Score Filter: {min_score}", summary_style))
@@ -1342,7 +1583,12 @@ def export_compliance_report(
             if data:
                 compliant_count = len([d for d in data if d["compliance_status"] == "Compliant"])
                 compliance_rate = (compliant_count / len(data)) * 100 if data else 0
-                story.append(Paragraph(f"Compliance Rate: {compliance_rate:.1f}% ({compliant_count}/{len(data)})", summary_style))
+                story.append(
+                    Paragraph(
+                        f"Compliance Rate: {compliance_rate:.1f}% ({compliant_count}/{len(data)})",
+                        summary_style,
+                    )
+                )
 
             story.append(Spacer(1, 20))
 
@@ -1350,28 +1596,53 @@ def export_compliance_report(
             if data:
                 table_data = [["File", "User", "Score", "Status", "Risk", "Date"]]
                 for row in data:
-                    table_data.append([
-                        row["filename"][:20] + "..." if len(row["filename"]) > 20 else row["filename"],
-                        row["username"][:15] + "..." if len(row["username"]) > 15 else row["username"],
-                        f"{row['compliance_score']:.1%}" if row["compliance_score"] is not None else "N/A",
-                        row["compliance_status"],
-                        row["risk_level"],
-                        row["assessment_date"].strftime("%Y-%m-%d") if row["assessment_date"] else ""
-                    ])
+                    table_data.append(
+                        [
+                            (
+                                row["filename"][:20] + "..."
+                                if len(row["filename"]) > 20
+                                else row["filename"]
+                            ),
+                            (
+                                row["username"][:15] + "..."
+                                if len(row["username"]) > 15
+                                else row["username"]
+                            ),
+                            (
+                                f"{row['compliance_score']:.1%}"
+                                if row["compliance_score"] is not None
+                                else "N/A"
+                            ),
+                            row["compliance_status"],
+                            row["risk_level"],
+                            (
+                                row["assessment_date"].strftime("%Y-%m-%d")
+                                if row["assessment_date"]
+                                else ""
+                            ),
+                        ]
+                    )
 
-                table = Table(table_data, colWidths=[1.8*inch, 1.2*inch, 0.8*inch, 1*inch, 0.8*inch, 1*inch])
-                table.setStyle(TableStyle([
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                    ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("FONTSIZE", (0, 0), (-1, 0), 10),
-                    ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                    ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                    ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-                    ("FONTSIZE", (0, 1), (-1, -1), 8),
-                    ("GRID", (0, 0), (-1, -1), 1, colors.black)
-                ]))
+                table = Table(
+                    table_data,
+                    colWidths=[1.8 * inch, 1.2 * inch, 0.8 * inch, 1 * inch, 0.8 * inch, 1 * inch],
+                )
+                table.setStyle(
+                    TableStyle(
+                        [
+                            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1976d2")),
+                            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                            ("FONTSIZE", (0, 0), (-1, 0), 10),
+                            ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                            ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                            ("FONTSIZE", (0, 1), (-1, -1), 8),
+                            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                        ]
+                    )
+                )
                 story.append(table)
 
             doc.build(story)
@@ -1379,7 +1650,9 @@ def export_compliance_report(
             return StreamingResponse(
                 iter([pdf_buf.getvalue()]),
                 media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.pdf"},
+                headers={
+                    "Content-Disposition": f"attachment; filename=compliance_report_{timestamp}.pdf"
+                },
             )
 
     except Exception as e:

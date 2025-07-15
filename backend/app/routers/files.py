@@ -32,21 +32,19 @@ async def download_file(
     """
     try:
         # Get file record from database
-        file_record = db.exec(
-            select(FileUpload).where(FileUpload.id == file_id)
-        ).first()
+        file_record = db.exec(select(FileUpload).where(FileUpload.id == file_id)).first()
 
         if not file_record:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
         # Check permissions - users can download their own files, admins and reviewers can download any
-        if current_user.role not in ["admin", "reviewer"] and file_record.user_id != current_user.id:
+        if (
+            current_user.role not in ["admin", "reviewer"]
+            and file_record.user_id != current_user.id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied - you can only download your own files"
+                detail="Access denied - you can only download your own files",
             )
 
         # Check if file exists on disk
@@ -54,8 +52,7 @@ async def download_file(
         if not file_path.exists():
             logger.error(f"File not found on disk: {file_path}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found on server"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found on server"
             )
 
         # Get MIME type
@@ -79,7 +76,7 @@ async def download_file(
                 "Cache-Control": "no-cache, no-store, must-revalidate",
                 "Pragma": "no-cache",
                 "Expires": "0",
-            }
+            },
         )
 
     except HTTPException:
@@ -87,8 +84,7 @@ async def download_file(
     except Exception as e:
         logger.exception(f"Error downloading file {file_id}: {e!s}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error downloading file"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error downloading file"
         )
 
 
@@ -106,21 +102,19 @@ async def view_file(
     """
     try:
         # Get file record from database
-        file_record = db.exec(
-            select(FileUpload).where(FileUpload.id == file_id)
-        ).first()
+        file_record = db.exec(select(FileUpload).where(FileUpload.id == file_id)).first()
 
         if not file_record:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
         # Check permissions
-        if current_user.role not in ["admin", "reviewer"] and file_record.user_id != current_user.id:
+        if (
+            current_user.role not in ["admin", "reviewer"]
+            and file_record.user_id != current_user.id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied - you can only view your own files"
+                detail="Access denied - you can only view your own files",
             )
 
         # Check if file exists on disk
@@ -128,8 +122,7 @@ async def view_file(
         if not file_path.exists():
             logger.error(f"File not found on disk: {file_path}")
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found on server"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found on server"
             )
 
         # Get MIME type
@@ -151,7 +144,7 @@ async def view_file(
             headers={
                 "Content-Disposition": f'inline; filename="{file_record.filename}"',
                 "Cache-Control": "public, max-age=3600",
-            }
+            },
         )
 
     except HTTPException:
@@ -159,8 +152,7 @@ async def view_file(
     except Exception as e:
         logger.exception(f"Error viewing file {file_id}: {e!s}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error viewing file"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error viewing file"
         )
 
 
@@ -178,29 +170,26 @@ async def stream_file(
     """
     try:
         # Get file record from database
-        file_record = db.exec(
-            select(FileUpload).where(FileUpload.id == file_id)
-        ).first()
+        file_record = db.exec(select(FileUpload).where(FileUpload.id == file_id)).first()
 
         if not file_record:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
         # Check permissions
-        if current_user.role not in ["admin", "reviewer"] and file_record.user_id != current_user.id:
+        if (
+            current_user.role not in ["admin", "reviewer"]
+            and file_record.user_id != current_user.id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied - you can only stream your own files"
+                detail="Access denied - you can only stream your own files",
             )
 
         # Check if file exists on disk
         file_path = Path(file_record.filepath)
         if not file_path.exists():
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found on server"
+                status_code=status.HTTP_404_NOT_FOUND, detail="File not found on server"
             )
 
         # Get file size
@@ -244,7 +233,7 @@ async def stream_file(
             file_streamer(),
             status_code=206 if range_header else 200,
             headers=headers,
-            media_type=mime_type
+            media_type=mime_type,
         )
 
     except HTTPException:
@@ -252,8 +241,7 @@ async def stream_file(
     except Exception as e:
         logger.exception(f"Error streaming file {file_id}: {e!s}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error streaming file"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error streaming file"
         )
 
 
@@ -270,21 +258,19 @@ async def get_file_info(
     """
     try:
         # Get file record from database
-        file_record = db.exec(
-            select(FileUpload).where(FileUpload.id == file_id)
-        ).first()
+        file_record = db.exec(select(FileUpload).where(FileUpload.id == file_id)).first()
 
         if not file_record:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
         # Check permissions
-        if current_user.role not in ["admin", "reviewer"] and file_record.user_id != current_user.id:
+        if (
+            current_user.role not in ["admin", "reviewer"]
+            and file_record.user_id != current_user.id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied - you can only access your own file info"
+                detail="Access denied - you can only access your own file info",
             )
 
         # Check if file exists on disk
@@ -311,7 +297,7 @@ async def get_file_info(
         logger.exception(f"Error getting file info {file_id}: {e!s}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error getting file information"
+            detail="Error getting file information",
         )
 
 
@@ -329,34 +315,30 @@ async def get_file_ai_analysis(
     """
     try:
         # Get file record from database
-        file_record = db.exec(
-            select(FileUpload).where(FileUpload.id == file_id)
-        ).first()
+        file_record = db.exec(select(FileUpload).where(FileUpload.id == file_id)).first()
 
         if not file_record:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="File not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File not found")
 
         # Check permissions
-        if current_user.role not in ["admin", "reviewer"] and file_record.user_id != current_user.id:
+        if (
+            current_user.role not in ["admin", "reviewer"]
+            and file_record.user_id != current_user.id
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied - you can only access analysis for your own files"
+                detail="Access denied - you can only access analysis for your own files",
             )
 
         # Get AI analysis results for this file
-        ai_results = db.exec(
-            select(AIResult).where(AIResult.file_upload_id == file_id)
-        ).all()
+        ai_results = db.exec(select(AIResult).where(AIResult.file_upload_id == file_id)).all()
 
         if not ai_results:
             return {
                 "file_id": file_id,
                 "filename": file_record.filename,
                 "has_analysis": False,
-                "message": "No AI analysis results found for this file"
+                "message": "No AI analysis results found for this file",
             }
 
         # Get the latest analysis result (in case there are multiple)
@@ -367,6 +349,7 @@ async def get_file_ai_analysis(
         if latest_result.analysis_metadata:
             try:
                 import json
+
                 analysis_metadata = json.loads(latest_result.analysis_metadata)
             except (json.JSONDecodeError, TypeError):
                 analysis_metadata = None
@@ -386,7 +369,7 @@ async def get_file_ai_analysis(
                 "ai_model_version": latest_result.ai_model_version,
                 "analysis_metadata": analysis_metadata,
                 "created_at": latest_result.created_at,
-                "status": "completed"
+                "status": "completed",
             },
             "file_info": {
                 "checklist_id": file_record.checklist_id,
@@ -394,8 +377,8 @@ async def get_file_ai_analysis(
                 "uploaded_at": file_record.uploaded_at,
                 "processing_status": file_record.processing_status,
                 "file_size": file_record.file_size,
-                "file_type": file_record.file_type
-            }
+                "file_type": file_record.file_type,
+            },
         }
 
     except HTTPException:
@@ -403,6 +386,5 @@ async def get_file_ai_analysis(
     except Exception as e:
         logger.exception(f"Error getting AI analysis for file {file_id}: {e!s}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error getting AI analysis"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error getting AI analysis"
         )

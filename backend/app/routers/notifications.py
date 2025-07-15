@@ -42,8 +42,7 @@ def get_unread_count(
 ):
     count = db.exec(
         select(Notification).where(
-            Notification.user_id == current_user.id,
-            Notification.read == False
+            Notification.user_id == current_user.id, Notification.read == False
         )
     ).all()
     return {"unread_count": len(count)}

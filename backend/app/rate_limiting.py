@@ -53,9 +53,7 @@ def get_rate_limit(endpoint_type: str) -> str:
     return RATE_LIMITS.get(endpoint_type, "100/minute")
 
 
-def create_rate_limiter(
-    endpoint_type: str
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def create_rate_limiter(endpoint_type: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Create a rate limiter decorator for specific endpoint type"""
     limit = get_rate_limit(endpoint_type)
 
@@ -109,7 +107,7 @@ user_limiter = Limiter(
 
 
 def create_user_rate_limiter(
-    endpoint_type: str
+    endpoint_type: str,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Create a user-based rate limiter for authenticated endpoints"""
     limit = get_rate_limit(endpoint_type)

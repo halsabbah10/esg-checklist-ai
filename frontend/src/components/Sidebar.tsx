@@ -70,11 +70,11 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
         description: 'Global search across all content',
       },
       {
-        text: 'Checklists',
+        text: 'Analysis History',
         icon: <ChecklistRtl />,
-        path: '/checklists',
+        path: '/analysis-history',
         roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
-        description: 'Manage ESG compliance checklists',
+        description: 'View previous AI analyses and results',
       },
       {
         text: 'Reviews',

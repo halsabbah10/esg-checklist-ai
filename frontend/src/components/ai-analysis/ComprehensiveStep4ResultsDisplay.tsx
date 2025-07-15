@@ -81,12 +81,19 @@ interface ComprehensiveAnalysisResult {
       total: number;
       completed: number;
       completion_rate: number;
+      summary?: {
+        complete: number;
+        incomplete: number;
+        missing: number;
+        total: number;
+      };
       items: Array<{
         id: string;
         question: string;
         status: 'Complete' | 'Incomplete' | 'Missing';
         evidence_found: string[];
         completeness_score: number;
+        quality_score?: number;
         weight: number;
         recommendations: string[];
       }>;
@@ -105,18 +112,28 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
   const [processedData, setProcessedData] = useState<any>(null);
 
   useEffect(() => {
-    if (state.analysisId) {
+    if (state.analysisId || state.results) {
       loadResults();
     } else {
-      onError('No analysis ID provided');
+      onError('No analysis ID or results provided');
     }
-  }, [state.analysisId]);
+  }, [state.analysisId, state.results]);
 
   const loadResults = async () => {
     try {
       setLoading(true);
-      const response = await api.get(`/v1/ai-analysis/results/${state.analysisId}`);
-      const rawResults = response.data;
+      
+      let rawResults;
+      if (state.results) {
+        // Use results from state (from comprehensive backend processing)
+        rawResults = state.results;
+      } else if (state.analysisId) {
+        // Fallback to API call
+        const response = await api.get(`/v1/ai-analysis/results/${state.analysisId}`);
+        rawResults = response.data;
+      } else {
+        throw new Error('No results or analysis ID available');
+      }
       
       // Process and enhance the results with comprehensive analysis
       const enhanced = await processComprehensiveResults(rawResults);
@@ -135,10 +152,17 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     const feedbackText = rawResults.feedback || '';
     const filename = rawResults.file_info?.filename || '';
 
-    // Extract category scores from feedback and metadata
+    // If comprehensive metadata is already available from backend, use it
+    if (rawResults.metadata && rawResults.metadata.category_scores) {
+      // Backend has already processed everything comprehensively
+      return {
+        ...rawResults,
+        metadata: rawResults.metadata
+      };
+    }
+
+    // Fallback: process results on frontend (for backward compatibility)
     const categoryScores = extractCategoryScores(feedbackText, overallScore, rawResults.metadata);
-    
-    // Generate comprehensive analysis
     const recommendations = extractDocumentSpecificRecommendations(feedbackText, filename);
     const gaps = extractDocumentSpecificGaps(feedbackText, filename, overallScore);
     const checklistCompleteness = generateCompletenessAnalysis(feedbackText, filename, overallScore, rawResults.metadata);
@@ -589,30 +613,82 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
         
         ${processedData?.checklist_completeness ? `
         <div class="section">
-          <h2>Checklist Completeness Analysis</h2>
-          <p><strong>Completion Rate:</strong> ${(processedData.checklist_completeness.completion_rate * 100).toFixed(1)}% 
-          (${processedData.checklist_completeness.completed}/${processedData.checklist_completeness.total} items)</p>
+          <h2>ESG Checklist Completeness Analysis</h2>
           
-          <table>
-            <thead>
-              <tr>
-                <th>Checklist Item</th>
-                <th>Status</th>
-                <th>Completeness Score</th>
-                <th>Evidence Found</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${processedData.checklist_completeness.items.map((item: any) => `
-                <tr>
-                  <td>${item.question}</td>
-                  <td>${item.status}</td>
-                  <td>${(item.completeness_score * 100).toFixed(1)}%</td>
-                  <td>${item.evidence_found.join(', ') || 'None'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
+          <!-- Summary Overview -->
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+            <div style="text-align: center; padding: 15px; background-color: #f5f5f5; border-radius: 8px;">
+              <h3 style="margin: 0; color: #1976d2;">${processedData.checklist_completeness.summary?.total || processedData.checklist_completeness.total || 0}</h3>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Total Questions</p>
+            </div>
+            <div style="text-align: center; padding: 15px; background-color: #e8f5e8; border-radius: 8px;">
+              <h3 style="margin: 0; color: #2e7d32;">${processedData.checklist_completeness.summary?.complete || processedData.checklist_completeness.completed || 0}</h3>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Complete</p>
+            </div>
+            <div style="text-align: center; padding: 15px; background-color: #fff3e0; border-radius: 8px;">
+              <h3 style="margin: 0; color: #f57c00;">${processedData.checklist_completeness.summary?.incomplete || 0}</h3>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Incomplete</p>
+            </div>
+            <div style="text-align: center; padding: 15px; background-color: #ffebee; border-radius: 8px;">
+              <h3 style="margin: 0; color: #d32f2f;">${processedData.checklist_completeness.summary?.missing || 0}</h3>
+              <p style="margin: 5px 0 0 0; font-size: 14px; color: #666;">Missing</p>
+            </div>
+          </div>
+          
+          <p><strong>Overall Completion Rate:</strong> ${(processedData.checklist_completeness.completion_rate * 100).toFixed(1)}%</p>
+          
+          <!-- Complete Requirements -->
+          ${(() => {
+            const completeItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Complete');
+            const incompleteItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Incomplete');
+            const missingItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Missing');
+            
+            let html = '';
+            
+            if (completeItems.length > 0) {
+              html += `
+                <h3 style="color: #2e7d32; margin-top: 30px;">✅ Complete Requirements (${completeItems.length})</h3>
+                <ul>
+                  ${completeItems.map((item: any) => `
+                    <li style="margin-bottom: 10px;">
+                      <strong>${item.question}</strong><br>
+                      <small style="color: #2e7d32;">Score: ${(item.completeness_score * 100).toFixed(1)}% | Evidence: ${item.evidence_found[0] || 'N/A'}</small>
+                    </li>
+                  `).join('')}
+                </ul>
+              `;
+            }
+            
+            if (incompleteItems.length > 0) {
+              html += `
+                <h3 style="color: #f57c00; margin-top: 30px;">⚠️ Incomplete Requirements (${incompleteItems.length})</h3>
+                <ul>
+                  ${incompleteItems.map((item: any) => `
+                    <li style="margin-bottom: 10px;">
+                      <strong>${item.question}</strong><br>
+                      <small style="color: #f57c00;">Score: ${(item.completeness_score * 100).toFixed(1)}% | Evidence: ${item.evidence_found[0] || 'N/A'}</small>
+                    </li>
+                  `).join('')}
+                </ul>
+              `;
+            }
+            
+            if (missingItems.length > 0) {
+              html += `
+                <h3 style="color: #d32f2f; margin-top: 30px;">❌ Missing Requirements (${missingItems.length})</h3>
+                <ul>
+                  ${missingItems.map((item: any) => `
+                    <li style="margin-bottom: 10px;">
+                      <strong>${item.question}</strong><br>
+                      <small style="color: #d32f2f;">Score: ${(item.completeness_score * 100).toFixed(1)}% | Evidence: ${item.evidence_found[0] || 'N/A'}</small>
+                    </li>
+                  `).join('')}
+                </ul>
+              `;
+            }
+            
+            return html;
+          })()}
         </div>
         ` : ''}
         
@@ -946,108 +1022,190 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                 ESG Checklist Completeness Analysis
               </Typography>
               
-              {processedData?.checklist_completeness && (
+              {processedData?.checklist_completeness && 
+               processedData.checklist_completeness.total !== undefined ? (
                 <>
-                  <Box mb={3}>
-                    <Typography variant="subtitle1" gutterBottom>Overall Completion Status</Typography>
-                    <Box display="flex" alignItems="center" gap={2} mb={2}>
-                      <Typography variant="h4" fontWeight="bold" color="primary.main">
-                        {processedData.checklist_completeness.completed}/{processedData.checklist_completeness.total}
-                      </Typography>
-                      <Typography variant="body1">items completed</Typography>
-                      <Chip 
-                        label={`${(processedData.checklist_completeness.completion_rate * 100).toFixed(1)}%`}
+                  {/* Summary Counts Section */}
+                  <Box mb={4}>
+                    <Typography variant="subtitle1" gutterBottom>Overview Summary</Typography>
+                    <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap={2} mb={3}>
+                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.50' }}>
+                        <Typography variant="h4" fontWeight="bold" color="primary.main">
+                          {processedData.checklist_completeness.summary?.total || processedData.checklist_completeness.total || 0}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Total Questions</Typography>
+                      </Paper>
+                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.50' }}>
+                        <Typography variant="h4" fontWeight="bold" color="success.main">
+                          {processedData.checklist_completeness.summary?.complete || processedData.checklist_completeness.completed || 0}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Complete</Typography>
+                      </Paper>
+                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.50' }}>
+                        <Typography variant="h4" fontWeight="bold" color="warning.main">
+                          {processedData.checklist_completeness.summary?.incomplete || 0}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Incomplete</Typography>
+                      </Paper>
+                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'error.50' }}>
+                        <Typography variant="h4" fontWeight="bold" color="error.main">
+                          {processedData.checklist_completeness.summary?.missing || 0}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">Missing</Typography>
+                      </Paper>
+                    </Box>
+                    
+                    {/* Completion Rate Progress */}
+                    <Box mb={2}>
+                      <Box display="flex" alignItems="center" gap={2} mb={1}>
+                        <Typography variant="body1" fontWeight="medium">
+                          Overall Completion Rate:
+                        </Typography>
+                        <Chip 
+                          label={`${(processedData.checklist_completeness.completion_rate * 100).toFixed(1)}%`}
+                          color={processedData.checklist_completeness.completion_rate > 0.8 ? 'success' : 
+                                 processedData.checklist_completeness.completion_rate > 0.6 ? 'warning' : 'error'}
+                        />
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={processedData.checklist_completeness.completion_rate * 100}
+                        sx={{ height: 10, borderRadius: 5 }}
                         color={processedData.checklist_completeness.completion_rate > 0.8 ? 'success' : 
                                processedData.checklist_completeness.completion_rate > 0.6 ? 'warning' : 'error'}
                       />
                     </Box>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={processedData.checklist_completeness.completion_rate * 100}
-                      sx={{ height: 8, borderRadius: 4 }}
-                    />
-                    
-                    {/* Quality Analysis Display */}
-                    {processedData.checklist_completeness.overall_quality !== undefined && (
-                      <Box mt={2}>
-                        <Typography variant="body2" color="text.secondary">
-                          Overall Answer Quality: {(processedData.checklist_completeness.overall_quality * 100).toFixed(1)}%
-                        </Typography>
-                        <LinearProgress 
-                          variant="determinate" 
-                          value={processedData.checklist_completeness.overall_quality * 100}
-                          sx={{ height: 6, borderRadius: 3, mt: 1 }}
-                          color={processedData.checklist_completeness.overall_quality > 0.8 ? 'success' : 
-                                 processedData.checklist_completeness.overall_quality > 0.6 ? 'warning' : 'error'}
-                        />
-                      </Box>
-                    )}
                   </Box>
 
-                  <Typography variant="subtitle1" gutterBottom>Item-by-Item Analysis</Typography>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Checklist Item</TableCell>
-                          <TableCell align="center">Status</TableCell>
-                          <TableCell align="center">Completeness Score</TableCell>
-                          <TableCell align="center">Quality Score</TableCell>
-                          <TableCell>Evidence Found</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {processedData.checklist_completeness.items.map((item: any, index: number) => (
-                          <TableRow key={item.id || index}>
-                            <TableCell>{item.question}</TableCell>
-                            <TableCell align="center">
-                              <Chip 
-                                label={item.status}
-                                color={item.status === 'Complete' ? 'success' : 
-                                       item.status === 'Incomplete' ? 'warning' : 'error'}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell align="center">
-                              <Typography variant="body2" fontWeight="medium">
-                                {(item.completeness_score * 100).toFixed(1)}%
-                              </Typography>
-                            </TableCell>
-                            <TableCell align="center">
-                              <Typography variant="body2" fontWeight="medium" color={
-                                item.quality_score > 0.8 ? 'success.main' : 
-                                item.quality_score > 0.6 ? 'warning.main' : 'error.main'
-                              }>
-                                {item.quality_score !== undefined ? `${(item.quality_score * 100).toFixed(1)}%` : 'N/A'}
-                              </Typography>
-                            </TableCell>
-                            <TableCell>
-                              {item.evidence_found.length > 0 ? (
-                                <List dense>
-                                  {item.evidence_found.map((evidence: string, idx: number) => (
-                                    <ListItem key={idx} sx={{ py: 0 }}>
-                                      <ListItemIcon sx={{ minWidth: 20 }}>
-                                        <CheckCircle size={12} color="#2e7d32" />
-                                      </ListItemIcon>
-                                      <ListItemText 
-                                        primary={evidence} 
-                                        primaryTypographyProps={{ variant: 'caption' }}
-                                      />
-                                    </ListItem>
-                                  ))}
-                                </List>
-                              ) : (
-                                <Typography variant="caption" color="text.secondary">
-                                  No evidence found
-                                </Typography>
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                  {/* Grouped Item Analysis */}
+                  {processedData.checklist_completeness.items && processedData.checklist_completeness.items.length > 0 && (() => {
+                    // Group items by status
+                    const completeItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Complete');
+                    const incompleteItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Incomplete');
+                    const missingItems = processedData.checklist_completeness.items.filter((item: any) => item.status === 'Missing');
+
+                    return (
+                      <Box>
+                        {/* Complete Items Section */}
+                        {completeItems.length > 0 && (
+                          <Box mb={4}>
+                            <Typography variant="h6" gutterBottom display="flex" alignItems="center">
+                              <CheckCircle sx={{ fontSize: 20, marginRight: 1, color: 'success.main' }} />
+                              Complete Requirements ({completeItems.length})
+                            </Typography>
+                            <Paper>
+                              <List>
+                                {completeItems.map((item: any, index: number) => (
+                                  <ListItem key={item.id || index} divider={index < completeItems.length - 1}>
+                                    <ListItemIcon>
+                                      <CheckCircle color="success" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                      primary={item.question || 'N/A'}
+                                      secondary={
+                                        <Box>
+                                          <Typography variant="body2" color="text.secondary">
+                                            Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
+                                            {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
+                                          </Typography>
+                                          {item.evidence_found && item.evidence_found.length > 0 && (
+                                            <Typography variant="caption" color="success.main">
+                                              Evidence: {item.evidence_found[0]}
+                                            </Typography>
+                                          )}
+                                        </Box>
+                                      }
+                                    />
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </Paper>
+                          </Box>
+                        )}
+
+                        {/* Incomplete Items Section */}
+                        {incompleteItems.length > 0 && (
+                          <Box mb={4}>
+                            <Typography variant="h6" gutterBottom display="flex" alignItems="center">
+                              <AlertTriangle sx={{ fontSize: 20, marginRight: 1, color: 'warning.main' }} />
+                              Incomplete Requirements ({incompleteItems.length})
+                            </Typography>
+                            <Paper>
+                              <List>
+                                {incompleteItems.map((item: any, index: number) => (
+                                  <ListItem key={item.id || index} divider={index < incompleteItems.length - 1}>
+                                    <ListItemIcon>
+                                      <AlertTriangle color="warning" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                      primary={item.question || 'N/A'}
+                                      secondary={
+                                        <Box>
+                                          <Typography variant="body2" color="text.secondary">
+                                            Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
+                                            {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
+                                          </Typography>
+                                          {item.evidence_found && item.evidence_found.length > 0 && (
+                                            <Typography variant="caption" color="warning.main">
+                                              Evidence: {item.evidence_found[0]}
+                                            </Typography>
+                                          )}
+                                        </Box>
+                                      }
+                                    />
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </Paper>
+                          </Box>
+                        )}
+
+                        {/* Missing Items Section */}
+                        {missingItems.length > 0 && (
+                          <Box mb={4}>
+                            <Typography variant="h6" gutterBottom display="flex" alignItems="center">
+                              <AlertCircle sx={{ fontSize: 20, marginRight: 1, color: 'error.main' }} />
+                              Missing Requirements ({missingItems.length})
+                            </Typography>
+                            <Paper>
+                              <List>
+                                {missingItems.map((item: any, index: number) => (
+                                  <ListItem key={item.id || index} divider={index < missingItems.length - 1}>
+                                    <ListItemIcon>
+                                      <AlertCircle color="error" />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                      primary={item.question || 'N/A'}
+                                      secondary={
+                                        <Box>
+                                          <Typography variant="body2" color="text.secondary">
+                                            Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
+                                            {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
+                                          </Typography>
+                                          {item.evidence_found && item.evidence_found.length > 0 && (
+                                            <Typography variant="caption" color="error.main">
+                                              Evidence: {item.evidence_found[0]}
+                                            </Typography>
+                                          )}
+                                        </Box>
+                                      }
+                                    />
+                                  </ListItem>
+                                ))}
+                              </List>
+                            </Paper>
+                          </Box>
+                        )}
+                      </Box>
+                    );
+                  })()}
                 </>
+              ) : (
+                <Alert severity="info">
+                  <Typography variant="body2">
+                    No checklist completeness data available. This analysis was performed without specific checklist items.
+                  </Typography>
+                </Alert>
               )}
             </Box>
           )}
@@ -1069,7 +1227,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                       </ListItemIcon>
                       <ListItemText 
                         primary={recommendation}
-                        primaryTypographyProps={{ variant: 'body2' }}
+                        slotProps={{ primary: { variant: 'body2' } }}
                       />
                     </ListItem>
                   ))}
@@ -1099,7 +1257,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                       </ListItemIcon>
                       <ListItemText 
                         primary={gap}
-                        primaryTypographyProps={{ variant: 'body2' }}
+                        slotProps={{ primary: { variant: 'body2' } }}
                       />
                     </ListItem>
                   ))}
@@ -1165,7 +1323,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                             </ListItemIcon>
                             <ListItemText 
                               primary={area}
-                              primaryTypographyProps={{ variant: 'body2' }}
+                              slotProps={{ primary: { variant: 'body2' } }}
                             />
                           </ListItem>
                         ))}

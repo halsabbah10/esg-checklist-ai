@@ -159,7 +159,9 @@ class AIResult(BaseModel, table=True):
     feedback: str = Field(sa_type=Text)
     processing_time_ms: Optional[int] = Field(default=None)
     ai_model_version: str = Field(default="gemini-2.0-flash-exp", max_length=50)
-    analysis_metadata: Optional[str] = Field(default=None, sa_type=Text)  # JSON field for additional data like department context and checklist completeness
+    analysis_metadata: Optional[str] = Field(
+        default=None, sa_type=Text
+    )  # JSON field for additional data like department context and checklist completeness
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Relationships

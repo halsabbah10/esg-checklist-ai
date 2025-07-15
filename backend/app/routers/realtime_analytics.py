@@ -245,9 +245,7 @@ async def get_realtime_events(
     """Get recent real-time events"""
     try:
         query: Any = (
-            select(RealtimeEvent)
-            .order_by(desc(RealtimeEvent.event_timestamp))
-            .limit(limit)
+            select(RealtimeEvent).order_by(desc(RealtimeEvent.event_timestamp)).limit(limit)
         )
 
         if event_type:

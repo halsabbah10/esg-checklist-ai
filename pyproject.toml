@@ -203,7 +203,6 @@ extend-exclude = '''
 /(
   # directories
   \.git
-  | \.mypy_cache
   | \.venv
   | venv
   | env
