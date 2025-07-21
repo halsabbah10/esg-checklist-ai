@@ -203,8 +203,14 @@ function AppContent() {
   // Prevent unwanted scroll-based navigation
   React.useEffect(() => {
     const preventScrollNavigation = (e: WheelEvent) => {
-      // Prevent horizontal scroll from triggering navigation
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+      // Allow scrolling within tables and scrollable containers
+      const target = e.target as Element;
+      if (target.closest('table') || target.closest('[data-scrollable]') || target.closest('.MuiTableContainer-root') || target.closest('.MuiDataGrid-root')) {
+        return;
+      }
+      
+      // Only prevent very fast horizontal scrolling that might trigger navigation
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 50) {
         e.preventDefault();
       }
     };

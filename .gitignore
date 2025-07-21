@@ -131,3 +131,41 @@ Makefile
 
 # Claude Code memory file
 CLAUDE.md
+
+# Additional cleanup patterns
+*.backup
+*.bak
+*.tmp
+*.orig
+*~
+*.swp
+*.swo
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Testing artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# IDE files
+.vscode/settings.json
+.vscode/launch.json
+*.sublime-*
+
+# Development scripts (temporary)
+analyze_*.py
+debug_*.py
+check_*.py
+simple_test*.py
+comprehensive_test*.py
+test_*.py
+!backend/tests/test_*.py
+
+# AI Documentation (auto-generated)
+AI_ANALYSIS_SYSTEM_DOCUMENTATION.md

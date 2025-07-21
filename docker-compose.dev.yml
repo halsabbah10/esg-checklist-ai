@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # Backend development service with hot reload
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: esg-backend-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=sqlite:///./test.db
+    env_file:
+      - backend/.env
+    volumes:
+      - ./backend:/app
+      - ./backend/uploads:/app/uploads
+      - backend_dev_data:/app/data
+    depends_on:
+      - db
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    networks:
+      - esg-network
+
+  # Frontend development service with hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: esg-frontend-dev
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    networks:
+      - esg-network
+
+  # PostgreSQL database for development
+  db:
+    image: postgres:15-alpine
+    container_name: esg-database-dev
+    environment:
+      - POSTGRES_DB=esg_ai_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - esg-network
+
+  # Redis for development
+  redis:
+    image: redis:7-alpine
+    container_name: esg-redis-dev
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - esg-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  backend_dev_data:
+    driver: local
+
+networks:
+  esg-network:
+    driver: bridge
