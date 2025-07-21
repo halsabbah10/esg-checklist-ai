@@ -68,8 +68,8 @@ export const Navbar: React.FC<NavbarProps> = React.memo(({ onMenuClick }) => {
         roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
       },
       {
-        label: 'Checklists',
-        path: '/checklists',
+        label: 'AI Analysis',
+        path: '/ai-analysis',
         roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
       },
       { label: 'Analytics', path: '/analytics', roles: ['admin', 'super_admin', 'reviewer'] },
