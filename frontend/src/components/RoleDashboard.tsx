@@ -1,7 +1,6 @@
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { AdminDashboard, ReviewerDashboard } from './dashboards';
-import { FallbackAuditorDashboard } from './dashboards/FallbackAuditorDashboard';
+import { AdminDashboard, ReviewerDashboard, AuditorDashboard } from './dashboards';
 
 export const RoleDashboard: React.FC = () => {
   const { user } = useAuth();
@@ -18,8 +17,8 @@ export const RoleDashboard: React.FC = () => {
     case 'reviewer':
       return <ReviewerDashboard />;
     case 'auditor':
-      return <FallbackAuditorDashboard />;
+      return <AuditorDashboard />;
     default:
-      return <FallbackAuditorDashboard />; // Default to fallback auditor view
+      return <AuditorDashboard />; // Default to auditor view
   }
 };

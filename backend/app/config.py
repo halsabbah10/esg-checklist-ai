@@ -22,8 +22,8 @@ except ImportError:
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load environment variables
-load_dotenv()
+# Load environment variables with override to ensure latest values
+load_dotenv(override=True)
 
 
 class Settings(BaseSettings):

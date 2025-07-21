@@ -26,16 +26,17 @@ import {
   Visibility,
 } from '@mui/icons-material';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { exportAPI, analyticsAPI } from '../services/api';
+import { exportAPI, analyticsAPI, brdReportsAPI } from '../services/api';
 
 interface Report {
   id: string;
   name: string;
-  type: 'compliance' | 'performance' | 'summary';
+  type: 'compliance' | 'performance' | 'summary' | 'brd-compliance' | 'brd-advisory' | 'brd-quality';
   format: 'pdf' | 'excel' | 'csv';
   generated_at: string;
   status: 'ready' | 'generating' | 'failed';
   size: string;
+  description?: string;
 }
 
 interface KPIData {
@@ -61,7 +62,45 @@ export const Reports: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // KPI data from auditor metrics
+  // Fetch BRD-specific data
+  const { data: brdAdvisoryData } = useQuery({
+    queryKey: ['brd-advisory-dashboard', parseInt(timeRange)],
+    queryFn: () => brdReportsAPI.getAdvisoryDashboard({ days: parseInt(timeRange) }).then(res => res.data),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true,
+  });
+
+  const { data: brdQualityData } = useQuery({
+    queryKey: ['brd-quality-validation', timeRange],
+    queryFn: () => {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - parseInt(timeRange));
+      return brdReportsAPI.getQualityValidation({
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+      }).then(res => res.data);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true,
+  });
+
+  const { data: brdReviewCycleData } = useQuery({
+    queryKey: ['brd-review-cycle', timeRange],
+    queryFn: () => {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - parseInt(timeRange));
+      return brdReportsAPI.getReviewCycleSummary({
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0],
+      }).then(res => res.data);
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: true,
+  });
+
+  // KPI data from auditor metrics and BRD data
   const kpiData: KPIData[] = [
     {
       label: 'Overall Score',
@@ -72,22 +111,26 @@ export const Reports: React.FC = () => {
       icon: <Assessment sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Passed Audits',
-      value: dashboardData?.passedAudits || 0,
+      label: 'Completed Audits',
+      value: brdAdvisoryData?.overview?.completed_audits || dashboardData?.passedAudits || 0,
       trend: 'up',
       icon: <CheckCircle sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Pending Reviews',
-      value: dashboardData?.pendingReviews || 0,
+      label: 'Compliance Rate',
+      value: brdAdvisoryData?.overview?.overall_compliance_rate
+        ? `${brdAdvisoryData.overview.overall_compliance_rate}%`
+        : '0%',
       trend: 'neutral',
       icon: <Warning sx={{ fontSize: 20 }} />,
     },
     {
-      label: 'Failed Audits',
-      value: dashboardData?.failedAudits || 0,
-      trend: 'down',
-      icon: <ErrorIcon sx={{ fontSize: 20 }} />,
+      label: 'Quality Score',
+      value: brdQualityData?.quality_trends?.high_quality_rate
+        ? `${brdQualityData.quality_trends.high_quality_rate}%`
+        : '0%',
+      trend: 'up',
+      icon: <TrendingUp sx={{ fontSize: 20 }} />,
     },
   ];
 
@@ -98,6 +141,48 @@ export const Reports: React.FC = () => {
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     
     return [
+      // BRD-specific reports
+      {
+        id: 'brd-review-cycle',
+        name: 'BRD Review Cycle Summary',
+        type: 'brd-compliance',
+        format: 'pdf',
+        generated_at: now.toISOString(),
+        status: 'ready',
+        size: '3.2 MB',
+        description: 'Comprehensive ESG review cycle summary with files checked, audit completion rates, and team performance metrics',
+      },
+      {
+        id: 'brd-advisory-dashboard',
+        name: 'Advisory Team Dashboard',
+        type: 'brd-advisory',
+        format: 'pdf',
+        generated_at: now.toISOString(),
+        status: 'ready',
+        size: '2.8 MB',
+        description: 'Advisory team monitoring dashboard with submission tracking, quality validation, and notification history',
+      },
+      {
+        id: 'brd-quality-validation',
+        name: 'Quality Validation Summary',
+        type: 'brd-quality',
+        format: 'pdf',
+        generated_at: weekAgo.toISOString(),
+        status: 'ready',
+        size: '1.9 MB',
+        description: 'NLP/rule-based validation results with comment quality scores and validation trends',
+      },
+      {
+        id: 'brd-missing-submissions',
+        name: 'Missing Submissions Report',
+        type: 'brd-advisory',
+        format: 'pdf',
+        generated_at: now.toISOString(),
+        status: 'ready',
+        size: '1.2 MB',
+        description: 'Alert report for Advisory team showing missing and overdue ESG checklist submissions',
+      },
+      // Traditional reports
       {
         id: 'checklists',
         name: `ESG Checklists Export ${now.getFullYear()}`,
@@ -106,6 +191,7 @@ export const Reports: React.FC = () => {
         generated_at: now.toISOString(),
         status: 'ready',
         size: '2.4 MB',
+        description: 'Complete ESG checklist data export with status and compliance metrics',
       },
       {
         id: 'ai-results',
@@ -115,6 +201,7 @@ export const Reports: React.FC = () => {
         generated_at: weekAgo.toISOString(),
         status: 'ready',
         size: '1.8 MB',
+        description: 'AI analysis results with compliance scores, processing metrics, and feedback',
       },
       {
         id: 'submissions',
@@ -124,6 +211,7 @@ export const Reports: React.FC = () => {
         generated_at: monthAgo.toISOString(),
         status: 'ready',
         size: '850 KB',
+        description: 'User submission data with completion patterns and response quality analysis',
       },
       {
         id: 'users',
@@ -133,6 +221,7 @@ export const Reports: React.FC = () => {
         generated_at: weekAgo.toISOString(),
         status: 'ready',
         size: '450 KB',
+        description: 'User directory with activity statistics and performance metrics',
       },
     ];
   };
@@ -165,10 +254,22 @@ export const Reports: React.FC = () => {
   });
 
   const downloadReportMutation = useMutation({
-    mutationFn: (data: { reportId: string; format: 'csv' | 'xlsx' | 'pdf' | 'docx' }) => {
+    mutationFn: async (data: { reportId: string; format: 'csv' | 'xlsx' | 'pdf' | 'docx' }) => {
       const { reportId, format } = data;
       // Map report IDs to appropriate export endpoints
       switch (reportId) {
+        case 'brd-review-cycle':
+          const reviewCycleData = await brdReportsAPI.getReviewCycleSummary();
+          return { data: JSON.stringify(reviewCycleData.data, null, 2) };
+        case 'brd-advisory-dashboard':
+          const advisoryData = await brdReportsAPI.getAdvisoryDashboard({ days: parseInt(timeRange) });
+          return { data: JSON.stringify(advisoryData.data, null, 2) };
+        case 'brd-quality-validation':
+          const qualityData = await brdReportsAPI.getQualityValidation();
+          return { data: JSON.stringify(qualityData.data, null, 2) };
+        case 'brd-missing-submissions':
+          const missingData = await brdReportsAPI.getMissingSubmissions();
+          return { data: JSON.stringify(missingData.data, null, 2) };
         case 'checklists':
           return exportAPI.exportChecklists(format);
         case 'ai-results':
@@ -359,6 +460,82 @@ export const Reports: React.FC = () => {
     ` : '';
 
     switch (reportId) {
+      case 'brd-review-cycle':
+        return `
+          <div class="highlight">
+            📊 BRD Review Cycle Summary - Comprehensive ESG review cycle report as specified in Business Requirements Document
+          </div>
+          ${kpiSummary}
+          <div class="data-section">
+            <h3>📊 Review Cycle Metrics</h3>
+            <div class="data-item">
+              <strong>BRD Compliance Data:</strong><br>
+              • Files checked: ${brdReviewCycleData?.summary?.files_checked || 'N/A'}<br>
+              • Completed audits: ${brdReviewCycleData?.summary?.completed_audits || 'N/A'}<br>
+              • Incomplete audits: ${brdReviewCycleData?.summary?.incomplete_audits || 'N/A'}<br>
+              • Missing audits: ${brdReviewCycleData?.summary?.missing_audits || 'N/A'}<br>
+              • Completion rate: ${brdReviewCycleData?.summary?.completion_rate || 'N/A'}%
+            </div>
+          </div>
+        `;
+      
+      case 'brd-advisory-dashboard':
+        return `
+          <div class="highlight">
+            👥 Advisory Team Dashboard - Monitoring and tracking dashboard for Advisory team oversight
+          </div>
+          ${kpiSummary}
+          <div class="data-section">
+            <h3>👥 Advisory Metrics</h3>
+            <div class="data-item">
+              <strong>Dashboard Overview:</strong><br>
+              • Files monitored: ${brdAdvisoryData?.data?.overview?.files_monitored || 'N/A'}<br>
+              • Missing submissions: ${brdAdvisoryData?.data?.overview?.missing_submissions || 'N/A'}<br>
+              • Overdue submissions: ${brdAdvisoryData?.data?.overview?.overdue_submissions || 'N/A'}<br>
+              • Overall compliance: ${brdAdvisoryData?.data?.overview?.overall_compliance_rate || 'N/A'}%<br>
+              • Notifications sent: ${brdAdvisoryData?.data?.efficiency?.total_notifications_sent || 'N/A'}
+            </div>
+          </div>
+        `;
+      
+      case 'brd-quality-validation':
+        return `
+          <div class="highlight">
+            🔍 Quality Validation Summary - NLP/rule-based validation results and comment quality analysis
+          </div>
+          ${kpiSummary}
+          <div class="data-section">
+            <h3>🔍 Quality Metrics</h3>
+            <div class="data-item">
+              <strong>Validation Results:</strong><br>
+              • High quality rate: ${brdQualityData?.data?.quality_trends?.high_quality_rate || 'N/A'}%<br>
+              • Needs improvement rate: ${brdQualityData?.data?.quality_trends?.needs_improvement_rate || 'N/A'}%<br>
+              • Total validated: ${brdQualityData?.data?.validation_summary?.total_validated || 'N/A'}<br>
+              • High quality submissions: ${brdQualityData?.data?.validation_summary?.high_quality || 'N/A'}<br>
+              • Low quality submissions: ${brdQualityData?.data?.validation_summary?.low_quality || 'N/A'}
+            </div>
+          </div>
+        `;
+      
+      case 'brd-missing-submissions':
+        return `
+          <div class="highlight">
+            ⚠️ Missing Submissions Report - Alert report for Advisory team showing missing and overdue submissions
+          </div>
+          ${kpiSummary}
+          <div class="data-section">
+            <h3>⚠️ Missing Submissions</h3>
+            <div class="data-item">
+              <strong>Submission Status:</strong><br>
+              • Expected submissions: Currently tracked<br>
+              • Missing submissions: Identified and flagged<br>
+              • Overdue submissions: Requiring immediate attention<br>
+              • Compliance tracking: Continuous monitoring<br>
+              • Automated alerts: Email notifications sent
+            </div>
+          </div>
+        `;
+      
       case 'checklists':
         return `
           <div class="highlight">
@@ -635,6 +812,9 @@ export const Reports: React.FC = () => {
             <MenuItem value="compliance">Compliance</MenuItem>
             <MenuItem value="performance">Performance</MenuItem>
             <MenuItem value="summary">Summary</MenuItem>
+            <MenuItem value="brd-compliance">BRD Compliance</MenuItem>
+            <MenuItem value="brd-advisory">BRD Advisory</MenuItem>
+            <MenuItem value="brd-quality">BRD Quality</MenuItem>
           </Select>
         </FormControl>
 
@@ -702,9 +882,14 @@ export const Reports: React.FC = () => {
                         {getStatusChip(report.status)}
                       </Box>
 
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                         Generated: {formatDate(report.generated_at)} • Size: {report.size}
                       </Typography>
+                      {report.description && (
+                        <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                          {report.description}
+                        </Typography>
+                      )}
                     </Box>
 
                     <Box display="flex" gap={1}>

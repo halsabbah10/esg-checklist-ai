@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -40,6 +40,8 @@ import {
   GetApp,
 } from '@mui/icons-material';
 import { searchAPI } from '../services/api';
+import { AnalysisResultDialog } from '../components/AnalysisResultDialog';
+import { TabbedDocumentViewer } from '../components/TabbedDocumentViewer';
 
 interface AIAnalysis {
   id: number;
@@ -53,11 +55,30 @@ interface AIAnalysis {
     filename: string;
     file_size: number;
   };
+  // BRD compliance fields
+  metadata?: {
+    checklist_completeness?: {
+      completion_rate: number;
+      total: number;
+      summary: {
+        complete: number;
+        incomplete: number;
+        missing: number;
+      };
+    };
+    department_context?: {
+      name: string;
+    };
+    quality_score?: number;
+  };
+  completeness_status?: string;
+  quality_score?: number;
+  revision_count?: number;
 }
 
 type SortDirection = 'asc' | 'desc';
 
-export const AnalysisHistory: React.FC = () => {
+export const AnalysisHistory = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<string>('created_at');
@@ -65,6 +86,10 @@ export const AnalysisHistory: React.FC = () => {
   const [modelFilter, setModelFilter] = useState<string>('all');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedAnalysis, setSelectedAnalysis] = useState<AIAnalysis | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
+  const [dialogAnalysisId, setDialogAnalysisId] = useState<number | null>(null);
+  const [dialogFileUploadId, setDialogFileUploadId] = useState<number | null>(null);
 
   // Fetch AI analysis history
   const {
@@ -93,7 +118,21 @@ export const AnalysisHistory: React.FC = () => {
   // Get unique models for filter
   const availableModels = useMemo(() => {
     const models = new Set(analyses.map((a: AIAnalysis) => a.ai_model_version));
-    return Array.from(models);
+    const modelsArray = Array.from(models);
+    
+    // Debug logging to see what models are being detected
+    console.log('🤖 AI Models detected in analyses:', modelsArray);
+    console.log('📊 Total unique models:', modelsArray.length);
+    
+    // Log a few sample analysis records to see the model versions
+    if (analyses.length > 0) {
+      console.log('📋 Sample analyses with model versions:');
+      analyses.slice(0, 5).forEach((analysis: AIAnalysis, index: number) => {
+        console.log(`  ${index + 1}. Model: "${analysis.ai_model_version}", ID: ${analysis.id}, Date: ${analysis.created_at}`);
+      });
+    }
+    
+    return modelsArray;
   }, [analyses]);
 
   // Filtered and sorted analyses
@@ -159,12 +198,15 @@ export const AnalysisHistory: React.FC = () => {
   };
 
   const handleViewResults = (analysis: AIAnalysis) => {
-    navigate(`/ai-analysis/results/${analysis.id}`);
+    setDialogAnalysisId(analysis.id);
+    setDialogFileUploadId(analysis.file_upload_id);
+    setDialogOpen(true);
     handleMenuClose();
   };
 
   const handleViewDocument = (analysis: AIAnalysis) => {
-    navigate(`/file-viewer/${analysis.file_upload_id}`);
+    setSelectedAnalysis(analysis);
+    setDocumentViewerOpen(true);
     handleMenuClose();
   };
 
@@ -200,6 +242,38 @@ export const AnalysisHistory: React.FC = () => {
     return modelVersion;
   };
 
+  const getCompletenessStatus = (analysis: AIAnalysis): string => {
+    // Check if there's a direct completeness_status field
+    if (analysis.completeness_status) {
+      return analysis.completeness_status;
+    }
+    
+    // Check metadata for checklist completeness (NOT compliance score)
+    const completeness = analysis.metadata?.checklist_completeness;
+    if (!completeness) {
+      return 'Unknown';
+    }
+    
+    // Use completion_rate to determine completeness status
+    const rate = completeness.completion_rate;
+    if (rate >= 0.95) return 'Complete';  // 95% or higher = complete
+    if (rate >= 0.5) return 'Incomplete'; // 50-94% = incomplete
+    return 'Missing';  // Below 50% = missing
+  };
+
+  const getQualityScore = (analysis: AIAnalysis): number => {
+    return analysis.metadata?.quality_score || analysis.score;
+  };
+
+  const getCompletenessColor = (status: string) => {
+    switch (status) {
+      case 'Complete': return 'success';
+      case 'Incomplete': return 'warning';
+      case 'Missing': return 'error';
+      default: return 'default';
+    }
+  };
+
   if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="400px">
@@ -217,7 +291,7 @@ export const AnalysisHistory: React.FC = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: 3, height: '100vh', overflow: 'auto' }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
@@ -240,7 +314,7 @@ export const AnalysisHistory: React.FC = () => {
 
       {/* Summary Stats */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -252,7 +326,7 @@ export const AnalysisHistory: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -267,21 +341,21 @@ export const AnalysisHistory: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
-                This Month
+                Complete Status
               </Typography>
               <Typography variant="h4">
                 {analyses.filter((a: AIAnalysis) => 
-                  new Date(a.created_at).getMonth() === new Date().getMonth()
+                  getCompletenessStatus(a) === 'Complete'
                 ).length}
               </Typography>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={3}>
+        <Grid size={{ xs: 12, sm: 3 }}>
           <Card>
             <CardContent>
               <Typography color="text.secondary" gutterBottom>
@@ -369,10 +443,11 @@ export const AnalysisHistory: React.FC = () => {
                   direction={sortField === 'score' ? sortDirection : 'asc'}
                   onClick={() => handleSort('score')}
                 >
-                  ESG Score
+                  Compliance Score
                 </TableSortLabel>
               </TableCell>
               <TableCell align="center">AI Model</TableCell>
+              <TableCell align="center">Completeness</TableCell>
               <TableCell align="center">
                 <TableSortLabel
                   active={sortField === 'processing_time'}
@@ -419,6 +494,14 @@ export const AnalysisHistory: React.FC = () => {
                 <TableCell align="center">
                   <Chip
                     label={getModelDisplayName(analysis.ai_model_version)}
+                    variant="outlined"
+                    size="small"
+                  />
+                </TableCell>
+                <TableCell align="center">
+                  <Chip
+                    label={getCompletenessStatus(analysis)}
+                    color={getCompletenessColor(getCompletenessStatus(analysis))}
                     variant="outlined"
                     size="small"
                   />
@@ -485,9 +568,29 @@ export const AnalysisHistory: React.FC = () => {
         </MenuItem>
         <MenuItem onClick={() => selectedAnalysis && handleViewDocument(selectedAnalysis)}>
           <GetApp sx={{ mr: 1 }} />
-          View Original Document
+          Export Analysis
         </MenuItem>
       </Menu>
+
+      {/* Analysis Result Dialog */}
+      <AnalysisResultDialog
+        open={dialogOpen}
+        onClose={() => setDialogOpen(false)}
+        analysisId={dialogAnalysisId || 0}
+        fileUploadId={dialogFileUploadId || 0}
+      />
+
+      {/* Tabbed Document Viewer */}
+      {selectedAnalysis && (
+        <TabbedDocumentViewer
+          open={documentViewerOpen}
+          onClose={() => setDocumentViewerOpen(false)}
+          uploadId={selectedAnalysis.file_upload_id}
+          filename={`Analysis ${selectedAnalysis.id}`}
+        />
+      )}
     </Box>
   );
 };
+
+export default AnalysisHistory;

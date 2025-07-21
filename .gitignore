@@ -128,3 +128,6 @@ backend/test_config_fixed.py
 backend/comprehensive_swagger_test_fixed.py
 backend/tests/test_comprehensive_coverage_fixed.py
 Makefile
+
+# Claude Code memory file
+CLAUDE.md

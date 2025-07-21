@@ -14,11 +14,16 @@ from slowapi.errors import RateLimitExceeded
 
 from app.routers.ai_analysis import router as ai_analysis_router
 from app.routers.analytics import router as analytics_router
+from app.routers.brd_reports import router as brd_reports_router
 from app.routers.departments import router as departments_router
+# from app.routers.configuration import router as configuration_router
+# from app.routers.email_notifications import router as email_notifications_router
+# from app.routers.enhanced_reports import router as enhanced_reports_router
 from app.routers.export import router as export_router
 from app.routers.files import router as files_router
 from app.routers.realtime_analytics import router as realtime_analytics_router
 from app.routers.uploads import router as uploads_router
+# from app.routers.search import router as search_router
 from app.utils.audit import router as audit_router
 
 from .config import (
@@ -28,6 +33,7 @@ from .config import (
     get_settings,
     is_production,
     validate_required_settings,
+    reload_settings,
 )
 from .database import get_db_health, init_database
 from .rate_limiting import limiter, rate_limit_exceeded_handler
@@ -40,8 +46,8 @@ try:
 except ImportError:
     psutil = None
 
-# Get centralized settings
-settings = get_settings()
+# Get centralized settings - force reload for latest environment variables
+settings = reload_settings()
 
 # Validate configuration and check critical secrets at startup
 validate_required_settings()
@@ -271,9 +277,14 @@ app.include_router(realtime_analytics_router, prefix=api_prefix)
 app.include_router(audit_router, prefix=api_prefix)
 app.include_router(export_router, prefix=api_prefix)
 app.include_router(uploads_router, prefix=api_prefix)
+# app.include_router(search_router, prefix=api_prefix)
 app.include_router(files_router, prefix=api_prefix)
 app.include_router(departments_router, prefix=api_prefix)
+app.include_router(brd_reports_router, prefix=api_prefix)
+# app.include_router(configuration_router, prefix=api_prefix)
 app.include_router(ai_analysis_router, prefix=api_prefix)
+# app.include_router(email_notifications_router, prefix=api_prefix)
+# app.include_router(enhanced_reports_router, prefix=api_prefix)
 
 # Admin routers with API versioning
 app.include_router(admin_users_router, prefix=api_prefix)

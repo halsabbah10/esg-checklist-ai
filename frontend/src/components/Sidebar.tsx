@@ -44,10 +44,12 @@ interface SidebarProps {
   onClose: () => void;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  isExpanded?: boolean;
+  onHover?: (hovered: boolean) => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = React.memo(
-  ({ isOpen, onClose, isCollapsed = false, onToggleCollapse }) => {
+  ({ isOpen, onClose, isCollapsed = false, onToggleCollapse, isExpanded = false, onHover }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -73,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
         text: 'Analysis History',
         icon: <ChecklistRtl />,
         path: '/analysis-history',
-        roles: ['admin', 'super_admin', 'reviewer', 'auditor'],
+        roles: ['admin', 'super_admin', 'auditor'],
         description: 'View previous AI analyses and results',
       },
       {
@@ -206,8 +208,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
                     sx={{
                       borderRadius: '0.5rem',
                       minHeight: 44,
-                      justifyContent: isCollapsed ? 'center' : 'flex-start',
-                      px: isCollapsed ? 1 : 2,
+                      justifyContent: isCollapsed && !isExpanded ? 'center' : 'flex-start',
+                      px: isCollapsed && !isExpanded ? 1 : 2,
                       color: 'text.secondary',
                       transition: 'all 0.2s ease-in-out',
                       '&:hover': {
@@ -223,8 +225,8 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
                         color: 'primary.contrastText',
                         borderLeft: '4px solid',
                         borderLeftColor: 'secondary.main',
-                        ml: isCollapsed ? 0 : -1,
-                        pl: isCollapsed ? 1 : 1,
+                        ml: isCollapsed && !isExpanded ? 0 : -1,
+                        pl: isCollapsed && !isExpanded ? 1 : 1,
                         '&:hover': {
                           bgcolor: 'primary.dark',
                         },
@@ -233,9 +235,9 @@ export const Sidebar: React.FC<SidebarProps> = React.memo(
                   >
                     <ListItemIcon
                       sx={{
-                        minWidth: isCollapsed ? 'auto' : 40,
+                        minWidth: isCollapsed && !isExpanded ? 'auto' : 40,
                         color: 'inherit',
-                        mr: isCollapsed ? 0 : 1,
+                        mr: isCollapsed && !isExpanded ? 0 : 1,
                         transition: 'transform 0.2s ease-in-out',
                       }}
                     >

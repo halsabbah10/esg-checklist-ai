@@ -136,7 +136,7 @@ export const checklistsAPI = {
 export const submissionsAPI = {
   getAll: () => api.get('/v1/submissions/'),
 
-  getById: (id: string) => api.get(`/v1/submissions/${id}`),
+  getById: (id: string) => api.get(`/v1/submissions/by-id/${id}`),
 
   getByChecklist: (checklistId: string) => api.get(`/v1/submissions/checklist/${checklistId}`),
 
@@ -442,6 +442,8 @@ export const searchAPI = {
 
   aiResults: (params?: Record<string, unknown>) => api.get('/v1/search/ai-results', { params }),
 
+  getAIResult: (id: number) => api.get(`/v1/search/ai-results/${id}`),
+
   users: (params?: Record<string, unknown>) => api.get('/v1/search/users', { params }),
 
   notifications: (params?: Record<string, unknown>) =>
@@ -534,6 +536,21 @@ export const departmentsAPI = {
 
   getHistory: (departmentName: string, params?: { limit?: number; offset?: number }) =>
     api.get(`/v1/departments/analyze/history/${encodeURIComponent(departmentName)}`, { params }),
+};
+
+// BRD Reports API endpoints
+export const brdReportsAPI = {
+  getReviewCycleSummary: (params?: { start_date?: string; end_date?: string }) => 
+    api.get('/v1/brd-reports/review-cycle-summary', { params }),
+  
+  getMissingSubmissions: (params?: { target_date?: string }) => 
+    api.get('/v1/brd-reports/missing-submissions', { params }),
+  
+  getAdvisoryDashboard: (params?: { days?: number }) => 
+    api.get('/v1/brd-reports/advisory-dashboard', { params }),
+  
+  getQualityValidation: (params?: { start_date?: string; end_date?: string }) => 
+    api.get('/v1/brd-reports/quality-validation-summary', { params }),
 };
 
 export default api;

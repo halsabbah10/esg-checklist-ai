@@ -357,3 +357,180 @@ class ComplianceTracking(SQLModel, table=True):
     recommendations: Optional[str] = Field(default=None, sa_type=Text)  # JSON array
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     auditor_notes: Optional[str] = Field(default=None, sa_type=Text)
+
+
+# Audit Trail and Enhanced Tracking Models
+
+class AuditTrail(SQLModel, table=True):
+    """Track all significant operations for audit trail compliance"""
+    
+    __tablename__ = "audit_trail"  # type: ignore
+    __table_args__ = (
+        Index("idx_audit_trail_timestamp", "timestamp"),
+        Index("idx_audit_trail_entity_type", "entity_type"),
+        Index("idx_audit_trail_action", "action"),
+        Index("idx_audit_trail_user", "user_id"),
+    )
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    action: str = Field(max_length=100)  # "create", "update", "delete", "analyze", "export", "email"
+    entity_type: str = Field(max_length=50)  # "analysis", "checklist", "user", "file"
+    entity_id: Optional[int] = Field(default=None)  # ID of the affected entity
+    old_values: Optional[str] = Field(default=None, sa_type=Text)  # JSON of old values
+    new_values: Optional[str] = Field(default=None, sa_type=Text)  # JSON of new values
+    audit_metadata: Optional[str] = Field(default=None, sa_type=Text)  # Additional context (JSON)
+    ip_address: Optional[str] = Field(default=None, max_length=45)  # Support IPv6
+    user_agent: Optional[str] = Field(default=None, max_length=500)
+    session_id: Optional[str] = Field(default=None, max_length=255)
+
+
+class AnalysisHistory(SQLModel, table=True):
+    """Enhanced tracking for analysis operations and their outcomes"""
+    
+    model_config = {"protected_namespaces": ()}
+    
+    __tablename__ = "analysis_history"  # type: ignore
+    __table_args__ = (
+        Index("idx_analysis_history_created_at", "created_at"),
+        Index("idx_analysis_history_user", "user_id"),
+        Index("idx_analysis_history_status", "status"),
+        Index("idx_analysis_history_file", "file_path"),
+    )
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    analysis_result_id: Optional[int] = Field(default=None)
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    filename: str = Field(max_length=500)
+    file_path: Optional[str] = Field(default=None, max_length=1000)
+    file_size: Optional[int] = Field(default=None)
+    file_hash: Optional[str] = Field(default=None, max_length=64)  # SHA-256 hash for integrity
+    
+    # Analysis configuration
+    ai_provider: str = Field(max_length=50)
+    model_version: Optional[str] = Field(default=None, max_length=100)
+    department_context: Optional[str] = Field(default=None, max_length=200)
+    
+    # Processing details
+    status: str = Field(max_length=50)  # "started", "processing", "completed", "failed"
+    processing_start: Optional[datetime] = Field(default=None)
+    processing_end: Optional[datetime] = Field(default=None)
+    processing_duration_ms: Optional[int] = Field(default=None)
+    
+    # Results summary
+    overall_score: Optional[float] = Field(default=None)
+    questions_detected: Optional[int] = Field(default=None)
+    completion_rate: Optional[float] = Field(default=None)
+    quality_score: Optional[float] = Field(default=None)
+    
+    # Error tracking
+    error_message: Optional[str] = Field(default=None, sa_type=Text)
+    error_type: Optional[str] = Field(default=None, max_length=100)
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: Optional[datetime] = Field(default=None)
+
+
+class EmailNotificationLog(SQLModel, table=True):
+    """Track all email notifications sent by the system"""
+    
+    __tablename__ = "email_notification_log"  # type: ignore
+    __table_args__ = (
+        Index("idx_email_log_sent_at", "sent_at"),
+        Index("idx_email_log_type", "notification_type"),
+        Index("idx_email_log_status", "status"),
+        Index("idx_email_log_analysis", "analysis_id"),
+    )
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    analysis_id: Optional[int] = Field(default=None)
+    notification_type: str = Field(max_length=50)  # "incomplete_checklist", "missing_submission", "summary_report"
+    
+    # Recipients
+    to_emails: str = Field(sa_type=Text)  # JSON array of email addresses
+    cc_emails: Optional[str] = Field(default=None, sa_type=Text)  # JSON array
+    bcc_emails: Optional[str] = Field(default=None, sa_type=Text)  # JSON array
+    
+    # Email content
+    subject: str = Field(max_length=500)
+    template_used: Optional[str] = Field(default=None, max_length=100)
+    has_attachments: bool = Field(default=False)
+    attachment_count: int = Field(default=0)
+    
+    # Delivery tracking
+    status: str = Field(max_length=50)  # "sent", "failed", "bounced", "delivered"
+    sent_at: Optional[datetime] = Field(default=None)
+    delivered_at: Optional[datetime] = Field(default=None)
+    error_message: Optional[str] = Field(default=None, sa_type=Text)
+    
+    # Metadata
+    smtp_server: Optional[str] = Field(default=None, max_length=255)
+    message_id: Optional[str] = Field(default=None, max_length=255)  # SMTP message ID
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SystemConfiguration(SQLModel, table=True):
+    """Store system configuration changes and their history"""
+    
+    __tablename__ = "system_configuration"  # type: ignore
+    __table_args__ = (
+        Index("idx_system_config_key", "config_key"),
+        Index("idx_system_config_created_at", "created_at"),
+        Index("idx_system_config_active", "is_active"),
+    )
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    config_key: str = Field(max_length=255, unique=True)
+    config_value: str = Field(sa_type=Text)  # JSON value
+    description: Optional[str] = Field(default=None, sa_type=Text)
+    
+    # Change tracking
+    changed_by: Optional[int] = Field(default=None, foreign_key="user.id")
+    previous_value: Optional[str] = Field(default=None, sa_type=Text)
+    change_reason: Optional[str] = Field(default=None, sa_type=Text)
+    
+    # Status
+    is_active: bool = Field(default=True)
+    effective_from: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    effective_until: Optional[datetime] = Field(default=None)
+    
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class PerformanceMetrics(SQLModel, table=True):
+    """Track system performance metrics for monitoring and optimization"""
+    
+    __tablename__ = "performance_metrics"  # type: ignore
+    __table_args__ = (
+        Index("idx_performance_timestamp", "timestamp"),
+        Index("idx_performance_metric_type", "metric_type"),
+        Index("idx_performance_endpoint", "endpoint"),
+    )
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    metric_type: str = Field(max_length=50)  # "api_response_time", "analysis_duration", "file_processing"
+    
+    # Request context
+    endpoint: Optional[str] = Field(default=None, max_length=255)
+    method: Optional[str] = Field(default=None, max_length=10)  # HTTP method
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    
+    # Performance data
+    duration_ms: Optional[int] = Field(default=None)
+    file_size_bytes: Optional[int] = Field(default=None)
+    questions_processed: Optional[int] = Field(default=None)
+    
+    # System metrics
+    cpu_usage_percent: Optional[float] = Field(default=None)
+    memory_usage_mb: Optional[float] = Field(default=None)
+    
+    # Results
+    status_code: Optional[int] = Field(default=None)
+    error_occurred: bool = Field(default=False)
+    error_type: Optional[str] = Field(default=None, max_length=100)
+    
+    # Additional metadata
+    performance_metadata: Optional[str] = Field(default=None, sa_type=Text)  # JSON for flexible data storage

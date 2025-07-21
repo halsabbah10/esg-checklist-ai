@@ -382,15 +382,19 @@ export const ReviewerDashboard: React.FC = () => {
                     <ListItemText
                       primary={`AI Score: ${formatAIScore(result.overall_score || result.score)}%`}
                       secondary={
-                        <Box>
-                          <Typography variant="caption" display="block">
+                        <React.Fragment>
+                          <Typography variant="caption" display="block" component="span">
                             File ID: {result.file_upload_id || result.id}
                           </Typography>
-                          <Typography variant="caption" display="block" color="text.secondary">
+                          <Typography variant="caption" display="block" component="span" color="text.secondary">
                             {result.created_at ? new Date(result.created_at).toLocaleDateString() : 'N/A'}
                           </Typography>
-                        </Box>
+                        </React.Fragment>
                       }
+                      slotProps={{
+                        primary: { component: 'div' },
+                        secondary: { component: 'div' }
+                      }}
                     />
                   </ListItem>
                 ))}

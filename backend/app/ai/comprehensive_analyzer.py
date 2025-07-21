@@ -186,9 +186,9 @@ class ComprehensiveESGAnalyzer:
 
         # Try multiple patterns to extract recommendations
         patterns = [
-            r"RECOMMENDATIONS?[:\s]*(.*?)(?=GAPS?|IMPROVEMENTS?|COMPLIANCE|$)",
+            r"RECOMMENDATIONS?[:\s]*(.*?)(?=GAPS?|IMPROVEMENTS?|COMPLIANCE|ESG|$)",
             r"### RECOMMENDATIONS?[:\s]*(.*?)(?=###|$)",
-            r"Recommendations?[:\s]*(.*?)(?=\n\n|$)",
+            r"Recommendations?[:\s]*(.*?)(?=\n\n|\n##|\nGAPS|$)",
             r"ACTIONS?[:\s]*(.*?)(?=GAPS?|IMPROVEMENTS?|$)",
         ]
 
@@ -210,6 +210,18 @@ class ComprehensiveESGAnalyzer:
                 if recommendations:
                     break
 
+        # If no structured recommendations found, try to extract from general text
+        if not recommendations:
+            # Look for sentences with recommendation keywords
+            sentences = re.split(r'[.!?]+', feedback)
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if any(keyword in sentence.lower() for keyword in ['recommend', 'suggest', 'should', 'consider', 'improve', 'enhance', 'implement', 'develop', 'establish', 'strengthen']):
+                    if len(sentence) > 20 and len(sentence) < 200:  # Reasonable length
+                        recommendations.append(sentence)
+                        if len(recommendations) >= 8:
+                            break
+
         return recommendations[:8]  # Limit to 8 recommendations
 
     def _extract_gaps_from_feedback(self, feedback: str) -> List[str]:
@@ -224,11 +236,13 @@ class ComprehensiveESGAnalyzer:
 
         # Try multiple patterns to extract gaps
         patterns = [
+            r"GAPS?\s+IDENTIFIED[:\s]*(.*?)(?=RECOMMENDATIONS?|IMPROVEMENTS?|$)",
             r"GAPS?[:\s]*(.*?)(?=RECOMMENDATIONS?|IMPROVEMENTS?|$)",
             r"### GAPS?[:\s]*(.*?)(?=###|$)",
             r"IMPROVEMENTS?[:\s]*(.*?)(?=RECOMMENDATIONS?|$)",
             r"DEFICIENCIES[:\s]*(.*?)(?=RECOMMENDATIONS?|$)",
             r"WEAKNESSES[:\s]*(.*?)(?=RECOMMENDATIONS?|$)",
+            r"AREAS?\s+FOR\s+IMPROVEMENT[:\s]*(.*?)(?=RECOMMENDATIONS?|$)",
         ]
 
         for pattern in patterns:
@@ -246,6 +260,18 @@ class ComprehensiveESGAnalyzer:
                             gaps.append(clean_gap)
                 if gaps:
                     break
+
+        # If no structured gaps found, try to extract from general text
+        if not gaps:
+            # Look for sentences with gap/issue keywords
+            sentences = re.split(r'[.!?]+', feedback)
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if any(keyword in sentence.lower() for keyword in ['lack', 'missing', 'insufficient', 'limited', 'weak', 'poor', 'gap', 'issue', 'problem', 'deficiency', 'absence']):
+                    if len(sentence) > 20 and len(sentence) < 200:  # Reasonable length
+                        gaps.append(sentence)
+                        if len(gaps) >= 6:
+                            break
 
         return gaps[:6]  # Limit to 6 gaps
 
@@ -655,6 +681,7 @@ class ComprehensiveESGAnalyzer:
     def _is_section_header(self, line: str) -> bool:
         """
         Identify section headers that should not be treated as questions.
+        Now includes subtitle detection for Excel format.
         """
         line_stripped = line.strip()
 
@@ -685,7 +712,24 @@ class ComprehensiveESGAnalyzer:
             return True
 
         # Lines that are just numbers or letters (section markers)
-        return bool(re.match(r"^\s*[A-Z0-9]+\s*$", line_stripped))
+        if re.match(r"^\s*[A-Z0-9]+\s*$", line_stripped):
+            return True
+
+        # Excel-specific subtitle detection
+        # These are subtitles like "Energy", "Environment", "Ethical AI", etc.
+        subtitles = [
+            "energy", "emissions", "water", "waste", "climate risk", "social risk", 
+            "carbon offsetting", "environment", "diversity,equity & inclusion",
+            "health and safety", "learning and development", "community engagement",
+            "consumer rights", "consumer segmentation", "consumer profiling",
+            "governance", "management and leadership", "risk management and control environment",
+            "reporting", "ethical ai", "data integrity", "procurement"
+        ]
+        
+        if line_stripped.lower() in subtitles:
+            return True
+
+        return False
 
     def _is_excel_metadata(self, line: str) -> bool:
         """

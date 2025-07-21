@@ -23,11 +23,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Paper,
   Stack,
 } from '@mui/material';
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
-import { reviewsAPI, uploadsAPI, aiAPI } from '../services/api';
+import { reviewsAPI, uploadsAPI } from '../services/api';
 import { TabbedDocumentViewer } from '../components/TabbedDocumentViewer';
 import { ReviewActions } from '../components/ReviewActions';
 
@@ -56,19 +55,11 @@ export const Reviews: React.FC = () => {
     'all'
   );
   const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(null);
-  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [documentViewerOpen, setDocumentViewerOpen] = useState(false);
   const [reviewActionsOpen, setReviewActionsOpen] = useState(false);
 
-  // Fetch AI analysis for selected file
-  const { data: aiAnalysis, isLoading: aiLoading } = useQuery({
-    queryKey: ['ai-analysis', selectedReview?.id],
-    queryFn: () => aiAPI.getResultByUpload(selectedReview!.id),
-    enabled: !!selectedReview && viewDialogOpen,
-    staleTime: 5 * 60 * 1000,
-  });
 
   // Fetch review items
   const {
@@ -202,10 +193,6 @@ export const Reviews: React.FC = () => {
     setReviewActionsOpen(true);
   };
 
-  const handleViewDetailsLegacy = (review: ReviewItem) => {
-    setSelectedReview(review);
-    setViewDialogOpen(true);
-  };
 
   const handleStatusChange = (newStatus: string) => {
     console.log(`Status changed to: ${newStatus}`);
@@ -375,6 +362,8 @@ export const Reviews: React.FC = () => {
                           {review.reviewer && ` • Reviewed by: ${review.reviewer}`}
                         </Typography>
                       }
+                      primaryTypographyProps={{ component: 'div' }}
+                      secondaryTypographyProps={{ component: 'div' }}
                     />
 
                     <Box sx={{ ml: 'auto', display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -388,14 +377,6 @@ export const Reviews: React.FC = () => {
                         View
                       </Button>
 
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleViewDetailsLegacy(review)}
-                        sx={{ minWidth: 'auto', px: 2, py: 0.5, fontSize: '0.75rem' }}
-                      >
-                        Quick View
-                      </Button>
 
                       {review.status === 'pending' && (
                         <Stack direction="row" spacing={0.5} sx={{ ml: 1 }}>
@@ -442,132 +423,6 @@ export const Reviews: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* AI Analysis View Dialog */}
-      <Dialog
-        open={viewDialogOpen}
-        onClose={() => setViewDialogOpen(false)}
-        maxWidth="lg"
-        fullWidth
-        PaperProps={{
-          sx: { height: '80vh', maxHeight: '800px' }
-        }}
-      >
-        <DialogTitle>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5">AI Analysis Results</Typography>
-            <Chip 
-              label={selectedReview?.status} 
-              color={selectedReview ? getStatusColor(selectedReview.status) : 'default'} 
-            />
-          </Box>
-        </DialogTitle>
-        <DialogContent dividers>
-          {selectedReview && (
-            <Stack spacing={3}>
-              {/* File Information */}
-              <Paper elevation={2} sx={{ p: 3 }}>
-                <Typography variant="h6" gutterBottom color="primary">
-                  📄 Document Information
-                </Typography>
-                <Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">Filename:</Typography>
-                    <Typography variant="body1" fontWeight={500}>{selectedReview.filename}</Typography>
-                  </Box>
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">Upload Date:</Typography>
-                    <Typography variant="body1">{new Date(selectedReview.uploaded_at).toLocaleString()}</Typography>
-                  </Box>
-                </Box>
-              </Paper>
-
-              {/* AI Analysis Results */}
-              {aiLoading ? (
-                <Box display="flex" justifyContent="center" py={4}>
-                  <CircularProgress />
-                  <Typography variant="body2" sx={{ ml: 2 }}>Loading AI analysis...</Typography>
-                </Box>
-              ) : aiAnalysis?.data?.results?.length > 0 ? (
-                <Paper elevation={2} sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    🤖 AI Analysis Results
-                  </Typography>
-                  {aiAnalysis?.data?.results?.map((result: any, index: number) => (
-                    <Box key={index} sx={{ mb: 3 }}>
-                      <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        <Typography variant="h4" color="success.main" fontWeight="bold">
-                          {Math.round((result.score || result.overall_score || 0) * 100)}%
-                        </Typography>
-                        <Typography variant="subtitle1" color="text.secondary">
-                          Compliance Score
-                        </Typography>
-                      </Box>
-                      
-                      {result.analysis && (
-                        <Box>
-                          <Typography variant="subtitle2" gutterBottom>Analysis Summary:</Typography>
-                          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'grey.50' }}>
-                            <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                              {result.analysis}
-                            </Typography>
-                          </Paper>
-                        </Box>
-                      )}
-
-                      <Box mt={2} display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={2}>
-                        <Box textAlign="center" p={1}>
-                          <Typography variant="subtitle2" color="text.secondary">Status</Typography>
-                          <Typography variant="body1" fontWeight={500}>{result.status || 'Completed'}</Typography>
-                        </Box>
-                        <Box textAlign="center" p={1}>
-                          <Typography variant="subtitle2" color="text.secondary">Analyzed</Typography>
-                          <Typography variant="body1">{new Date(result.created_at).toLocaleDateString()}</Typography>
-                        </Box>
-                        <Box textAlign="center" p={1}>
-                          <Typography variant="subtitle2" color="text.secondary">Checklist ID</Typography>
-                          <Typography variant="body1">{result.checklist_id}</Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  ))}
-                </Paper>
-              ) : (
-                <Paper elevation={2} sx={{ p: 3 }}>
-                  <Alert severity="warning">
-                    No AI analysis results found for this document. The analysis may still be processing.
-                  </Alert>
-                </Paper>
-              )}
-
-              {/* Comments Section */}
-              {selectedReview.comments && selectedReview.comments.length > 0 && (
-                <Paper elevation={2} sx={{ p: 3 }}>
-                  <Typography variant="h6" gutterBottom color="primary">
-                    💬 Review Comments
-                  </Typography>
-                  {selectedReview.comments.map((comment, index) => (
-                    <Paper key={index} variant="outlined" sx={{ p: 2, mb: 1 }}>
-                      <Typography variant="body2">{comment}</Typography>
-                    </Paper>
-                  ))}
-                </Paper>
-              )}
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setViewDialogOpen(false)}>Close</Button>
-          <Button 
-            variant="contained" 
-            onClick={() => {
-              setViewDialogOpen(false);
-              // Could add approve/reject functionality here
-            }}
-          >
-            Review Document
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Add Comment Dialog */}
       <Dialog
@@ -610,6 +465,7 @@ export const Reviews: React.FC = () => {
       {/* Enhanced Tabbed Document Viewer */}
       {selectedReview && (
         <TabbedDocumentViewer
+          key={`tabbed-viewer-${selectedReview.id}`}
           open={documentViewerOpen}
           onClose={() => setDocumentViewerOpen(false)}
           uploadId={parseInt(selectedReview.id)}

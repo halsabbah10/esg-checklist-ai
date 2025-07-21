@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .content { background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .footer { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+        .alert { background-color: #f8d7da; padding: 15px; border-radius: 4px; margin: 15px 0; border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ESG Checklist Submission Required</h2>
+            <p><strong>Audit:</strong> {{ audit_name }}</p>
+            <p><strong>Due Date:</strong> {{ due_date }}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear Advisory Team,</p>
+            
+            <div class="alert">
+                <strong>Missing ESG Checklist Submission</strong><br>
+                No ESG checklist has been received for the audit: <strong>{{ audit_name }}</strong>
+            </div>
+            
+            <p><strong>Required Action:</strong></p>
+            <ul>
+                <li>Follow up with the audit team to request ESG checklist submission</li>
+                <li>Provide the checklist template if needed</li>
+                <li>Set a deadline for submission</li>
+                <li>Monitor for compliance</li>
+            </ul>
+            
+            <p>This notification will continue until the checklist is received and processed.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from the ESG Checklist AI system.</p>
+            <p>Generated on {{ current_date }} | Internal Audit Department</p>
+        </div>
+    </div>
+</body>
+</html>

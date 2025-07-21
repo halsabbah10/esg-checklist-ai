@@ -152,9 +152,16 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     const feedbackText = rawResults.feedback || '';
     const filename = rawResults.file_info?.filename || '';
 
+    console.log('Processing comprehensive results:', {
+      hasMetadata: !!rawResults.metadata,
+      hasCategoryScores: !!rawResults.metadata?.category_scores,
+      metadata: rawResults.metadata
+    });
+
     // If comprehensive metadata is already available from backend, use it
     if (rawResults.metadata && rawResults.metadata.category_scores) {
       // Backend has already processed everything comprehensively
+      console.log('Using backend processed data');
       return {
         ...rawResults,
         metadata: rawResults.metadata
@@ -162,12 +169,13 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     }
 
     // Fallback: process results on frontend (for backward compatibility)
+    console.log('Processing on frontend - fallback mode');
     const categoryScores = extractCategoryScores(feedbackText, overallScore, rawResults.metadata);
-    const recommendations = extractDocumentSpecificRecommendations(feedbackText, filename);
-    const gaps = extractDocumentSpecificGaps(feedbackText, filename, overallScore);
+    const recommendations = extractDocumentSpecificRecommendations(feedbackText, filename, rawResults.metadata);
+    const gaps = extractDocumentSpecificGaps(feedbackText, filename, overallScore, rawResults.metadata);
     const checklistCompleteness = generateCompletenessAnalysis(feedbackText, filename, overallScore, rawResults.metadata);
     const esgAlignment = analyzeESGAlignment(feedbackText, filename, overallScore);
-    const complianceIndicators = extractComplianceIndicators(feedbackText);
+    const complianceIndicators = extractComplianceIndicators(feedbackText, overallScore);
 
     return {
       ...rawResults,
@@ -222,113 +230,190 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     };
   };
 
-  const extractDocumentSpecificRecommendations = (feedback: string, filename: string): string[] => {
+  const extractDocumentSpecificRecommendations = (feedback: string, _filename: string, metadata?: any): string[] => {
     const recommendations: string[] = [];
     
-    // Look for recommendations section
-    const recMatch = feedback.match(/### Recommendations:\s*(.*?)(?=###|$)/s);
-    if (recMatch) {
-      const recLines = recMatch[1].split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('•'));
-      recommendations.push(...recLines.map(line => line.replace(/^[-•]\s*/, '').trim()));
+    console.log('🔍 Extracting recommendations from:', {
+      hasMetadata: !!metadata,
+      hasChecklistCompleteness: !!metadata?.checklist_completeness,
+      hasRecommendations: !!metadata?.recommendations,
+      metadata: metadata
+    });
+    
+    // First, try to get recommendations directly from backend metadata
+    if (metadata?.recommendations && Array.isArray(metadata.recommendations)) {
+      console.log('✅ Using backend recommendations:', metadata.recommendations);
+      recommendations.push(...metadata.recommendations);
     }
-
-    // Generate content-based recommendations if none found
-    if (recommendations.length === 0) {
-      // Generate document-specific recommendations based on filename
-      const isAuditDocument = filename.toLowerCase().includes('audit');
-      const isReportDocument = filename.toLowerCase().includes('report');
-      const isPolicyDocument = filename.toLowerCase().includes('policy');
+    
+    // Second, try to extract actionable recommendations from backend completeness data
+    if (metadata?.checklist_completeness) {
+      const completenessData = metadata.checklist_completeness;
+      const incompleteItems = completenessData.items?.filter((item: any) => item.status === 'Incomplete') || [];
+      const missingItems = completenessData.items?.filter((item: any) => item.status === 'Missing') || [];
       
-      if (isAuditDocument) {
-        recommendations.push(
-          `Enhance ${filename} with detailed compliance verification procedures`,
-          "Include quantitative metrics for audit trail transparency",
-          "Add cross-referencing to regulatory compliance standards",
-          "Implement periodic audit review scheduling",
-          "Strengthen internal control documentation"
-        );
-      } else if (isReportDocument) {
-        recommendations.push(
-          `Improve ${filename} narrative with stakeholder impact analysis`,
-          "Include year-over-year comparative ESG performance data",
-          "Add third-party verification statements",
-          "Expand on material ESG risks and opportunities",
-          "Strengthen forward-looking ESG commitments"
-        );
-      } else if (isPolicyDocument) {
-        recommendations.push(
-          `Update ${filename} with measurable implementation targets`,
-          "Include clear accountability structures and roles",
-          "Add regular policy review and update schedules",
-          "Strengthen monitoring and evaluation frameworks",
-          "Expand stakeholder consultation processes"
-        );
-      } else {
-        recommendations.push(
-          "Enhance ESG disclosure transparency with more detailed metrics",
-          "Implement systematic ESG data collection processes",
-          "Establish clear ESG targets with measurable outcomes",
-          "Strengthen stakeholder engagement on ESG initiatives",
-          "Develop comprehensive ESG training programs"
-        );
+      console.log('🔍 Completeness data:', {
+        incompleteItems: incompleteItems.length,
+        missingItems: missingItems.length,
+        firstItemRecommendations: incompleteItems[0]?.recommendations || []
+      });
+      
+      // Add specific recommendations from incomplete items
+      incompleteItems.forEach((item: any) => {
+        if (item.recommendations && item.recommendations.length > 0) {
+          item.recommendations.forEach((rec: string) => {
+            recommendations.push(`${item.question}: ${rec}`);
+          });
+        }
+      });
+      
+      // Add high-priority recommendations for missing items
+      missingItems.forEach((item: any) => {
+        recommendations.push(`PRIORITY: Complete response for "${item.question}" - this is a critical ESG compliance requirement`);
+      });
+      
+      // Add strategic recommendations based on completion rate
+      const completionRate = completenessData.completion_rate || 0;
+      if (completionRate < 0.8) {
+        recommendations.push(`Focus on improving overall checklist completion rate (currently ${(completionRate * 100).toFixed(1)}%)`);
+      }
+      
+      // Add quality improvement recommendations based on quality scores
+      const lowQualityItems = completenessData.items?.filter((item: any) => 
+        item.status === 'Complete' && item.quality_score && item.quality_score < 0.7
+      ) || [];
+      
+      if (lowQualityItems.length > 0) {
+        recommendations.push(`Enhance response quality for ${lowQualityItems.length} completed items with low quality scores`);
+      }
+    }
+    
+    // Look for recommendations section in feedback if no backend data
+    if (recommendations.length === 0) {
+      console.log('🔍 Trying to extract recommendations from feedback text');
+      
+      // Try multiple patterns to find recommendations
+      const patterns = [
+        /### Recommendations:\s*(.*?)(?=###|$)/s,
+        /## Recommendations:\s*(.*?)(?=##|$)/s,
+        /Recommendations:\s*(.*?)(?=\n\n|$)/s,
+        /(?:Key\s+)?Recommendations?:\s*(.*?)(?=\n\n|$)/s,
+        /(?:Suggested\s+)?Improvements?:\s*(.*?)(?=\n\n|$)/s,
+        /Action\s+Items?:\s*(.*?)(?=\n\n|$)/s,
+        /Next\s+Steps?:\s*(.*?)(?=\n\n|$)/s,
+      ];
+      
+      for (const pattern of patterns) {
+        const match = feedback.match(pattern);
+        if (match) {
+          const lines = match[1].split('\n');
+          const recLines = lines.filter(line => {
+            const trimmed = line.trim();
+            return trimmed.startsWith('-') || trimmed.startsWith('•') || 
+                   trimmed.startsWith('*') || trimmed.startsWith('→') ||
+                   (trimmed.length > 10 && /^\d+\./.test(trimmed));
+          });
+          
+          if (recLines.length > 0) {
+            recommendations.push(...recLines.map(line => 
+              line.replace(/^[-•*→\d+\.\s]+/, '').trim()
+            ).filter(line => line.length > 5));
+            break;
+          }
+        }
+      }
+      
+      // If still no recommendations, try to extract from unstructured text
+      if (recommendations.length === 0) {
+        const sentences = feedback.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        const recSentences = sentences.filter(sentence => {
+          const lower = sentence.toLowerCase();
+          return lower.includes('recommend') || lower.includes('suggest') || 
+                 lower.includes('should') || lower.includes('consider') ||
+                 lower.includes('improve') || lower.includes('enhance');
+        });
+        
+        recommendations.push(...recSentences.slice(0, 5).map(s => s.trim()));
       }
     }
 
-    return recommendations.slice(0, 10); // Limit to top 10
+    // Only use actual recommendations from AI analysis - no fallback generation
+
+    console.log('✅ Final recommendations extracted:', recommendations);
+    return recommendations.slice(0, 12); // Limit to top 12
   };
 
-  const extractDocumentSpecificGaps = (feedback: string, filename: string, score: number): string[] => {
+  const extractDocumentSpecificGaps = (feedback: string, _filename: string, score: number, metadata?: any): string[] => {
     const gaps: string[] = [];
     
-    // Look for gaps/improvement areas
-    const gapsMatch = feedback.match(/### Areas for Improvement:\s*(.*?)(?=###|$)/s);
-    if (gapsMatch) {
-      const gapLines = gapsMatch[1].split('\n').filter(line => line.trim().startsWith('-') || line.trim().startsWith('•'));
-      gaps.push(...gapLines.map(line => line.replace(/^[-•]\s*/, '').trim()));
+    console.log('🔍 Extracting gaps from:', {
+      hasMetadata: !!metadata,
+      hasGaps: !!metadata?.gaps,
+      score: score,
+      metadata: metadata
+    });
+    
+    // First, try to get gaps directly from backend metadata
+    if (metadata?.gaps && Array.isArray(metadata.gaps)) {
+      console.log('✅ Using backend gaps:', metadata.gaps);
+      gaps.push(...metadata.gaps);
     }
-
-    // Generate score-based gaps if none found with document context
+    
+    // Look for gaps/improvement areas in feedback text
     if (gaps.length === 0) {
-      const documentType = filename.toLowerCase();
-      const isFinancialDoc = documentType.includes('financial') || documentType.includes('annual');
-      const isSustainabilityDoc = documentType.includes('sustainability') || documentType.includes('esg');
+      console.log('🔍 Trying to extract gaps from feedback text');
       
-      if (score < 0.7) {
-        if (isFinancialDoc) {
-          gaps.push(
-            `${filename}: Limited integration of ESG financial metrics`,
-            "Missing climate-related financial disclosures (TCFD)",
-            "Insufficient ESG risk quantification in financial statements",
-            "Lack of ESG-linked performance indicators",
-            "Missing sustainability accounting standards (SASB) alignment"
-          );
-        } else if (isSustainabilityDoc) {
-          gaps.push(
-            `${filename}: Limited evidence of environmental impact measurement`,
-            "Insufficient documentation of social initiatives",
-            "Governance framework needs strengthening",
-            "Missing quantitative ESG metrics and KPIs",
-            "Lack of third-party ESG verification"
-          );
-        } else {
-          gaps.push(
-            `${filename}: Limited ESG integration in document structure`,
-            "Missing systematic ESG data collection processes",
-            "Insufficient stakeholder impact documentation",
-            "Lack of regulatory compliance mapping",
-            "Missing ESG performance benchmarking"
-          );
+      // Try multiple patterns to find gaps and weaknesses
+      const patterns = [
+        /### Areas for Improvement:\s*(.*?)(?=###|$)/s,
+        /## Areas for Improvement:\s*(.*?)(?=##|$)/s,
+        /(?:Areas\s+for\s+)?Improvement:\s*(.*?)(?=\n\n|$)/s,
+        /(?:Identified\s+)?Gaps?:\s*(.*?)(?=\n\n|$)/s,
+        /(?:Key\s+)?Issues?:\s*(.*?)(?=\n\n|$)/s,
+        /Weaknesses?:\s*(.*?)(?=\n\n|$)/s,
+        /Challenges?:\s*(.*?)(?=\n\n|$)/s,
+        /(?:Risk\s+)?Areas?:\s*(.*?)(?=\n\n|$)/s,
+        /Concerns?:\s*(.*?)(?=\n\n|$)/s,
+      ];
+      
+      for (const pattern of patterns) {
+        const match = feedback.match(pattern);
+        if (match) {
+          const lines = match[1].split('\n');
+          const gapLines = lines.filter(line => {
+            const trimmed = line.trim();
+            return trimmed.startsWith('-') || trimmed.startsWith('•') || 
+                   trimmed.startsWith('*') || trimmed.startsWith('→') ||
+                   (trimmed.length > 10 && /^\d+\./.test(trimmed));
+          });
+          
+          if (gapLines.length > 0) {
+            gaps.push(...gapLines.map(line => 
+              line.replace(/^[-•*→\d+\.\s]+/, '').trim()
+            ).filter(line => line.length > 5));
+            break;
+          }
         }
-      } else if (score < 0.9) {
-        gaps.push(
-          `${filename}: ESG reporting could be more comprehensive`,
-          "Stakeholder engagement processes need enhancement",
-          "Additional cross-referencing to ESG frameworks needed",
-          "More detailed impact measurement recommended"
-        );
+      }
+      
+      // If still no gaps, try to extract from unstructured text
+      if (gaps.length === 0) {
+        const sentences = feedback.split(/[.!?]+/).filter(s => s.trim().length > 20);
+        const gapSentences = sentences.filter(sentence => {
+          const lower = sentence.toLowerCase();
+          return lower.includes('missing') || lower.includes('lack') || 
+                 lower.includes('insufficient') || lower.includes('limited') ||
+                 lower.includes('weak') || lower.includes('poor') ||
+                 lower.includes('gap') || lower.includes('issue');
+        });
+        
+        gaps.push(...gapSentences.slice(0, 5).map(s => s.trim()));
       }
     }
 
+    // Only use actual gaps from AI analysis - no fallback generation
+
+    console.log('✅ Final gaps extracted:', gaps);
     return gaps.slice(0, 8); // Limit to top 8
   };
 
@@ -442,12 +527,30 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     };
   };
 
-  const extractComplianceIndicators = (feedback: string) => {
+  const extractComplianceIndicators = (feedback: string, score: number) => {
+    // Calculate risk level based on actual ESG score
+    const risk_level = score >= 0.8 ? 'Low' : score >= 0.6 ? 'Medium' : 'High';
+    
+    // Use actual ESG score as compliance rate (they should be the same)
+    const compliance_rate = score;
+    
+    // Generate priority areas based on score and feedback content
+    const priority_areas = [];
+    if (score < 0.7) {
+      if (feedback.toLowerCase().includes('environment')) priority_areas.push('Environmental Management');
+      if (feedback.toLowerCase().includes('social')) priority_areas.push('Social Impact');
+      if (feedback.toLowerCase().includes('governance')) priority_areas.push('Governance Framework');
+    }
+    
+    // Default priority areas if none found
+    if (priority_areas.length === 0) {
+      priority_areas.push('Environmental Management', 'Social Impact', 'Governance Framework');
+    }
+    
     return {
-      risk_level: feedback.toLowerCase().includes('high risk') ? 'High' : 
-                 feedback.toLowerCase().includes('medium risk') ? 'Medium' : 'Low',
-      compliance_rate: Math.random() * 0.3 + 0.7, // 70-100%
-      priority_areas: ['Environmental Management', 'Social Impact', 'Governance Framework']
+      risk_level,
+      compliance_rate,
+      priority_areas
     };
   };
 
@@ -529,6 +632,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       // Create a new window with the report content
       const printWindow = window.open('', '_blank');
       if (printWindow) {
+        printWindow.document.open();
         printWindow.document.write(printContent);
         printWindow.document.close();
         
@@ -1090,7 +1194,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                         {completeItems.length > 0 && (
                           <Box mb={4}>
                             <Typography variant="h6" gutterBottom display="flex" alignItems="center">
-                              <CheckCircle sx={{ fontSize: 20, marginRight: 1, color: 'success.main' }} />
+                              <CheckCircle style={{ fontSize: 20, marginRight: 8, color: 'green' }} />
                               Complete Requirements ({completeItems.length})
                             </Typography>
                             <Paper>
@@ -1103,17 +1207,17 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                                     <ListItemText
                                       primary={item.question || 'N/A'}
                                       secondary={
-                                        <Box>
-                                          <Typography variant="body2" color="text.secondary">
+                                        <span>
+                                          <span style={{ fontSize: '0.875rem', color: 'rgba(0, 0, 0, 0.6)' }}>
                                             Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
                                             {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
-                                          </Typography>
+                                          </span>
                                           {item.evidence_found && item.evidence_found.length > 0 && (
-                                            <Typography variant="caption" color="success.main">
+                                            <span style={{ fontSize: '0.75rem', color: '#2e7d32', display: 'block' }}>
                                               Evidence: {item.evidence_found[0]}
-                                            </Typography>
+                                            </span>
                                           )}
-                                        </Box>
+                                        </span>
                                       }
                                     />
                                   </ListItem>
@@ -1127,7 +1231,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                         {incompleteItems.length > 0 && (
                           <Box mb={4}>
                             <Typography variant="h6" gutterBottom display="flex" alignItems="center">
-                              <AlertTriangle sx={{ fontSize: 20, marginRight: 1, color: 'warning.main' }} />
+                              <AlertTriangle style={{ fontSize: 20, marginRight: 8, color: 'orange' }} />
                               Incomplete Requirements ({incompleteItems.length})
                             </Typography>
                             <Paper>
@@ -1164,7 +1268,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                         {missingItems.length > 0 && (
                           <Box mb={4}>
                             <Typography variant="h6" gutterBottom display="flex" alignItems="center">
-                              <AlertCircle sx={{ fontSize: 20, marginRight: 1, color: 'error.main' }} />
+                              <AlertCircle style={{ fontSize: 20, marginRight: 8, color: 'red' }} />
                               Missing Requirements ({missingItems.length})
                             </Typography>
                             <Paper>

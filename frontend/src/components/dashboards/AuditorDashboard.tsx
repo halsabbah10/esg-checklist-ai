@@ -37,12 +37,13 @@ import {
   PieChart,
   Refresh,
 } from '@mui/icons-material';
-import { analyticsAPI, aiAPI, submissionsAPI } from '../../services/api';
+import { analyticsAPI, aiAPI, uploadsAPI } from '../../services/api';
 
 interface AIResult {
   id: number;
   checklist_id: number;
   overall_score: number;
+  score?: number; // Alternative score field used in some contexts
   analysis: string;
   created_at: string;
   updated_at: string;
@@ -50,18 +51,43 @@ interface AIResult {
   upload_id?: number;
   filename?: string;
   file_upload_id?: number;
+  metadata?: {
+    checklist_completeness?: {
+      completion_rate: number;
+      total: number;
+      completed: number;
+      summary?: {
+        complete: number;
+        incomplete: number;
+        missing: number;
+        total: number;
+      };
+    };
+    department_context?: any;
+    quality_score?: number;
+  };
+  analysis_metadata?: any; // Fallback for alternative structure
+  checklist_completeness?: any; // Direct completeness field fallback
 }
 
-interface Submission {
+interface FileUpload {
   id: number;
-  checklist_id: number;
   user_id: number;
-  status: 'pending' | 'approved' | 'rejected' | 'in_review';
+  filename: string;
+  file_path: string;
+  status: 'pending' | 'approved' | 'rejected' | 'in_review' | 'processing';
   created_at: string;
   updated_at: string;
-  filename?: string;
-  ai_score?: number;
-  submitted_at?: string;
+  uploaded_at?: string; // Alternative date field
+  upload_date?: string; // Alternative date field
+  timestamp?: string; // Alternative date field
+  ai_result?: {
+    overall_score: number;
+    status: string;
+  };
+  review_status?: string;
+  file_size?: number;
+  content_type?: string;
 }
 
 interface StatsCardProps {
@@ -167,17 +193,17 @@ export const AuditorDashboard: React.FC = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Optimized: Load recent submissions with reduced limit
-  const { data: submissions, isLoading: submissionsLoading } = useQuery<{ data: Submission[] }>({
-    queryKey: ['submissions', 'recent'],
-    queryFn: () => submissionsAPI.getAll(),
+  // Load recent file uploads (the actual submissions in this system)
+  const { data: uploads, isLoading: uploadsLoading, error: uploadsError } = useQuery<{ data: { results: FileUpload[] } }>({
+    queryKey: ['uploads', 'recent'],
+    queryFn: () => uploadsAPI.search({ limit: 20 }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
   });
 
   // Improved loading state - show partial content while loading
-  const isInitialLoading = metricsLoading && aiLoading && submissionsLoading;
+  const isInitialLoading = metricsLoading && aiLoading && uploadsLoading;
   
   if (isInitialLoading) {
     return (
@@ -193,7 +219,23 @@ export const AuditorDashboard: React.FC = () => {
   }
 
   const aiResultsData = aiResults?.data?.results || [];
-  const submissionsData = submissions?.data || [];
+  const uploadsData = uploads?.data?.results || [];
+  
+  // Enhanced debug logging for uploads data
+  if (typeof window !== 'undefined') {
+    console.log('🔍 Debug: Uploads Data:', {
+      uploads,
+      uploadsData,
+      uploadsError,
+      isArray: Array.isArray(uploadsData),
+      originalData: uploads?.data,
+      uploadsLoading,
+      dataLength: uploadsData?.length,
+      rawResponse: uploads,
+      sampleUpload: uploadsData[0], // Show structure of first upload
+      uploadFields: uploadsData[0] ? Object.keys(uploadsData[0]) : []
+    });
+  }
   const metrics = auditorMetrics?.data || {};
 
   // Use real metrics from backend
@@ -209,6 +251,54 @@ export const AuditorDashboard: React.FC = () => {
     return score >= 0.5 && score < 0.7;
   }).length;
 
+  // Enhanced completeness metrics with proper data handling
+  const getCompleteness = (result: any) => {
+    // Try multiple possible data structures
+    return result.metadata?.checklist_completeness || 
+           result.analysis_metadata?.checklist_completeness ||
+           result.checklist_completeness ||
+           null;
+  };
+
+  const getCompletionRate = (result: any): number => {
+    const completeness = getCompleteness(result);
+    return completeness?.completion_rate || 
+           (completeness?.completed && completeness?.total ? completeness.completed / completeness.total : 0);
+  };
+
+  const hasCompletenessData = (result: any): boolean => {
+    const completeness = getCompleteness(result);
+    return !!(completeness && (completeness.completion_rate !== undefined || 
+             (completeness.completed !== undefined && completeness.total !== undefined)));
+  };
+
+  // Calculate completeness metrics with better data validation
+  const resultsWithCompleteness = aiResultsData.filter(hasCompletenessData);
+  
+  const completeAudits = resultsWithCompleteness.filter((result: any) => {
+    return getCompletionRate(result) >= 0.95;
+  }).length;
+
+  const incompleteAudits = resultsWithCompleteness.filter((result: any) => {
+    const rate = getCompletionRate(result);
+    return rate >= 0.5 && rate < 0.95;
+  }).length;
+
+  const missingDataAudits = resultsWithCompleteness.filter((result: any) => {
+    return getCompletionRate(result) < 0.5;
+  }).length;
+
+  const averageCompleteness = resultsWithCompleteness.length > 0 
+    ? resultsWithCompleteness.reduce((sum: number, result: any) => {
+        return sum + getCompletionRate(result);
+      }, 0) / resultsWithCompleteness.length
+    : 0;
+
+  // Calculate percentage of audits that have completeness data
+  const completenessDataAvailability = aiResultsData.length > 0 
+    ? (resultsWithCompleteness.length / aiResultsData.length) * 100 
+    : 0;
+
   // Manual refresh function
   const handleRefresh = async () => {
     await Promise.all([
@@ -217,6 +307,51 @@ export const AuditorDashboard: React.FC = () => {
     ]);
     setLastRefresh(new Date());
   };
+
+  // Debug logging for all data (remove in production)
+  if (typeof window !== 'undefined') {
+    // Calculate stats for debugging using consistent logic
+    const frontendPassedCount = aiResultsData.filter((r: AIResult) => {
+      const scoreValue = r.overall_score || r.score || 0;
+      const score = scoreValue > 1 ? scoreValue : scoreValue * 100;
+      return score >= 70;
+    }).length;
+    const frontendFailedCount = aiResultsData.filter((r: AIResult) => {
+      const scoreValue = r.overall_score || r.score || 0;
+      const score = scoreValue > 1 ? scoreValue : scoreValue * 100;
+      return score < 50;
+    }).length;
+    const frontendWarningCount = aiResultsData.filter((r: AIResult) => {
+      const scoreValue = r.overall_score || r.score || 0;
+      const score = scoreValue > 1 ? scoreValue : scoreValue * 100;
+      return score >= 50 && score < 70;
+    }).length;
+
+    console.log('🔍 Debug: Dashboard Data Structure:', {
+      metrics: metrics,
+      aiResultsData: aiResultsData,
+      uploadsData: uploadsData,
+      sampleAIResult: aiResultsData[0],
+      backendMetrics: {
+        passedAudits: passedAudits,
+        failedAudits: failedAudits,
+        overallScore: overallScore
+      },
+      frontendCalculatedMetrics: {
+        passedCount: frontendPassedCount,
+        failedCount: frontendFailedCount,
+        warningCount: frontendWarningCount,
+        total: aiResultsData.length,
+        passRate: aiResultsData.length > 0 ? Math.round((frontendPassedCount / aiResultsData.length) * 100) : 0
+      },
+      completenessData: {
+        resultsWithCompleteness: resultsWithCompleteness.length,
+        completeAudits: completeAudits,
+        incompleteAudits: incompleteAudits,
+        missingDataAudits: missingDataAudits
+      }
+    });
+  }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -236,13 +371,58 @@ export const AuditorDashboard: React.FC = () => {
           variant="outlined"
           startIcon={<Refresh />}
           onClick={handleRefresh}
-          disabled={metricsLoading || aiLoading}
+          disabled={metricsLoading || aiLoading || uploadsLoading}
         >
           Refresh Data
         </Button>
       </Box>
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Completeness */}
+      <Typography variant="h5" component="h2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+        Completeness Metrics
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        <StatsCard
+          title="Overall Completeness"
+          value={resultsWithCompleteness.length > 0 ? `${Math.round(averageCompleteness * 100)}%` : 'N/A'}
+          icon={<Assignment fontSize="large" />}
+          color={resultsWithCompleteness.length > 0 ? "primary" : "warning"}
+          subtitle={resultsWithCompleteness.length > 0 ? `${resultsWithCompleteness.length} audits` : 'No data available'}
+        />
+        <StatsCard
+          title="Complete Audits"
+          value={completeAudits}
+          icon={<CheckCircle fontSize="large" />}
+          color="success"
+          subtitle="Rate ≥ 95%"
+        />
+        <StatsCard
+          title="Incomplete Audits"
+          value={incompleteAudits}
+          icon={<Warning fontSize="large" />}
+          color="warning"
+          subtitle="Rate 50-94%"
+        />
+        <StatsCard
+          title="Missing Data"
+          value={missingDataAudits}
+          icon={<ErrorIcon fontSize="large" />}
+          color="error"
+          subtitle="Rate < 50%"
+        />
+      </Box>
+
+      {/* Key Metrics - Compliance */}
+      <Typography variant="h5" component="h2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+        Compliance Metrics
+      </Typography>
       <Box
         sx={{
           display: 'grid',
@@ -280,7 +460,7 @@ export const AuditorDashboard: React.FC = () => {
         />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
         {/* ESG Compliance Scores */}
         <Card elevation={2}>
           <CardContent>
@@ -290,6 +470,46 @@ export const AuditorDashboard: React.FC = () => {
             {esgCategories.map((item: any) => (
               <ComplianceScore key={item.category} category={item.category} score={item.score} />
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Completeness Breakdown */}
+        <Card elevation={2}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Completeness Breakdown
+            </Typography>
+            {aiResultsData.length === 0 ? (
+              <Alert severity="info">No audit data available</Alert>
+            ) : resultsWithCompleteness.length === 0 ? (
+              <Alert severity="warning">
+                No completeness data available. This data is generated by newer AI analysis versions.
+              </Alert>
+            ) : (
+              <Box>
+                <ComplianceScore 
+                  category="Complete (≥95%)" 
+                  score={completeAudits} 
+                  maxScore={resultsWithCompleteness.length}
+                />
+                <ComplianceScore 
+                  category="Incomplete (50-94%)" 
+                  score={incompleteAudits} 
+                  maxScore={resultsWithCompleteness.length}
+                />
+                <ComplianceScore 
+                  category="Missing (<50%)" 
+                  score={missingDataAudits} 
+                  maxScore={resultsWithCompleteness.length}
+                />
+                <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Data availability: {resultsWithCompleteness.length}/{aiResultsData.length} audits 
+                    ({completenessDataAvailability.toFixed(0)}%)
+                  </Typography>
+                </Box>
+              </Box>
+            )}
           </CardContent>
         </Card>
 
@@ -307,22 +527,42 @@ export const AuditorDashboard: React.FC = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell>File Upload</TableCell>
-                      <TableCell>Score</TableCell>
+                      <TableCell>Compliance</TableCell>
+                      <TableCell>Completeness</TableCell>
                       <TableCell>Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {aiResultsData.slice(0, 5).map((result: AIResult) => {
-                      const score = (result.overall_score || 0) * 100;
+                      // Try multiple possible score fields and handle different formats
+                      const scoreValue = result.overall_score || (result as any).score || 0;
+                      const score = scoreValue > 1 ? scoreValue : scoreValue * 100;
                       const status = score >= 70 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail';
                       const statusColor =
                         score >= 70 ? 'success' : score >= 50 ? 'warning' : 'error';
 
+                      // Get completeness data using our enhanced functions
+                      const completenessRate = getCompletionRate(result);
+                      const hasCompleteness = hasCompletenessData(result);
+                      const completenessStatus = hasCompleteness 
+                        ? (completenessRate >= 0.95 ? 'Complete' : 
+                           completenessRate >= 0.5 ? 'Incomplete' : 'Missing')
+                        : 'No Data';
+                      const completenessColor = hasCompleteness 
+                        ? (completenessRate >= 0.95 ? 'success' : 
+                           completenessRate >= 0.5 ? 'warning' : 'error')
+                        : 'default';
+
                       return (
                         <TableRow key={result.id}>
                           <TableCell>
-                            <Typography variant="body2">
-                              Upload ID: {result.file_upload_id || result.id}
+                            <Typography variant="body2" fontWeight={500}>
+                              {(result as any).filename || 
+                               (result as any).file_info?.filename || 
+                               `Analysis ${result.id}`}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ID: {result.file_upload_id || result.id}
                             </Typography>
                           </TableCell>
                           <TableCell>
@@ -331,7 +571,26 @@ export const AuditorDashboard: React.FC = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Chip label={status} color={statusColor} size="small" />
+                            {hasCompleteness ? (
+                              <Typography variant="body2" fontWeight={500} color={completenessColor === 'success' ? 'success.main' : completenessColor === 'error' ? 'error.main' : 'warning.main'}>
+                                {Math.round(completenessRate * 100)}%
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                N/A
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                              <Chip label={status} color={statusColor} size="small" />
+                              <Chip 
+                                label={completenessStatus} 
+                                color={completenessColor} 
+                                size="small" 
+                                variant={hasCompleteness ? "outlined" : "filled"}
+                              />
+                            </Box>
                           </TableCell>
                         </TableRow>
                       );
@@ -353,45 +612,90 @@ export const AuditorDashboard: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Compliance Activity Overview
             </Typography>
-            {submissionsData.length === 0 ? (
-              <Alert severity="info">No submission data available</Alert>
+            {uploadsLoading ? (
+              <Box display="flex" justifyContent="center" p={2}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : uploadsError ? (
+              <Alert severity="error">
+                Error loading file uploads: {uploadsError?.message || 'Unknown error'}
+              </Alert>
+            ) : uploadsData.length === 0 ? (
+              <Alert severity="info">
+                No document submissions available. This could mean:
+                <br />• No documents have been uploaded yet
+                <br />• Files are still being processed
+                <br />• Check browser console for API errors
+              </Alert>
             ) : (
               <List>
-                {submissionsData.slice(0, 6).map((submission: Submission, index: number) => (
-                  <React.Fragment key={submission.id}>
+                {uploadsData.slice(0, 6).map((upload: FileUpload, index: number) => (
+                  <React.Fragment key={upload.id}>
                     <ListItem>
                       <ListItemIcon>
                         <Assignment color="primary" />
                       </ListItemIcon>
                       <ListItemText
-                        primary={`Checklist ID: ${submission.checklist_id}`}
+                        primary={
+                          <Typography variant="subtitle2">
+                            {upload.filename || `Document ${upload.id}`}
+                          </Typography>
+                        }
                         secondary={
-                          <Box>
-                            <Typography variant="caption" display="block">
-                              User ID: {submission.user_id}
+                          <React.Fragment>
+                            <Typography variant="caption" display="block" color="text.secondary" component="span">
+                              Uploaded by User {upload.user_id}
                             </Typography>
-                            <Typography variant="caption" display="block">
-                              Submitted:{' '}
-                              {submission.submitted_at
-                                ? new Date(submission.submitted_at).toLocaleDateString()
-                                : 'N/A'}
+                            <Typography variant="caption" display="block" color="text.secondary" component="span">
+                              {(() => {
+                                // Try multiple possible date fields and formats
+                                const dateValue = upload.created_at || upload.uploaded_at || upload.upload_date || upload.timestamp;
+                                if (dateValue) {
+                                  try {
+                                    const date = new Date(dateValue);
+                                    // Check if date is valid
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                      });
+                                    }
+                                  } catch (error) {
+                                    console.warn('Date parsing error:', error, dateValue);
+                                  }
+                                }
+                                return 'Date not available';
+                              })()}
                             </Typography>
-                          </Box>
+                            {upload.ai_result?.overall_score && (
+                              <Typography variant="caption" display="block" color="primary.main" component="span">
+                                AI Score: {Math.round(upload.ai_result.overall_score * 100)}%
+                              </Typography>
+                            )}
+                            {upload.file_size && (
+                              <Typography variant="caption" display="block" color="text.secondary" component="span">
+                                Size: {(upload.file_size / 1024 / 1024).toFixed(2)} MB
+                              </Typography>
+                            )}
+                          </React.Fragment>
                         }
                       />
                       <Chip
-                        label={submission.status}
+                        label={upload.status || upload.review_status || 'Processing'}
                         color={
-                          submission.status === 'approved'
+                          upload.status === 'approved' || upload.review_status === 'approved'
                             ? 'success'
-                            : submission.status === 'rejected'
+                            : upload.status === 'rejected' || upload.review_status === 'rejected'
                               ? 'error'
                               : 'warning'
                         }
                         size="small"
                       />
                     </ListItem>
-                    {index < submissionsData.length - 1 && (
+                    {index < uploadsData.length - 1 && (
                       <Box
                         component="hr"
                         sx={{ border: 'none', borderTop: 1, borderColor: 'divider', my: 1 }}
@@ -423,8 +727,30 @@ export const AuditorDashboard: React.FC = () => {
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                 <Typography variant="body2">Pass Rate</Typography>
                 <Typography variant="body2" fontWeight={500} color="success.main">
-                  {aiResultsData.length > 0
-                    ? Math.round((passedAudits / aiResultsData.length) * 100)
+                  {(() => {
+                    if (aiResultsData.length === 0) return 'N/A';
+                    
+                    // Calculate pass rate using same logic as "Recent Audit Results" table
+                    const passedCount = aiResultsData.filter((r: AIResult) => {
+                      const scoreValue = r.overall_score || r.score || 0;
+                      const score = scoreValue > 1 ? scoreValue : scoreValue * 100;
+                      return score >= 70; // Same threshold as table status logic
+                    }).length;
+                    
+                    const passRate = Math.round((passedCount / aiResultsData.length) * 100);
+                    
+                    return Math.min(passRate, 100); // Cap at 100%
+                  })()}%
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                <Typography variant="body2">Completion Rate</Typography>
+                <Typography variant="body2" fontWeight={500} color="info.main">
+                  {resultsWithCompleteness.length > 0
+                    ? Math.round((completeAudits / resultsWithCompleteness.length) * 100)
                     : 0}
                   %
                 </Typography>
@@ -436,6 +762,15 @@ export const AuditorDashboard: React.FC = () => {
                 <Typography variant="body2">Avg Processing Time</Typography>
                 <Typography variant="body2" fontWeight={500}>
                   {avgProcessingTime > 0 ? `${avgProcessingTime} min` : 'N/A'}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                <Typography variant="body2">Data Availability</Typography>
+                <Typography variant="body2" fontWeight={500} color={completenessDataAvailability >= 50 ? "success.main" : "warning.main"}>
+                  {completenessDataAvailability.toFixed(0)}%
                 </Typography>
               </Box>
             </Box>

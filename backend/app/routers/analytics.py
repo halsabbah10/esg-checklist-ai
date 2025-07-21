@@ -113,13 +113,13 @@ def get_dashboard_data(
             processed_upload_ids = {r[3] for r in ai_results if r[3] is not None}
             pending_uploads = [u for u in uploads if u[0] not in processed_upload_ids]
 
-        # ESG categories (simplified calculation)
+        # ESG categories (normalized as percentages 0-100)
         esg_categories = [
-            {"category": "Environmental", "score": round(overall_score * 85, 1)},
-            {"category": "Social", "score": round(overall_score * 78, 1)},
-            {"category": "Governance", "score": round(overall_score * 92, 1)},
-            {"category": "Risk Management", "score": round(overall_score * 88, 1)},
-            {"category": "Compliance", "score": round(overall_score * 82, 1)},
+            {"category": "Environmental", "score": round(overall_score * 0.85 * 100, 1)},
+            {"category": "Social", "score": round(overall_score * 0.78 * 100, 1)},
+            {"category": "Governance", "score": round(overall_score * 0.92 * 100, 1)},
+            {"category": "Risk Management", "score": round(overall_score * 0.88 * 100, 1)},
+            {"category": "Compliance", "score": round(overall_score * 0.82 * 100, 1)},
         ]
 
         # Format recent AI results for display
@@ -128,7 +128,8 @@ def get_dashboard_data(
             recent_ai_results.append(
                 {
                     "id": r[3] or 0,
-                    "overall_score": r[0] or 0,
+                    "overall_score": r[0] or 0,  # Keep as float (0-1) for consistency
+                    "score": r[0] or 0,  # Also include 'score' field for backward compatibility
                     "file_upload_id": r[3],
                     "created_at": r[2].isoformat() if r[2] else None,
                 }
@@ -151,11 +152,13 @@ def get_dashboard_data(
         return {
             "metrics": {
                 "overallScore": round(overall_score, 3),
+                "overallScorePercentage": round(overall_score * 100, 1),  # Add percentage version
                 "passedAudits": passed_audits,
                 "failedAudits": failed_audits,
                 "pendingReviews": len(pending_uploads),
                 "avgProcessingTime": round(avg_processing_time, 1),
                 "esgCategories": esg_categories,
+                "passRate": round((passed_audits / (passed_audits + failed_audits) * 100) if (passed_audits + failed_audits) > 0 else 0, 1),
             },
             "aiResults": recent_ai_results,
             "uploads": recent_uploads,
@@ -180,6 +183,8 @@ def get_dashboard_data(
                     {"category": "Risk Management", "score": 0},
                     {"category": "Compliance", "score": 0},
                 ],
+                "passRate": 0,
+                "overallScorePercentage": 0,
             },
             "aiResults": [],
             "uploads": [],
@@ -282,14 +287,14 @@ def get_auditor_metrics(
         )
     ).one()
 
-    # Calculate ESG categories based on real data patterns
+    # Calculate ESG categories based on real data patterns (normalized as percentages 0-100)
     # This is a simplified version - in reality, you'd analyze the feedback/content
     esg_categories = [
-        {"category": "Environmental", "score": round(overall_score * 85, 1)},
-        {"category": "Social", "score": round(overall_score * 78, 1)},
-        {"category": "Governance", "score": round(overall_score * 92, 1)},
-        {"category": "Risk Management", "score": round(overall_score * 88, 1)},
-        {"category": "Compliance", "score": round(overall_score * 82, 1)},
+        {"category": "Environmental", "score": round(overall_score * 0.85 * 100, 1)},
+        {"category": "Social", "score": round(overall_score * 0.78 * 100, 1)},
+        {"category": "Governance", "score": round(overall_score * 0.92 * 100, 1)},
+        {"category": "Risk Management", "score": round(overall_score * 0.88 * 100, 1)},
+        {"category": "Compliance", "score": round(overall_score * 0.82 * 100, 1)},
     ]
 
     # Optimized: Calculate average processing time
@@ -301,11 +306,13 @@ def get_auditor_metrics(
 
     return {
         "overallScore": round(overall_score, 3),
+        "overallScorePercentage": round(overall_score * 100, 1),
         "passedAudits": passed_audits,
         "failedAudits": failed_audits,
         "pendingReviews": pending_reviews,
         "avgProcessingTime": round(avg_processing_time, 1),
         "esgCategories": esg_categories,
+        "passRate": round((passed_audits / (passed_audits + failed_audits) * 100) if (passed_audits + failed_audits) > 0 else 0, 1),
     }
 
 

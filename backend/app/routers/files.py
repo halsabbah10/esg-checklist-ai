@@ -91,6 +91,7 @@ async def download_file(
 @router.get("/{file_id}/view")
 async def view_file(
     file_id: int,
+    token: Optional[str] = None,
     db: Session = Depends(get_session),
     current_user: User = Depends(require_role(["admin", "auditor", "reviewer"])),
 ):

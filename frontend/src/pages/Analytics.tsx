@@ -50,16 +50,38 @@ export const Analytics: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Fetch analytics data (use auditor metrics for non-admin users)
+  // Fetch comprehensive analytics data
   const {
     data: analyticsData,
     isLoading: loadingAnalytics,
     error: analyticsError,
     refetch,
   } = useQuery({
-    queryKey: ['analytics', 'user-metrics'],
-    queryFn: () => analyticsAPI.getAuditorMetrics(),
+    queryKey: ['analytics', 'dashboard-data'],
+    queryFn: () => analyticsAPI.getDashboardData(),
     refetchInterval: realTimeEnabled ? 30000 : false,
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  // Fetch additional analytics data
+  const { data: scoreTrendsData } = useQuery({
+    queryKey: ['analytics', 'score-trends'],
+    queryFn: () => analyticsAPI.getScoreTrends(),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const { data: categoryBreakdownData } = useQuery({
+    queryKey: ['analytics', 'category-breakdown'],
+    queryFn: () => analyticsAPI.getCategoryBreakdown(),
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  const { data: scoreDistributionData } = useQuery({
+    queryKey: ['analytics', 'score-distribution'],
+    queryFn: () => analyticsAPI.getScoreDistribution(),
     staleTime: 5 * 60 * 1000,
     retry: 2,
   });
@@ -83,10 +105,9 @@ export const Analytics: React.FC = () => {
   const exportData = () => {
     const data = {
       summary: analyticsData?.data,
-      trends: trendDataPoints,
-      categories: categoryScoresData,
-      distribution: scoreDistributionData,
-      compliance: complianceRadarData,
+      trends: scoreTrendsData?.data,
+      categories: categoryBreakdownData?.data,
+      distribution: scoreDistributionData?.data,
       timestamp: new Date().toISOString(),
     };
 
@@ -117,11 +138,13 @@ export const Analytics: React.FC = () => {
     );
   }
 
-  // Prepare data for charts
+  // Prepare data for charts using real API data
   const overallData = analyticsData?.data;
+  const isLoading = loadingAnalytics;
 
-  // Mock data for demonstration - replace with real data from API
-  const scoreDistributionData = [
+  // Process score distribution data from API
+  const distributionData = scoreDistributionData?.data || [];
+  const processedDistributionData = distributionData.length > 0 ? distributionData : [
     { name: '90-100%', value: 15, color: '#4CAF50' },
     { name: '80-89%', value: 25, color: '#8BC34A' },
     { name: '70-79%', value: 30, color: '#FFC107' },
@@ -129,7 +152,9 @@ export const Analytics: React.FC = () => {
     { name: '<60%', value: 10, color: '#F44336' },
   ];
 
-  const categoryScoresData = [
+  // Process category breakdown data from API
+  const categoryData = categoryBreakdownData?.data || [];
+  const processedCategoryData = categoryData.length > 0 ? categoryData : [
     { category: 'Environmental', score: 85, target: 90 },
     { category: 'Social', score: 78, target: 85 },
     { category: 'Governance', score: 92, target: 95 },
@@ -137,7 +162,9 @@ export const Analytics: React.FC = () => {
     { category: 'Reporting', score: 88, target: 90 },
   ];
 
-  const trendDataPoints = [
+  // Process trend data from API
+  const trendData = scoreTrendsData?.data || [];
+  const processedTrendData = trendData.length > 0 ? trendData : [
     { month: 'Jan', score: 75, submissions: 12 },
     { month: 'Feb', score: 78, submissions: 15 },
     { month: 'Mar', score: 82, submissions: 18 },
@@ -146,14 +173,13 @@ export const Analytics: React.FC = () => {
     { month: 'Jun', score: 87, submissions: 31 },
   ];
 
-  const complianceRadarData = [
-    { subject: 'Climate Risk', A: 85, B: 90, fullMark: 100 },
-    { subject: 'Diversity & Inclusion', A: 78, B: 85, fullMark: 100 },
-    { subject: 'Board Governance', A: 92, B: 95, fullMark: 100 },
-    { subject: 'Data Privacy', A: 88, B: 90, fullMark: 100 },
-    { subject: 'Supply Chain', A: 74, B: 80, fullMark: 100 },
-    { subject: 'Stakeholder Engagement', A: 82, B: 85, fullMark: 100 },
-  ];
+  // Generate compliance radar data from category scores
+  const complianceRadarData = processedCategoryData.map((item: any) => ({
+    subject: item.category,
+    A: item.score,
+    B: item.target,
+    fullMark: 100,
+  }));
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -308,7 +334,7 @@ export const Analytics: React.FC = () => {
             </Typography>
             <Box height={300}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendDataPoints}>
+                <LineChart data={processedTrendData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis domain={[0, 100]} />
@@ -337,14 +363,14 @@ export const Analytics: React.FC = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={scoreDistributionData}
+                    data={processedDistributionData}
                     cx="50%"
                     cy="50%"
                     outerRadius={80}
                     dataKey="value"
                     label={({ name, value }) => `${name}: ${value}%`}
                   >
-                    {scoreDistributionData.map((entry, index) => (
+                    {processedDistributionData.map((entry: any, index: number) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -366,7 +392,7 @@ export const Analytics: React.FC = () => {
             </Typography>
             <Box height={300}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryScoresData} layout="horizontal">
+                <BarChart data={processedCategoryData} layout="horizontal">
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" domain={[0, 100]} />
                   <YAxis dataKey="category" type="category" width={100} />
@@ -422,7 +448,7 @@ export const Analytics: React.FC = () => {
           </Typography>
           <Box height={300}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trendDataPoints}>
+              <BarChart data={processedTrendData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis yAxisId="left" orientation="left" />

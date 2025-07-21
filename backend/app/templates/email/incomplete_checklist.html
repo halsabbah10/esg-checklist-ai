@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .content { background-color: #fff; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .footer { margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; font-size: 12px; color: #666; }
+        .highlight { background-color: #fff3cd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .incomplete-items { background-color: #f8d7da; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        .missing-items { background-color: #d1ecf1; padding: 15px; border-radius: 4px; margin: 15px 0; }
+        ul { margin: 10px 0; padding-left: 20px; }
+        li { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>ESG Checklist Review Required</h2>
+            <p><strong>File:</strong> {{ filename }}</p>
+            <p><strong>Analysis Date:</strong> {{ analysis_date }}</p>
+        </div>
+        
+        <div class="content">
+            <p>Dear Audit Team,</p>
+            
+            <p>Your ESG checklist has been reviewed and requires attention. Please see the details below:</p>
+            
+            <div class="highlight">
+                <strong>Completion Summary:</strong>
+                <ul>
+                    <li>Total Questions: {{ total_questions }}</li>
+                    <li>Complete: {{ complete_count }}</li>
+                    <li>Incomplete: {{ incomplete_count }}</li>
+                    <li>Missing: {{ missing_count }}</li>
+                    <li>Completion Rate: {{ completion_rate }}%</li>
+                </ul>
+            </div>
+            
+            {% if incomplete_items %}
+            <div class="incomplete-items">
+                <h3>Incomplete Items ({{ incomplete_items|length }})</h3>
+                <p>The following questions need more detailed responses:</p>
+                <ul>
+                {% for item in incomplete_items[:10] %}
+                    <li>{{ item.question }}</li>
+                {% endfor %}
+                {% if incomplete_items|length > 10 %}
+                    <li><em>... and {{ incomplete_items|length - 10 }} more items</em></li>
+                {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if missing_items %}
+            <div class="missing-items">
+                <h3>Missing Information ({{ missing_items|length }})</h3>
+                <p>The following questions require responses:</p>
+                <ul>
+                {% for item in missing_items[:10] %}
+                    <li>{{ item.question }}</li>
+                {% endfor %}
+                {% if missing_items|length > 10 %}
+                    <li><em>... and {{ missing_items|length - 10 }} more items</em></li>
+                {% endif %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <p><strong>Next Steps:</strong></p>
+            <ul>
+                <li>Review the attached file and address the identified gaps</li>
+                <li>Complete all missing responses</li>
+                <li>Enhance incomplete responses with more detail</li>
+                <li>Resubmit the updated checklist</li>
+            </ul>
+            
+            <p>If you have any questions about these requirements, please contact the Advisory team.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated notification from the ESG Checklist AI system.</p>
+            <p>Generated on {{ analysis_date }} | Internal Audit Department</p>
+        </div>
+    </div>
+</body>
+</html>

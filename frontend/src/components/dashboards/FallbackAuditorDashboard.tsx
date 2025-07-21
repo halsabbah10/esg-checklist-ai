@@ -21,7 +21,9 @@ import {
   LinearProgress,
 } from '@mui/material';
 import {
+  Assignment,
   AssessmentOutlined,
+  CheckCircle,
   FileDownload,
   Timeline,
   Warning,
@@ -231,6 +233,24 @@ export const FallbackAuditorDashboard: React.FC = () => {
     return score >= 0.5 && score < 0.7;
   }).length;
 
+  // Calculate completeness metrics
+  const completeAudits = aiResultsData.filter((result: any) => {
+    const completeness = result.metadata?.checklist_completeness;
+    return completeness && completeness.completion_rate >= 0.95;
+  }).length;
+
+  const incompleteAudits = aiResultsData.filter((result: any) => {
+    const completeness = result.metadata?.checklist_completeness;
+    return completeness && completeness.completion_rate >= 0.5 && completeness.completion_rate < 0.95;
+  }).length;
+
+  const averageCompleteness = aiResultsData.length > 0 
+    ? aiResultsData.reduce((sum: number, result: any) => {
+        const completeness = result.metadata?.checklist_completeness;
+        return sum + (completeness?.completion_rate || 0);
+      }, 0) / aiResultsData.length
+    : 0;
+
   // Manual refresh function
   const handleRefresh = async () => {
     if (dashboardError) {
@@ -276,7 +296,10 @@ export const FallbackAuditorDashboard: React.FC = () => {
         </Alert>
       )}
 
-      {/* Key Metrics */}
+      {/* Key Metrics - Compliance */}
+      <Typography variant="h5" component="h2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+        Compliance Metrics
+      </Typography>
       <Box
         sx={{
           display: 'grid',
@@ -294,7 +317,7 @@ export const FallbackAuditorDashboard: React.FC = () => {
         <StatsCard
           title="Passed Audits"
           value={metrics.passedAudits || 0}
-          icon={<AssessmentOutlined fontSize="large" />}
+          icon={<CheckCircle fontSize="large" />}
           color="success"
           subtitle="Score ≥ 70%"
         />
@@ -311,6 +334,47 @@ export const FallbackAuditorDashboard: React.FC = () => {
           icon={<Warning fontSize="large" />}
           color="warning"
           subtitle="Score 50-69%"
+        />
+      </Box>
+
+      {/* Key Metrics - Completeness */}
+      <Typography variant="h5" component="h2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
+        Completeness Metrics
+      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr 1fr' },
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        <StatsCard
+          title="Overall Completeness"
+          value={`${Math.round(averageCompleteness * 100)}%`}
+          icon={<Assignment fontSize="large" />}
+          color="primary"
+        />
+        <StatsCard
+          title="Complete Audits"
+          value={completeAudits}
+          icon={<CheckCircle fontSize="large" />}
+          color="success"
+          subtitle="Rate ≥ 95%"
+        />
+        <StatsCard
+          title="Incomplete Audits"
+          value={incompleteAudits}
+          icon={<Warning fontSize="large" />}
+          color="warning"
+          subtitle="Rate 50-94%"
+        />
+        <StatsCard
+          title="Missing Data"
+          value={aiResultsData.length - completeAudits - incompleteAudits}
+          icon={<ErrorIcon fontSize="large" />}
+          color="error"
+          subtitle="Rate < 50%"
         />
       </Box>
 

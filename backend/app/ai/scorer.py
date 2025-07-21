@@ -230,48 +230,28 @@ class AIScorer:
         # Get department-specific prompt
         dept_prompt = get_department_prompt(department_name, checklist_items or [])
 
-        # Enhanced Excel checklist understanding
-        excel_context = """
-        DOCUMENT FORMAT: This is an ESG Internal Audit Checklist in Excel format with columns:
-        - Category (Environment/Social/Governance)
-        - Sub Category (Energy, Emissions, Water, etc.)
-        - Reference (ESG-Environment-01a, ESG-Social-01, etc.)
-        - Question (The actual ESG requirement question)
-        - Mandatory/Optional
-        - Assessment (Yes/No/Not Available - current answer status)
-        - Details/Comments
-        
-        ANSWER INTERPRETATION:
-        - "Yes" = Requirement fully met and implemented
-        - "No" = Requirement acknowledged but not met/implemented
-        - "Not Available" = Information/data not available, needs follow-up
-        - Empty = No response provided
-        """
-
-        # Check total prompt length and use appropriate version
+        # Check total prompt length and use simplified version if needed
         full_prompt = (
-            f"{dept_prompt}\n\n{excel_context}\n\nDocument: {text}\n\n"
+            f"{dept_prompt}\n\nDocument: {text}\n\n"
             f"Score 0.0-1.0 for {department_name} ESG compliance."
         )
 
         if len(full_prompt) > 4000:  # Token-conscious approach
-            # Use simplified but Excel-aware prompt for token efficiency
+            # Use simplified department prompt for token efficiency
             analysis_prompt = (
-                f"Analyze this {department_name} ESG checklist document (Excel format with Yes/No/Not Available answers) "
-                f"and score 0.0-1.0 based on department-specific requirements:\n\n{text}\n\n"
+                f"Analyze this {department_name} ESG document and score 0.0-1.0 "
+                f"based on department-specific requirements:\n\n{text}\n\n"
                 f"Score format: Score: X.XX\n"
-                f"Focus: {department_name} ESG compliance. Consider 'Yes' as complete, 'No' as incomplete, 'Not Available' as missing."
+                f"Focus: {department_name} department ESG compliance and best practices."
             )
         else:
             # Use full comprehensive prompt when tokens allow
             analysis_prompt = f"""
             {dept_prompt}
 
-            {excel_context}
-            
             Document text to analyze: {text}
 
-            SCORING GUIDELINES FOR ESG CHECKLIST:
+            SCORING GUIDELINES:
             - 0.9-1.0: Exceptional performance meeting all {department_name} ESG requirements
             - 0.8-0.89: Strong performance with comprehensive {department_name} practices
             - 0.7-0.79: Good performance with solid {department_name} implementation
@@ -481,37 +461,18 @@ class AIScorer:
         # Get department-specific prompt
         dept_prompt = get_department_prompt(department_name, checklist_items or [])
 
-        # Enhanced Excel checklist understanding for DeepSeek
-        excel_context = """
-        DOCUMENT FORMAT: This is an ESG Internal Audit Checklist in Excel format with columns:
-        - Category (Environment/Social/Governance)
-        - Sub Category (Energy, Emissions, Water, etc.)
-        - Reference (ESG-Environment-01a, ESG-Social-01, etc.)
-        - Question (The actual ESG requirement question)
-        - Mandatory/Optional
-        - Assessment (Yes/No/Not Available - current answer status)
-        - Details/Comments
-        
-        ANSWER INTERPRETATION:
-        - "Yes" = Requirement fully met and implemented
-        - "No" = Requirement acknowledged but not met/implemented
-        - "Not Available" = Information/data not available, needs follow-up
-        - Empty = No response provided
-        """
-
-        # Check total prompt length and use appropriate version
+        # Check total prompt length and use simplified version if needed
         full_prompt = (
-            f"{dept_prompt}\n\n{excel_context}\n\nDocument: {text}\n\n"
+            f"{dept_prompt}\n\nDocument: {text}\n\n"
             f"Score 0.0-1.0 for {department_name} ESG compliance."
         )
 
         if len(full_prompt) > 6000:  # Token-conscious approach for DeepSeek
-            # Use simplified but Excel-aware prompt for token efficiency
-            analysis_prompt = f"""As a {department_name} ESG specialist, analyze this ESG checklist document (Excel format with Yes/No/Not Available answers) and provide a comprehensive assessment:
+            # Use simplified department prompt for token efficiency
+            analysis_prompt = f"""As a {department_name} ESG specialist, analyze this document """
+            analysis_prompt += f"""and provide a comprehensive assessment:
 
 {text}
-
-Consider 'Yes' as complete requirements, 'No' as incomplete but acknowledged, 'Not Available' as missing information.
 
 Provide:
 1. Overall ESG compliance score (0.0-1.0) for {department_name} department
@@ -1692,7 +1653,7 @@ Governance structures demonstrate basic compliance but need strengthening in "
 
         return {
             "risk_level": risk_level,
-            "compliance_rate": completion_rate,
+            "compliance_rate": overall_score,  # Use overall score as compliance rate
             "overall_score": overall_score,
             "priority_areas": self._identify_priority_areas(checklist_completeness),
         }
@@ -1703,7 +1664,7 @@ Governance structures demonstrate basic compliance but need strengthening in "
         """Generate category-specific scores."""
         if not checklist_completeness or not checklist_completeness.get("items"):
             # Generate varied scores based on typical ESG distribution patterns
-            # Environmental typically scores slightly lower, Social in middle, 
+            # Environmental typically scores slightly lower, Social in middle,
             # Governance slightly higher
             base_variation = 0.15
             return {
@@ -1815,31 +1776,240 @@ Governance structures demonstrate basic compliance but need strengthening in "
         relevance_score = 0.0
         quality_score = 0.0
 
-        # Try to find the specific question and its answer in the document
-        answer_context = self._find_question_answer_context(text_lower, question_text)
-        
-        if answer_context:
-            # Evaluate the quality and completeness of the found answer
-            relevance_score, quality_score, evidence_found = self._evaluate_answer_quality(
-                answer_context, question_text
-            )
-        else:
-            # Fall back to general keyword matching if no specific answer found
-            relevance_score, evidence_found = self._evaluate_general_relevance(
-                text_lower, question_text
-            )
+        # Enhanced keyword extraction from question
+        question_words = [
+            word
+            for word in question_lower.split()
+            if len(word) > 3
+            and word
+            not in {
+                "does",
+                "have",
+                "they",
+                "there",
+                "been",
+                "this",
+                "that",
+                "with",
+                "from",
+                "what",
+                "when",
+                "where",
+                "which",
+                "will",
+                "would",
+                "could",
+                "should",
+            }
+        ]
 
-        # Determine completeness score and status with ESG checklist thresholds
-        # Adjusted for proper Yes/No/Not Available handling
-        if relevance_score >= 0.8:
-            status = "complete"
-            completeness_score = min(1.0, relevance_score)
-        elif relevance_score >= 0.2:
-            status = "incomplete"
-            completeness_score = relevance_score
+        # Look for question-related keywords and content
+        keyword_matches = 0
+
+        # Check for keyword presence with better scoring
+        for word in question_words[:5]:  # Check up to 5 significant words
+            if word in text_lower:
+                keyword_matches += 1
+
+        # Weight keyword matches
+        if keyword_matches >= 2:
+            relevance_score += 0.3
+        elif keyword_matches == 1:
+            relevance_score += 0.15
+
+        # Enhanced evidence detection
+        if keyword_matches > 0:
+            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
+
+        # Look for explicit answers first (for questionnaire documents)
+        # For Excel questionnaires, we need to look for answers in the same line as the question
+        explicit_answers = ["yes", "no", "not available", "n/a", "not applicable", "completed", "implemented", "in progress", "partial"]
+        explicit_answer_found = False
+        
+        # Look for answers in the same line as the question (Excel format)
+        lines = text_lower.split('\n')
+        question_line_index = -1
+        
+        # Find the line containing this question
+        for i, line in enumerate(lines):
+            if any(word in line for word in question_words[:3] if len(word) > 4):
+                question_line_index = i
+                break
+        
+        # If we found the question line, look for answers in that specific line
+        if question_line_index >= 0:
+            question_line = lines[question_line_index]
+            
+            # In Excel format, answers appear after "mandatory" or "optional"
+            # Look for the pattern: "ESG-XX-YY: question text Mandatory/Optional [Answer]"
+            for answer in explicit_answers:
+                if answer in question_line:
+                    # Make sure it's not just part of the question text
+                    # Check if the answer appears after "mandatory" or "optional"
+                    if "mandatory" in question_line or "optional" in question_line:
+                        mandatory_pos = question_line.find("mandatory")
+                        optional_pos = question_line.find("optional")
+                        requirement_pos = max(mandatory_pos, optional_pos)
+                        
+                        if requirement_pos >= 0:
+                            # Check if answer appears after the requirement label
+                            answer_pos = question_line.find(answer)
+                            if answer_pos > requirement_pos:
+                                explicit_answer_found = True
+                                evidence_found.append(f"Answer '{answer}' found after requirement label")
+                                break
+        
+        # If we found explicit answers, prioritize them
+        if explicit_answer_found:
+            relevance_score += 0.8  # Higher score for explicit answers
         else:
+            # Check if the line contains only requirement labels (Mandatory/Optional)
+            # This indicates the question exists but has no answer (Missing)
+            if question_line_index >= 0:
+                question_line = lines[question_line_index]
+                if ("mandatory" in question_line or "optional" in question_line) and not any(ans in question_line for ans in explicit_answers):
+                    # This is a question with requirement label but no answer - it's Missing
+                    relevance_score += 0.2  # Very low score for missing answers
+                    evidence_found.append("Question found with requirement label but no answer")
+                else:
+                    # General case - no clear structure identified
+                    relevance_score += 0.1
+        
+        # Look for answer patterns and implementation indicators (but with much less weight if no explicit answers)
+        answer_indicators = [
+            "implemented",
+            "established", 
+            "documented",
+            "policy",
+            "procedure",
+            "annually",
+            "monthly",
+            "quarterly",
+            "regularly",
+            "compliance",
+            "complete",
+            "percentage",
+            "%",
+            "training",
+            "monitoring",
+            "review",
+            "assessment",
+            "audit",
+            "report",
+            "management",
+            "system",
+            "process",
+            "framework",
+            "guidelines",
+            "standards",
+        ]
+
+        answer_count = 0
+        for indicator in answer_indicators:
+            if indicator in text_lower:
+                answer_count += 1
+
+        # For questionnaire documents, only count implementation indicators if we have explicit answers
+        # Otherwise, these are likely generic terms from instructions/headers, not actual answers
+        weight_multiplier = 0.05 if not explicit_answer_found else 1.0  # Much lower weight for missing answers
+        if answer_count >= 5:
+            relevance_score += 0.3 * weight_multiplier
+            evidence_found.append(f"Strong implementation evidence: {answer_count} indicators")
+        elif answer_count >= 3:
+            relevance_score += 0.2 * weight_multiplier
+            evidence_found.append(f"Moderate implementation evidence: {answer_count} indicators")
+        elif answer_count >= 1:
+            relevance_score += 0.1 * weight_multiplier
+            evidence_found.append(f"Basic implementation evidence: {answer_count} indicators")
+
+        # Look for substantial content that suggests detailed responses
+        lines = text_lower.split("\n")
+        substantial_content = sum(1 for line in lines if len(line.strip()) > 50)
+        content_density = len(text_lower) / max(1, len(lines))
+
+        # Content density should only matter if we have explicit answers for questionnaires
+        content_weight = 0.05 if not explicit_answer_found else 1.0
+        if substantial_content > 10 and content_density > 30:
+            relevance_score += 0.2 * content_weight
+            evidence_found.append(
+                f"Detailed content found: {substantial_content} substantial lines"
+            )
+        elif substantial_content > 5:
+            relevance_score += 0.1 * content_weight
+            evidence_found.append(f"Some detailed content: {substantial_content} lines")
+
+        # QUALITY ANALYSIS - Evaluate answer quality
+        # Look for detailed explanations, specific examples, quantitative data
+        quality_indicators = [
+            "specific",
+            "example",
+            "detail",
+            "metric",
+            "measurement",
+            "target",
+            "achieved",
+            "performance",
+            "result",
+            "outcome",
+            "impact",
+            "evidence",
+            "data",
+            "statistics",
+            "number",
+            "percentage",
+            "increased",
+            "decreased",
+            "improved",
+            "enhanced",
+            "developed",
+            "created",
+            "established",
+            "timeline",
+            "deadline",
+            "milestone",
+            "objective",
+            "goal",
+        ]
+
+        quality_count = 0
+        for indicator in quality_indicators:
+            if indicator in text_lower:
+                quality_count += 1
+
+        # Score quality based on indicators
+        if quality_count >= 8:
+            quality_score = 1.0
+            evidence_found.append(f"High quality response: {quality_count} quality indicators")
+        elif quality_count >= 5:
+            quality_score = 0.75
+            evidence_found.append(f"Good quality response: {quality_count} quality indicators")
+        elif quality_count >= 3:
+            quality_score = 0.5
+            evidence_found.append(f"Moderate quality response: {quality_count} quality indicators")
+        elif quality_count >= 1:
+            quality_score = 0.25
+            evidence_found.append(f"Basic quality response: {quality_count} quality indicators")
+        else:
+            quality_score = 0.0
+            evidence_found.append("Low quality response: lacks specific details")
+
+        # For questionnaire documents, if no explicit answers are found, it should be "missing"
+        # regardless of other factors like keywords or content density
+        if not explicit_answer_found and ("mandatory" in text_lower or "optional" in text_lower):
+            # This is likely a questionnaire document with requirement labels but no answers
             status = "missing"
             completeness_score = 0.0
+        else:
+            # Determine completeness score and status with stricter thresholds for questionnaires
+            if relevance_score >= 0.7:  # Higher threshold for "complete" 
+                status = "complete"
+                completeness_score = min(1.0, relevance_score)
+            elif relevance_score >= 0.4:  # Higher threshold for "incomplete"
+                status = "incomplete" 
+                completeness_score = relevance_score
+            else:
+                status = "missing"
+                completeness_score = 0.0
 
         # Generate gaps and recommendations
         gaps: List[str] = []
@@ -1935,12 +2105,64 @@ Governance structures demonstrate basic compliance but need strengthening in "
         if keyword_matches > 0:
             evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
 
-        # Look for answer patterns and implementation indicators
+        # Look for explicit answers first (for questionnaire documents)
+        # For Excel questionnaires, we need to look for answers in the same line as the question
+        explicit_answers = ["yes", "no", "not available", "n/a", "not applicable", "completed", "implemented", "in progress", "partial"]
+        explicit_answer_found = False
+        
+        # Look for answers in the same line as the question (Excel format)
+        lines = text_lower.split('\n')
+        question_line_index = -1
+        
+        # Find the line containing this question
+        for i, line in enumerate(lines):
+            if any(word in line for word in question_words[:3] if len(word) > 4):
+                question_line_index = i
+                break
+        
+        # If we found the question line, look for answers in that specific line
+        if question_line_index >= 0:
+            question_line = lines[question_line_index]
+            
+            # In Excel format, answers appear after "mandatory" or "optional"
+            # Look for the pattern: "ESG-XX-YY: question text Mandatory/Optional [Answer]"
+            for answer in explicit_answers:
+                if answer in question_line:
+                    # Make sure it's not just part of the question text
+                    # Check if the answer appears after "mandatory" or "optional"
+                    if "mandatory" in question_line or "optional" in question_line:
+                        mandatory_pos = question_line.find("mandatory")
+                        optional_pos = question_line.find("optional")
+                        requirement_pos = max(mandatory_pos, optional_pos)
+                        
+                        if requirement_pos >= 0:
+                            # Check if answer appears after the requirement label
+                            answer_pos = question_line.find(answer)
+                            if answer_pos > requirement_pos:
+                                explicit_answer_found = True
+                                evidence_found.append(f"Answer '{answer}' found after requirement label")
+                                break
+        
+        # If we found explicit answers, prioritize them
+        if explicit_answer_found:
+            relevance_score += 0.8  # Higher score for explicit answers
+        else:
+            # Check if the line contains only requirement labels (Mandatory/Optional)
+            # This indicates the question exists but has no answer (Missing)
+            if question_line_index >= 0:
+                question_line = lines[question_line_index]
+                if ("mandatory" in question_line or "optional" in question_line) and not any(ans in question_line for ans in explicit_answers):
+                    # This is a question with requirement label but no answer - it's Missing
+                    relevance_score += 0.2  # Very low score for missing answers
+                    evidence_found.append("Question found with requirement label but no answer")
+                else:
+                    # General case - no clear structure identified
+                    relevance_score += 0.1
+        
+        # Look for answer patterns and implementation indicators (but with much less weight if no explicit answers)
         answer_indicators = [
-            "yes",
-            "no",
             "implemented",
-            "established",
+            "established", 
             "documented",
             "policy",
             "procedure",
@@ -1950,10 +2172,6 @@ Governance structures demonstrate basic compliance but need strengthening in "
             "regularly",
             "compliance",
             "complete",
-            "partial",
-            "in progress",
-            "not applicable",
-            "n/a",
             "percentage",
             "%",
             "training",
@@ -1975,15 +2193,17 @@ Governance structures demonstrate basic compliance but need strengthening in "
             if indicator in text_lower:
                 answer_count += 1
 
-        # Score based on answer indicators found
+        # For questionnaire documents, only count implementation indicators if we have explicit answers
+        # Otherwise, these are likely generic terms from instructions/headers, not actual answers
+        weight_multiplier = 0.05 if not explicit_answer_found else 1.0  # Much lower weight for missing answers
         if answer_count >= 5:
-            relevance_score += 0.4
+            relevance_score += 0.3 * weight_multiplier
             evidence_found.append(f"Strong implementation evidence: {answer_count} indicators")
         elif answer_count >= 3:
-            relevance_score += 0.25
+            relevance_score += 0.2 * weight_multiplier
             evidence_found.append(f"Moderate implementation evidence: {answer_count} indicators")
         elif answer_count >= 1:
-            relevance_score += 0.15
+            relevance_score += 0.1 * weight_multiplier
             evidence_found.append(f"Basic implementation evidence: {answer_count} indicators")
 
         # Look for substantial content that suggests detailed responses
@@ -1991,25 +2211,34 @@ Governance structures demonstrate basic compliance but need strengthening in "
         substantial_content = sum(1 for line in lines if len(line.strip()) > 50)
         content_density = len(text_lower) / max(1, len(lines))
 
+        # Content density should only matter if we have explicit answers for questionnaires
+        content_weight = 0.05 if not explicit_answer_found else 1.0
         if substantial_content > 10 and content_density > 30:
-            relevance_score += 0.2
+            relevance_score += 0.2 * content_weight
             evidence_found.append(
                 f"Detailed content found: {substantial_content} substantial lines"
             )
         elif substantial_content > 5:
-            relevance_score += 0.1
+            relevance_score += 0.1 * content_weight
             evidence_found.append(f"Some detailed content: {substantial_content} lines")
 
-        # Determine completeness score and status with better thresholds
-        if relevance_score >= 0.6:
-            status = "complete"
-            completeness_score = min(1.0, relevance_score)
-        elif relevance_score >= 0.25:
-            status = "incomplete"
-            completeness_score = relevance_score
-        else:
+        # For questionnaire documents, if no explicit answers are found, it should be "missing"
+        # regardless of other factors like keywords or content density
+        if not explicit_answer_found and ("mandatory" in text_lower or "optional" in text_lower):
+            # This is likely a questionnaire document with requirement labels but no answers
             status = "missing"
             completeness_score = 0.0
+        else:
+            # Determine completeness score and status with stricter thresholds for questionnaires
+            if relevance_score >= 0.7:  # Higher threshold for "complete" 
+                status = "complete"
+                completeness_score = min(1.0, relevance_score)
+            elif relevance_score >= 0.4:  # Higher threshold for "incomplete"
+                status = "incomplete" 
+                completeness_score = relevance_score
+            else:
+                status = "missing"
+                completeness_score = 0.0
 
         # Generate gaps and recommendations
         gaps: List[str] = []
@@ -2177,191 +2406,3 @@ Governance structures demonstrate basic compliance but need strengthening in "
 #         }
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
-
-    def _find_question_answer_context(self, text_lower: str, question_text: str) -> str:
-        """
-        Find the specific question and its answer context in the document.
-        Returns the answer text if found, empty string if not found.
-        """
-        lines = text_lower.split('\n')
-        question_lower = question_text.lower()
-        
-        # Remove question numbers and clean up for matching
-        clean_question = re.sub(r'^\d+[\.\)\:\-\s]*', '', question_lower).strip()
-        
-        # Look for the question in the document
-        for i, line in enumerate(lines):
-            line_clean = re.sub(r'^\d+[\.\)\:\-\s]*', '', line).strip()
-            
-            # Check if this line contains the question (with some flexibility)
-            if self._is_question_match(line_clean, clean_question):
-                # Found the question, now look for the answer
-                answer_text = self._extract_answer_from_context(lines, i, line)
-                if answer_text:
-                    return answer_text
-                    
-        return ""
-
-    def _is_question_match(self, line: str, target_question: str) -> bool:
-        """
-        Check if a line matches the target question with some flexibility.
-        """
-        # Exact match (after cleaning)
-        if line == target_question:
-            return True
-            
-        # High similarity match (80%+ of words match)
-        line_words = set(line.split())
-        target_words = set(target_question.split())
-        
-        if len(target_words) > 0:
-            overlap = len(line_words.intersection(target_words))
-            similarity = overlap / len(target_words)
-            if similarity >= 0.8:
-                return True
-                
-        return False
-
-    def _extract_answer_from_context(self, lines: List[str], question_line_idx: int, question_line: str) -> str:
-        """
-        Extract the answer text from the context around a question.
-        """
-        # Check if answer is on the same line (after the question)
-        question_parts = question_line.split('?', 1)
-        if len(question_parts) > 1 and question_parts[1].strip():
-            answer = question_parts[1].strip()
-            if len(answer) > 5:  # Meaningful answer length
-                return answer
-                
-        # Look for answer on the next few lines
-        for i in range(question_line_idx + 1, min(question_line_idx + 4, len(lines))):
-            line = lines[i].strip()
-            if not line:
-                continue
-                
-            # Skip if this looks like another question
-            if '?' in line or re.match(r'^\d+[\.\)\:]', line):
-                break
-                
-            # This might be an answer
-            if len(line) > 10:  # Meaningful content
-                return line
-                
-        return ""
-
-    def _evaluate_answer_quality(self, answer_text: str, question_text: str) -> tuple:
-        """
-        Evaluate the quality and completeness of a specific answer.
-        Enhanced for ESG checklist format with proper Yes/No/Not Available handling.
-        Returns (relevance_score, quality_score, evidence_found)
-        """
-        evidence_found = []
-        answer_lower = answer_text.lower().strip()
-        
-        # Check for meaningful content
-        if len(answer_text.strip()) < 2:
-            return 0.0, 0.0, ["No answer provided"]
-        
-        relevance_score = 0.0
-        quality_score = 0.0
-        
-        # ESG Checklist specific answer patterns
-        # Check in order of specificity to avoid false matches
-        
-        # "Not Available" / "N/A" answers - check first to avoid conflicts with "no"
-        na_patterns = ["not available", "n/a", "na", "not applicable", "no data", "unknown"]
-        if any(pattern in answer_lower for pattern in na_patterns):
-            relevance_score = 0.1  # Information not available
-            quality_score = 0.5   # Moderate quality for indicating unavailability
-            evidence_found.append("Information not available - requires follow-up")
-            return relevance_score, quality_score, evidence_found
-        
-        # "No" answers - use word boundaries to avoid matching "not available"
-        import re
-        no_patterns = [r"\bno\b", r"\bn\b", "✗", "✘", "false", "not implemented", "not established"]
-        if any(re.search(pattern, answer_lower) for pattern in no_patterns):
-            relevance_score = 0.3  # Acknowledged but incomplete
-            quality_score = 0.7   # Good quality for honest negative response
-            evidence_found.append("Negative response - requirement not met but acknowledged")
-            return relevance_score, quality_score, evidence_found
-        
-        # "Yes" answers - indicate complete implementation
-        yes_patterns = [r"\byes\b", r"\by\b", "✓", "✔", "true", "implemented", "established", "in place"]
-        if any(re.search(pattern, answer_lower) for pattern in yes_patterns):
-            relevance_score = 1.0  # Complete answer
-            quality_score = 0.9   # High quality for affirmative responses
-            evidence_found.append("Affirmative response - requirement met")
-            return relevance_score, quality_score, evidence_found
-        
-        # Detailed text responses (fallback to original logic)
-        # Direct answer indicators for complex responses
-        direct_answers = ["we have", "we do", "we are", "we use", "our organization", "the company"]
-        has_direct_answer = any(indicator in answer_lower for indicator in direct_answers)
-        
-        if has_direct_answer:
-            relevance_score += 0.6
-            quality_score += 0.4
-            evidence_found.append("Detailed response provided")
-            
-        # Check for specific details in text responses
-        detail_indicators = ["annually", "monthly", "quarterly", "regularly", "percent", "%", "number", "times", "frequency"]
-        detail_count = sum(1 for indicator in detail_indicators if indicator in answer_lower)
-        if detail_count > 0:
-            relevance_score += 0.3
-            quality_score += 0.4
-            evidence_found.append(f"Specific details provided: {detail_count} indicators")
-            
-        # Check for implementation evidence in text responses
-        implementation_words = ["policy", "procedure", "system", "process", "program", "framework", "guidelines", "standards"]
-        impl_count = sum(1 for word in implementation_words if word in answer_lower)
-        if impl_count > 0:
-            relevance_score += 0.3
-            quality_score += 0.5
-            evidence_found.append(f"Implementation evidence: {impl_count} indicators")
-            
-        # Length-based quality assessment for text responses
-        if len(answer_text) > 50:
-            quality_score += 0.3
-            evidence_found.append("Comprehensive response provided")
-        elif len(answer_text) > 20:
-            quality_score += 0.2
-            evidence_found.append("Moderate detail in response")
-        else:
-            # For very short responses that aren't yes/no, treat as incomplete
-            relevance_score = max(0.2, relevance_score)
-            quality_score += 0.1
-            evidence_found.append("Brief response provided")
-            
-        return min(1.0, relevance_score), min(1.0, quality_score), evidence_found
-
-    def _evaluate_general_relevance(self, text_lower: str, question_text: str) -> tuple:
-        """
-        Fall back to general keyword matching when specific answer not found.
-        Returns (relevance_score, evidence_found)
-        """
-        question_lower = question_text.lower()
-        evidence_found = []
-        
-        # Extract key words from question
-        question_words = [
-            word for word in question_lower.split()
-            if len(word) > 3 and word not in {
-                "does", "have", "they", "there", "been", "this", "that", "with", "from",
-                "what", "when", "where", "which", "will", "would", "could", "should"
-            }
-        ]
-        
-        # Count keyword matches
-        keyword_matches = sum(1 for word in question_words[:5] if word in text_lower)
-        
-        relevance_score = 0.0
-        if keyword_matches >= 3:
-            relevance_score = 0.2
-            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
-        elif keyword_matches >= 1:
-            relevance_score = 0.1
-            evidence_found.append(f"Found {keyword_matches} relevant keywords in document")
-        else:
-            evidence_found.append("No specific answer or relevant keywords found")
-            
-        return relevance_score, evidence_found

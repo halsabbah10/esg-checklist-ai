@@ -21,9 +21,7 @@ const Login = lazy(() => import('./pages/Login').then(module => ({ default: modu
 const Dashboard = lazy(() =>
   import('./pages/Dashboard').then(module => ({ default: module.Dashboard }))
 );
-const AnalysisHistory = lazy(() =>
-  import('./pages/AnalysisHistory').then(module => ({ default: module.AnalysisHistory }))
-);
+const AnalysisHistory = lazy(() => import('./pages/AnalysisHistory'));
 const ChecklistDetail = lazy(() =>
   import('./pages/ChecklistDetail').then(module => ({ default: module.ChecklistDetail }))
 );
@@ -115,9 +113,13 @@ const ProtectedRouteWithSuspense: React.FC<{
 // Layout component for authenticated pages
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // Default to collapsed
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
+  // Determine if sidebar should show expanded (either manually expanded or hovered)
+  const isExpanded = !isMobile && (!sidebarCollapsed || sidebarHovered);
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
@@ -125,6 +127,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
 
   const handleSidebarCollapse = () => {
     setSidebarCollapsed(!sidebarCollapsed);
+  };
+
+  const handleSidebarHover = (hovered: boolean) => {
+    setSidebarHovered(hovered);
   };
 
   return (
@@ -135,6 +141,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         onClose={() => setSidebarOpen(false)}
         isCollapsed={!isMobile && sidebarCollapsed}
         onToggleCollapse={handleSidebarCollapse}
+        isExpanded={isExpanded}
+        onHover={handleSidebarHover}
       />
       <Box
         component="main"
@@ -144,11 +152,11 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          // Remove margin-left and let flex handle the positioning
+          // Dynamic width based on expanded state
           width: `calc(100% - ${
-            isMobile ? 0 : sidebarCollapsed ? 64 : 240
+            isMobile ? 0 : isExpanded ? 240 : 64
           }px)`,
-          transition: 'width 0.3s ease',
+          transition: 'width 0.25s ease', // Slightly faster transition
         }}
       >
         <Toolbar />
@@ -192,6 +200,32 @@ function Home() {
 }
 
 function AppContent() {
+  // Prevent unwanted scroll-based navigation
+  React.useEffect(() => {
+    const preventScrollNavigation = (e: WheelEvent) => {
+      // Prevent horizontal scroll from triggering navigation
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+      }
+    };
+
+    const preventSwipeNavigation = (e: TouchEvent) => {
+      // Prevent swipe gestures on main content areas
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    // Add event listeners
+    document.addEventListener('wheel', preventScrollNavigation, { passive: false });
+    document.addEventListener('touchstart', preventSwipeNavigation, { passive: false });
+
+    return () => {
+      document.removeEventListener('wheel', preventScrollNavigation);
+      document.removeEventListener('touchstart', preventSwipeNavigation);
+    };
+  }, []);
+
   // Reset problematic global styles
   const globalStylesReset = `
     body {
@@ -199,6 +233,7 @@ function AppContent() {
       padding: 0 !important;
       min-height: 100vh !important;
       background-color: #f5f5f5 !important;
+      overscroll-behavior: none;
     }
     #root {
       margin: 0 !important;
