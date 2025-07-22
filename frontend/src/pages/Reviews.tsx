@@ -28,6 +28,7 @@ import {
 import { Search, CheckCircle, Error, Pending, Comment, Visibility } from '@mui/icons-material';
 import { reviewsAPI, uploadsAPI } from '../services/api';
 import { TabbedDocumentViewer } from '../components/TabbedDocumentViewer';
+import { PageTransition } from '../components/ui';
 import { ReviewActions } from '../components/ReviewActions';
 
 interface ReviewItem {
@@ -232,15 +233,16 @@ export const Reviews: React.FC = () => {
   const rejectedCount = reviews.filter((r: ReviewItem) => r.status === 'rejected').length;
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Typography variant="h4" component="h1" gutterBottom>
-        Document Reviews
-      </Typography>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        {/* Header */}
+        <Typography variant="h4" component="h1" gutterBottom>
+          Document Reviews
+        </Typography>
 
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-        Review and approve ESG compliance documents submitted for analysis.
-      </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          Review and approve ESG compliance documents submitted for analysis.
+        </Typography>
 
       {/* Summary Cards */}
       <Box
@@ -484,6 +486,7 @@ export const Reviews: React.FC = () => {
           onStatusChange={handleStatusChange}
         />
       )}
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };

@@ -42,6 +42,7 @@ import {
 } from 'recharts';
 import { Download, Refresh, SignalWifi4Bar, SignalWifiOff } from '@mui/icons-material';
 import { analyticsAPI } from '../services/api';
+import { PageTransition } from '../components/ui';
 
 export const Analytics: React.FC = () => {
   const [timeRange, setTimeRange] = useState('30');
@@ -182,15 +183,16 @@ export const Analytics: React.FC = () => {
   }));
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
-            ESG Analytics Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Comprehensive analysis of ESG compliance performance and trends
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        {/* Header */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
+              ESG Analytics Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Comprehensive analysis of ESG compliance performance and trends
           </Typography>
         </Box>
 
@@ -469,6 +471,7 @@ export const Analytics: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };

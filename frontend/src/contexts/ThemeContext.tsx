@@ -448,6 +448,35 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
   const currentTheme = isDarkMode ? darkTheme : lightTheme;
 
+  // Set CSS custom properties for global access
+  React.useEffect(() => {
+    const root = document.documentElement;
+    const palette = currentTheme.palette;
+    
+    // Set theme-aware CSS custom properties
+    root.style.setProperty('--mui-palette-background-default', palette.background.default);
+    root.style.setProperty('--mui-palette-background-paper', palette.background.paper);
+    root.style.setProperty('--mui-palette-text-primary', palette.text.primary);
+    root.style.setProperty('--mui-palette-text-secondary', palette.text.secondary);
+    root.style.setProperty('--mui-palette-primary-main', palette.primary.main);
+    root.style.setProperty('--mui-palette-divider', palette.divider);
+    
+    // Set body and html background immediately
+    document.body.style.backgroundColor = palette.background.default;
+    document.documentElement.style.backgroundColor = palette.background.default;
+    
+    // Ensure viewport background matches theme
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', palette.background.default);
+    } else {
+      const meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      meta.content = palette.background.default;
+      document.head.appendChild(meta);
+    }
+  }, [currentTheme]);
+
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
       <MuiThemeProvider theme={currentTheme}>

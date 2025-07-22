@@ -181,7 +181,8 @@ export default function AIAnalysisWorkflow() {
                           height: 40,
                           borderRadius: '50%',
                           bgcolor: index <= state.currentStep ? 'primary.main' : 'grey.300',
-                          color: 'white'
+                          color: 'white',
+                          flexShrink: 0
                         }}
                       >
                         {index < state.currentStep ? (
@@ -191,12 +192,52 @@ export default function AIAnalysisWorkflow() {
                         )}
                       </Box>
                     }
+                    sx={{
+                      '& .MuiStepLabel-root': {
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        textAlign: 'center'
+                      },
+                      '& .MuiStepLabel-iconContainer': {
+                        paddingRight: 0,
+                        marginBottom: 1
+                      },
+                      '& .MuiStepLabel-labelContainer': {
+                        textAlign: 'center',
+                        width: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        marginTop: 0
+                      },
+                      '& .MuiStepLabel-label': {
+                        textAlign: 'center',
+                        marginTop: 0
+                      }
+                    }}
                   >
-                    <Box>
-                      <Typography variant="body2" fontWeight="medium">
+                    <Box sx={{ 
+                      textAlign: 'center', 
+                      maxWidth: '120px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <Typography variant="body2" fontWeight="medium" sx={{ 
+                        lineHeight: 1.3,
+                        mb: 0.25,
+                        textAlign: 'center'
+                      }}>
                         {step.title}
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" color="text.secondary" sx={{
+                        lineHeight: 1.2,
+                        display: 'block',
+                        textAlign: 'center'
+                      }}>
                         {step.description}
                       </Typography>
                     </Box>

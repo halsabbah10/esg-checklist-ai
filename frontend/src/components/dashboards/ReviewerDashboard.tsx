@@ -38,6 +38,7 @@ import {
 import { uploadsAPI, aiAPI } from '../../services/api';
 import { TabbedDocumentViewer } from '../TabbedDocumentViewer';
 import { ReviewActions } from '../ReviewActions';
+import { PageTransition } from '../ui';
 
 interface Upload {
   id: number;
@@ -222,11 +223,12 @@ export const ReviewerDashboard: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-          Reviewer Dashboard
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        {/* Header */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+            Reviewer Dashboard
         </Typography>
         <Typography variant="body1" color="text.secondary">
           Review and evaluate file uploads and AI analysis results
@@ -500,6 +502,7 @@ export const ReviewerDashboard: React.FC = () => {
           onStatusChange={handleStatusChange}
         />
       )}
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };

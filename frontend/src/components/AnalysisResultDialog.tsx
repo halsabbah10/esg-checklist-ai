@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -26,6 +26,8 @@ import { searchAPI } from '../services/api';
 import ComprehensiveStep4ResultsDisplay from './ai-analysis/ComprehensiveStep4ResultsDisplay';
 import { DocumentViewer } from './DocumentViewer';
 import { LoadingSpinner } from './LoadingSpinner';
+import { useModalManager, useEscapeKey } from '../utils/modalManager';
+import { designTokens, getBorderRadius } from '../theme/designTokens';
 
 interface AnalysisResultDialogProps {
   open: boolean;
@@ -70,6 +72,24 @@ export const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
   const [activeTab, setActiveTab] = useState(0);
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  
+  // Manage modal state for scroll locking
+  const { openModal, closeModal } = useModalManager('analysis-result-dialog', 'dialog');
+  
+  // Handle modal state
+  useEffect(() => {
+    if (open) {
+      openModal();
+    } else {
+      closeModal();
+    }
+    
+    return () => closeModal();
+  }, [open, openModal, closeModal]);
+  
+  // Handle escape key
+  useEscapeKey(onClose, open);
 
   // Fetch analysis results if not provided
   const { data: analysis, isLoading, error } = useQuery({
@@ -235,7 +255,10 @@ export const AnalysisResultDialog: React.FC<AnalysisResultDialogProps> = ({
             <ComprehensiveStep4ResultsDisplay
               state={{
                 analysisId: analysisId,
-                results: resultData,
+                results: {
+                  ...resultData,
+                  model_version: resultData.ai_model_version || 'Unknown'
+                },
                 selectedDepartment: resultData.metadata?.department_context?.name || 'General Approach',
                 selectedModel: resultData.ai_model_version || 'Unknown',
               }}

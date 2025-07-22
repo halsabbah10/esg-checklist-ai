@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -41,21 +41,33 @@ interface SearchResult {
 
 export const GlobalSearch: React.FC = React.memo(() => {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [filters, setFilters] = useState<string[]>([]);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showResults, setShowResults] = useState(false);
   const navigate = useNavigate();
 
+  // Debounce search query for performance optimization
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300); // 300ms debounce delay
+
+    return () => clearTimeout(timer);
+  }, [query]);
+
   const { data: results, isLoading } = useQuery({
-    queryKey: ['search', query, filters],
+    queryKey: ['search', debouncedQuery, filters],
     queryFn: () =>
       searchAPI.globalSearch({
-        q: query,
+        q: debouncedQuery,
         types: filters.length > 0 ? filters : undefined,
         limit: 10,
       }),
-    enabled: query.length >= 2,
+    enabled: debouncedQuery.length >= 2,
     select: response => response.data,
+    staleTime: 5 * 60 * 1000, // Cache results for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in garbage collection for 10 minutes
   });
 
   const handleSearch = useCallback((value: string) => {
@@ -317,11 +329,15 @@ export const GlobalSearch: React.FC = React.memo(() => {
                 </React.Fragment>
               ))}
             </List>
-          ) : query.length >= 2 ? (
+          ) : debouncedQuery.length >= 2 ? (
             <Box p={2}>
               <Typography variant="body2" color="text.secondary" textAlign="center">
-                No results found for "{query}"
+                No results found for "{debouncedQuery}"
               </Typography>
+            </Box>
+          ) : query.length >= 2 && query !== debouncedQuery ? (
+            <Box p={2}>
+              <LoadingSpinner size={24} message="Searching..." />
             </Box>
           ) : null}
         </Paper>

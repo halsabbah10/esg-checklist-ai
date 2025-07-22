@@ -20,12 +20,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow
 } from '@mui/material';
 import {
   CheckCircle2,
@@ -43,9 +37,33 @@ import {
   Assessment,
   Timeline,
   Assignment,
-  Visibility
+  Visibility,
+  Schedule
 } from '@mui/icons-material';
 import api from '../../services/api';
+
+// Utility functions
+const formatProcessingTime = (timeMs: number): string => {
+  if (timeMs < 1000) {
+    return `${timeMs}ms`;
+  } else if (timeMs < 60000) {
+    const seconds = Math.floor(timeMs / 1000);
+    const ms = timeMs % 1000;
+    return ms === 0 ? `${seconds}s` : `${seconds}.${Math.floor(ms / 100)}s`;
+  } else {
+    const minutes = Math.floor(timeMs / 60000);
+    const seconds = Math.floor((timeMs % 60000) / 1000);
+    return seconds === 0 ? `${minutes}m` : `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+};
 
 interface Step4Props {
   state: any;
@@ -127,18 +145,38 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       if (state.results) {
         // Use results from state (from comprehensive backend processing)
         rawResults = state.results;
+        console.log('🔍 USING STATE RESULTS:', rawResults);
       } else if (state.analysisId) {
         // Fallback to API call
+        console.log('🔍 FETCHING FROM API:', state.analysisId);
         const response = await api.get(`/v1/ai-analysis/results/${state.analysisId}`);
         rawResults = response.data;
+        console.log('🔍 API RESPONSE:', rawResults);
       } else {
         throw new Error('No results or analysis ID available');
       }
+      
+      console.log('🔍 RAW RESULTS STRUCTURE:', {
+        hasMetadata: !!rawResults.metadata,
+        hasRecommendations: !!rawResults.metadata?.recommendations,
+        hasGaps: !!rawResults.metadata?.gaps,
+        hasCategoryScores: !!rawResults.metadata?.category_scores,
+        hasChecklistCompleteness: !!rawResults.metadata?.checklist_completeness,
+        metadata: rawResults.metadata
+      });
       
       // Process and enhance the results with comprehensive analysis
       const enhanced = await processComprehensiveResults(rawResults);
       setResults(enhanced);
       setProcessedData(enhanced.metadata);
+      
+      console.log('🔍 FINAL PROCESSED DATA:', {
+        recommendations: enhanced.metadata?.recommendations,
+        gaps: enhanced.metadata?.gaps,
+        category_scores: enhanced.metadata?.category_scores,
+        checklist_completeness: enhanced.metadata?.checklist_completeness,
+        fullMetadata: enhanced.metadata
+      });
     } catch (error: any) {
       console.error('Failed to load results:', error);
       onError('Failed to load analysis results');
@@ -158,35 +196,51 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       metadata: rawResults.metadata
     });
 
-    // If comprehensive metadata is already available from backend, use it
-    if (rawResults.metadata && rawResults.metadata.category_scores) {
-      // Backend has already processed everything comprehensively
-      console.log('Using backend processed data');
-      return {
-        ...rawResults,
-        metadata: rawResults.metadata
-      };
-    }
-
-    // Fallback: process results on frontend (for backward compatibility)
-    console.log('Processing on frontend - fallback mode');
-    const categoryScores = extractCategoryScores(feedbackText, overallScore, rawResults.metadata);
-    const recommendations = extractDocumentSpecificRecommendations(feedbackText, filename, rawResults.metadata);
-    const gaps = extractDocumentSpecificGaps(feedbackText, filename, overallScore, rawResults.metadata);
-    const checklistCompleteness = generateCompletenessAnalysis(feedbackText, filename, overallScore, rawResults.metadata);
-    const esgAlignment = analyzeESGAlignment(feedbackText, filename, overallScore);
-    const complianceIndicators = extractComplianceIndicators(feedbackText, overallScore);
-
+    console.log('Using backend data directly - NO FALLBACKS');
+    
     return {
       ...rawResults,
       metadata: {
         ...rawResults.metadata,
-        category_scores: categoryScores,
-        recommendations,
-        gaps,
-        checklist_completeness: checklistCompleteness,
-        esg_alignment: esgAlignment,
-        compliance_indicators: complianceIndicators
+        // Use ONLY actual backend data - NO fallbacks
+        recommendations: (() => {
+          const directRecs = rawResults.metadata?.recommendations || [];
+          
+          // Extract only genuine AI recommendations from checklist items
+          const aiGeneratedRecs = rawResults.metadata?.checklist_completeness?.items
+            ?.filter((item: any) => 
+              item.recommendations && 
+              item.recommendations.length > 0 &&
+              item.id
+            )
+            ?.flatMap((item: any) => 
+              item.recommendations
+                .filter((rec: string) => 
+                  rec && 
+                  rec.trim().length > 0 &&
+                  !rec.toLowerCase().includes('provide comprehensive response') &&
+                  !rec.toLowerCase().includes('address this requirement') &&
+                  rec.length > 25
+                )
+                .map((rec: string) => `[${item.id}] ${rec.trim()}`)
+            ) || [];
+          
+          const allRecs = [...directRecs, ...aiGeneratedRecs];
+          const uniqueRecs = [...new Set(allRecs)];
+          
+          console.log('🔍 BACKEND DATA ONLY:', {
+            directRecs: directRecs.length,
+            aiGeneratedRecs: aiGeneratedRecs.length,
+            totalUnique: uniqueRecs.length
+          });
+          
+          return uniqueRecs;
+        })(),
+        gaps: rawResults.metadata?.gaps || [],
+        category_scores: rawResults.metadata?.category_scores || null,
+        checklist_completeness: rawResults.metadata?.checklist_completeness || null,
+        esg_alignment: rawResults.metadata?.esg_alignment || null,
+        compliance_indicators: rawResults.metadata?.compliance_indicators || null
       }
     };
   };
@@ -566,20 +620,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
     return 'error';
   };
 
-  const formatProcessingTime = (ms: number): string => {
-    if (ms < 1000) return `${ms}ms`;
-    const seconds = ms / 1000;
-    if (seconds < 60) return `${seconds.toFixed(1)}s`;
-    const minutes = seconds / 60;
-    return `${minutes.toFixed(1)}m`;
-  };
-
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  };
+  // Using global utility functions defined at top of file
 
   const startNewAnalysis = () => {
     // Reset the workflow to step 1
@@ -633,7 +674,8 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       const printWindow = window.open('', '_blank');
       if (printWindow) {
         printWindow.document.open();
-        printWindow.document.write(printContent);
+        // Use innerHTML instead of deprecated document.write
+        printWindow.document.body.innerHTML = printContent;
         printWindow.document.close();
         
         // Wait for content to load, then print
@@ -751,7 +793,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
             
             if (completeItems.length > 0) {
               html += `
-                <h3 style="color: #2e7d32; margin-top: 30px;">✅ Complete Requirements (${completeItems.length})</h3>
+                <h3 style="color: #2e7d32; margin-top: 30px;">✓ Complete Requirements (${completeItems.length})</h3>
                 <ul>
                   ${completeItems.map((item: any) => `
                     <li style="margin-bottom: 10px;">
@@ -765,7 +807,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
             
             if (incompleteItems.length > 0) {
               html += `
-                <h3 style="color: #f57c00; margin-top: 30px;">⚠️ Incomplete Requirements (${incompleteItems.length})</h3>
+                <h3 style="color: #f57c00; margin-top: 30px;">! Incomplete Requirements (${incompleteItems.length})</h3>
                 <ul>
                   ${incompleteItems.map((item: any) => `
                     <li style="margin-bottom: 10px;">
@@ -779,7 +821,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
             
             if (missingItems.length > 0) {
               html += `
-                <h3 style="color: #d32f2f; margin-top: 30px;">❌ Missing Requirements (${missingItems.length})</h3>
+                <h3 style="color: #d32f2f; margin-top: 30px;">✗ Missing Requirements (${missingItems.length})</h3>
                 <ul>
                   ${missingItems.map((item: any) => `
                     <li style="margin-bottom: 10px;">
@@ -909,7 +951,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
         <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
           <CheckCircle2 size={32} color="#2e7d32" style={{ marginRight: 8 }} />
           <Typography variant="h4" fontWeight="bold" color="success.main">
-            🤖 AI Analysis Complete!
+            AI Analysis Complete!
           </Typography>
         </Box>
         <Typography variant="body1" color="text.secondary">
@@ -918,7 +960,11 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       </Box>
 
       {/* Enhanced Score Overview */}
-      <Card sx={{ mb: 3, border: 2, borderColor: 'success.main' }}>
+      <Card sx={{ 
+        mb: 3,
+        bgcolor: 'grey.50',
+        boxShadow: 2
+      }}>
         <CardHeader sx={{ textAlign: 'center', pb: 2 }}>
           <Box display="flex" justifyContent="center" alignItems="center" mb={2}>
             <Box 
@@ -956,32 +1002,126 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
           </Typography>
         </CardHeader>
         <CardContent>
-          <Box sx={{ mb: 3 }}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-              <Typography variant="body2" color="text.secondary">
-                Overall Compliance Score
+          {/* Completeness Score - Most Important Metric */}
+          {processedData?.checklist_completeness && (
+            <Box mb={3}>
+              <Typography variant="h6" gutterBottom>Completeness Score</Typography>
+              <Typography variant="h6" fontWeight="bold" color="success.main" sx={{ textAlign: 'right', mb: 1 }}>
+                {((processedData.checklist_completeness.completion_rate || 0) * 100).toFixed(1)}%
               </Typography>
-              <Typography variant="h6" fontWeight="bold" color={getScoreColor(results.score)}>
-                {(results.score * 100).toFixed(1)}%
-              </Typography>
+              <LinearProgress 
+                variant="determinate" 
+                value={(processedData.checklist_completeness.completion_rate || 0) * 100} 
+                color="success"
+                sx={{ height: 12, borderRadius: 6 }}
+              />
             </Box>
+          )}
+
+          {/* Overall Compliance Score - Secondary to Completeness */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Overall Compliance Score</Typography>
+            <Typography variant="h6" fontWeight="bold" color={getScoreColor(results.score)} sx={{ textAlign: 'right', mb: 1 }}>
+              {(results.score * 100).toFixed(1)}%
+            </Typography>
             <LinearProgress 
               variant="determinate" 
               value={results.score * 100} 
               sx={{ height: 12, borderRadius: 6 }}
             />
           </Box>
+
+          {/* ESG Checklist Completeness Breakdown */}
+          {processedData?.checklist_completeness && (
+            <Box mb={3}>
+              <Typography variant="h6" gutterBottom>ESG Checklist Completeness</Typography>
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: 'repeat(4, 1fr)' }} gap={2}>
+                <Box>
+                  <Paper sx={{ 
+                    p: 1.5, 
+                    textAlign: 'center',
+                    bgcolor: 'primary.50',
+                    border: '2px solid',
+                    borderColor: 'primary.main',
+                    borderRadius: 2
+                  }}>
+                    <Typography variant="h5" fontWeight="bold" color="primary.main">
+                      {processedData.checklist_completeness.summary?.total || processedData.checklist_completeness.total || 0}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Total</Typography>
+                  </Paper>
+                </Box>
+                <Box>
+                  <Paper sx={{ 
+                    p: 1.5, 
+                    textAlign: 'center',
+                    bgcolor: 'success.50',
+                    border: '2px solid',
+                    borderColor: 'success.main',
+                    borderRadius: 2
+                  }}>
+                    <Typography variant="h5" fontWeight="bold" color="success.main">
+                      {processedData.checklist_completeness.summary?.complete || processedData.checklist_completeness.completed || 0}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Complete</Typography>
+                  </Paper>
+                </Box>
+                <Box>
+                  <Paper sx={{ 
+                    p: 1.5, 
+                    textAlign: 'center',
+                    bgcolor: 'warning.50',
+                    border: '2px solid',
+                    borderColor: 'warning.main',
+                    borderRadius: 2
+                  }}>
+                    <Typography variant="h5" fontWeight="bold" color="warning.main">
+                      {processedData.checklist_completeness.summary?.incomplete || 0}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Incomplete</Typography>
+                  </Paper>
+                </Box>
+                <Box>
+                  <Paper sx={{ 
+                    p: 1.5, 
+                    textAlign: 'center',
+                    bgcolor: 'error.50',
+                    border: '2px solid',
+                    borderColor: 'error.main',
+                    borderRadius: 2
+                  }}>
+                    <Typography variant="h5" fontWeight="bold" color="error.main">
+                      {processedData.checklist_completeness.summary?.missing || 0}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Missing</Typography>
+                  </Paper>
+                </Box>
+              </Box>
+            </Box>
+          )}
           
           {/* Category Scores */}
           {processedData?.category_scores && (
             <Box mb={3}>
-              <Typography variant="h6" gutterBottom>ESG Category Breakdown</Typography>
+              <Typography variant="h6" sx={{ mb: 2 }}>ESG Category Breakdown</Typography>
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
                 {Object.entries(processedData.category_scores).map(([category, score]) => {
                   const numericScore = typeof score === 'number' ? score : 0;
                   return (
                     <Box key={category}>
-                      <Paper sx={{ p: 2, textAlign: 'center' }}>
+                      <Paper sx={{ 
+                        p: 2, 
+                        textAlign: 'center',
+                        bgcolor: 'grey.100',
+                        boxShadow: 2,
+                        borderRadius: 2,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-2px)',
+                          boxShadow: 4,
+                          bgcolor: 'background.paper'
+                        }
+                      }}>
                         <Typography variant="subtitle2" textTransform="capitalize" gutterBottom>
                           {category}
                         </Typography>
@@ -1033,8 +1173,31 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
       </Card>
 
       {/* Comprehensive Tabs */}
-      <Card>
-        <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} variant="scrollable">
+      <Card sx={{ 
+        bgcolor: 'grey.50',
+        boxShadow: 2
+      }}>
+        <Tabs 
+          value={activeTab} 
+          onChange={(_, newValue) => setActiveTab(newValue)} 
+          variant="fullWidth"
+          sx={{
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              textTransform: 'none',
+              fontWeight: 500,
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                color: 'primary.main',
+                transform: 'translateY(-2px)'
+              },
+              '&.Mui-selected': {
+                transform: 'translateY(-1px)'
+              }
+            }
+          }}
+        >
           <Tab icon={<Dashboard />} label="Overview" />
           <Tab icon={<FileText />} label="Detailed Analysis" />
           <Tab icon={<Assignment />} label="Completeness" />
@@ -1048,7 +1211,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
         <CardContent sx={{ minHeight: 400 }}>
           {/* Overview Tab */}
           {activeTab === 0 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <Dashboard sx={{ fontSize: 20, marginRight: 1 }} />
                 Analysis Summary & Key Metrics
@@ -1056,7 +1219,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
               
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={3}>
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Performance Indicators
                     </Typography>
@@ -1083,7 +1257,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                 </Box>
                 
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Document Analysis
                     </Typography>
@@ -1105,22 +1290,56 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* Detailed Analysis Tab */}
           {activeTab === 1 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <FileText size={20} style={{ marginRight: 8 }} />
                 Comprehensive AI Analysis
               </Typography>
-              <Paper sx={{ p: 3, bgcolor: 'grey.50' }}>
-                <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
-                  {results.feedback}
-                </Typography>
+              <Paper sx={{ 
+                p: 3, 
+                bgcolor: 'background.paper',
+                border: '1px solid',
+                borderColor: 'divider',
+                boxShadow: 2
+              }}>
+                {(() => {
+                  const feedback = results.feedback || 'No detailed analysis feedback available.';
+                  
+                  // Check if feedback contains multiple sections separated by commas
+                  if (feedback.includes(', ESG Checklist Completeness Analysis') || 
+                      feedback.includes(', AI-Generated Recommendations') ||
+                      feedback.includes(', dentified Gaps & Risk Areas')) {
+                    
+                    // Split by section markers and clean up
+                    const sections = feedback
+                      .split(', ')
+                      .filter(section => section.trim().length > 0)
+                      .map(section => section.trim());
+                    
+                    // Display only the first section (main analysis)
+                    const mainAnalysis = sections[0] || feedback;
+                    
+                    return (
+                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                        {mainAnalysis}
+                      </Typography>
+                    );
+                  }
+                  
+                  // Display as normal if not concatenated
+                  return (
+                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+                      {feedback}
+                    </Typography>
+                  );
+                })()}
               </Paper>
             </Box>
           )}
 
           {/* Completeness Tab */}
           {activeTab === 2 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <Assignment sx={{ fontSize: 20, marginRight: 1 }} />
                 ESG Checklist Completeness Analysis
@@ -1133,25 +1352,53 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                   <Box mb={4}>
                     <Typography variant="subtitle1" gutterBottom>Overview Summary</Typography>
                     <Box display="grid" gridTemplateColumns="repeat(4, 1fr)" gap={2} mb={3}>
-                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'primary.50' }}>
+                      <Paper sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        bgcolor: 'background.paper',
+                        border: '2px solid',
+                        borderColor: 'primary.main',
+                        boxShadow: 1
+                      }}>
                         <Typography variant="h4" fontWeight="bold" color="primary.main">
                           {processedData.checklist_completeness.summary?.total || processedData.checklist_completeness.total || 0}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">Total Questions</Typography>
                       </Paper>
-                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.50' }}>
+                      <Paper sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        bgcolor: 'background.paper',
+                        border: '2px solid',
+                        borderColor: 'success.main',
+                        boxShadow: 1
+                      }}>
                         <Typography variant="h4" fontWeight="bold" color="success.main">
                           {processedData.checklist_completeness.summary?.complete || processedData.checklist_completeness.completed || 0}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">Complete</Typography>
                       </Paper>
-                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.50' }}>
+                      <Paper sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        bgcolor: 'background.paper',
+                        border: '2px solid',
+                        borderColor: 'warning.main',
+                        boxShadow: 1
+                      }}>
                         <Typography variant="h4" fontWeight="bold" color="warning.main">
                           {processedData.checklist_completeness.summary?.incomplete || 0}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">Incomplete</Typography>
                       </Paper>
-                      <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'error.50' }}>
+                      <Paper sx={{ 
+                        p: 2, 
+                        textAlign: 'center', 
+                        bgcolor: 'background.paper',
+                        border: '2px solid',
+                        borderColor: 'error.main',
+                        boxShadow: 1
+                      }}>
                         <Typography variant="h4" fontWeight="bold" color="error.main">
                           {processedData.checklist_completeness.summary?.missing || 0}
                         </Typography>
@@ -1243,19 +1490,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                                     </ListItemIcon>
                                     <ListItemText
                                       primary={item.question || 'N/A'}
-                                      secondary={
-                                        <Box>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
-                                            {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
-                                          </Typography>
-                                          {item.evidence_found && item.evidence_found.length > 0 && (
-                                            <Typography variant="caption" color="warning.main">
-                                              Evidence: {item.evidence_found[0]}
-                                            </Typography>
-                                          )}
-                                        </Box>
-                                      }
+                                      secondary={`Score: ${item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}${item.quality_score !== undefined ? ` | Quality: ${(item.quality_score * 100).toFixed(1)}%` : ''}${item.evidence_found && item.evidence_found.length > 0 ? ` • Evidence: ${item.evidence_found[0]}` : ''}`}
                                     />
                                   </ListItem>
                                 ))}
@@ -1280,19 +1515,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                                     </ListItemIcon>
                                     <ListItemText
                                       primary={item.question || 'N/A'}
-                                      secondary={
-                                        <Box>
-                                          <Typography variant="body2" color="text.secondary">
-                                            Score: {item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}
-                                            {item.quality_score !== undefined && ` | Quality: ${(item.quality_score * 100).toFixed(1)}%`}
-                                          </Typography>
-                                          {item.evidence_found && item.evidence_found.length > 0 && (
-                                            <Typography variant="caption" color="error.main">
-                                              Evidence: {item.evidence_found[0]}
-                                            </Typography>
-                                          )}
-                                        </Box>
-                                      }
+                                      secondary={`Score: ${item.completeness_score !== undefined ? `${(item.completeness_score * 100).toFixed(1)}%` : 'N/A'}${item.quality_score !== undefined ? ` | Quality: ${(item.quality_score * 100).toFixed(1)}%` : ''}${item.evidence_found && item.evidence_found.length > 0 ? ` • Evidence: ${item.evidence_found[0]}` : ''}`}
                                     />
                                   </ListItem>
                                 ))}
@@ -1316,11 +1539,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* Recommendations Tab */}
           {activeTab === 3 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <TrendingUp size={20} style={{ marginRight: 8 }} />
                 AI-Generated Recommendations
               </Typography>
+              
+              {(() => {
+                console.log('🔍 RECOMMENDATIONS TAB - processedData:', processedData);
+                console.log('🔍 RECOMMENDATIONS TAB - recommendations:', processedData?.recommendations);
+                console.log('🔍 RECOMMENDATIONS TAB - length:', processedData?.recommendations?.length);
+                return null;
+              })()}
               
               {processedData?.recommendations && processedData.recommendations.length > 0 ? (
                 <List>
@@ -1346,11 +1576,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* Gaps & Risks Tab */}
           {activeTab === 4 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <AlertTriangle size={20} style={{ marginRight: 8 }} />
                 Identified Gaps & Risk Areas
               </Typography>
+              
+              {(() => {
+                console.log('🔍 GAPS TAB - processedData:', processedData);
+                console.log('🔍 GAPS TAB - gaps:', processedData?.gaps);
+                console.log('🔍 GAPS TAB - length:', processedData?.gaps?.length);
+                return null;
+              })()}
               
               {processedData?.gaps && processedData.gaps.length > 0 ? (
                 <List>
@@ -1376,7 +1613,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* Compliance Tab */}
           {activeTab === 5 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <Assessment sx={{ fontSize: 20, marginRight: 1 }} />
                 Compliance Assessment
@@ -1384,7 +1621,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
               
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={3}>
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Compliance Indicators
                     </Typography>
@@ -1414,7 +1662,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                 </Box>
                 
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Priority Focus Areas
                     </Typography>
@@ -1441,7 +1700,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* ESG Alignment Tab */}
           {activeTab === 6 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <Timeline sx={{ fontSize: 20, marginRight: 1 }} />
                 ESG Strategic Alignment
@@ -1500,7 +1759,7 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
 
           {/* Document Details Tab */}
           {activeTab === 7 && (
-            <Box>
+<Box>
               <Typography variant="h6" gutterBottom display="flex" alignItems="center">
                 <Visibility sx={{ fontSize: 20, marginRight: 1 }} />
                 Document Information & Analysis Context
@@ -1508,7 +1767,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
               
               <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={3}>
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       File Details
                     </Typography>
@@ -1534,7 +1804,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                 </Box>
                 
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Analysis Configuration
                     </Typography>
@@ -1551,8 +1832,11 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                       </Typography>
                     </Box>
                     <Box display="flex" justifyContent="space-between" mb={1}>
-                      <Typography variant="body2" color="text.secondary">Processing Time:</Typography>
-                      <Typography variant="body2" fontWeight="medium">
+                      <Typography variant="body2" color="text.secondary" display="flex" alignItems="center">
+                        <Schedule sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                        Processing Time:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium" color="text.secondary">
                         {formatProcessingTime(results.processing_time_ms)}
                       </Typography>
                     </Box>
@@ -1560,7 +1844,18 @@ export default function ComprehensiveStep4ResultsDisplay({ state, onComplete, on
                 </Box>
                 
                 <Box>
-                  <Paper sx={{ p: 2 }}>
+                  <Paper sx={{ 
+                    p: 2,
+                    bgcolor: 'grey.100',
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      boxShadow: 4,
+                      bgcolor: 'background.paper'
+                    }
+                  }}>
                     <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
                       Analysis Summary
                     </Typography>

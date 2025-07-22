@@ -8,7 +8,6 @@ import {
   Typography,
   Box,
   Button,
-  TextField,
   RadioGroup,
   FormControlLabel,
   Radio,
@@ -22,6 +21,7 @@ import {
 } from '@mui/material';
 import { Send, ArrowBack, ArrowForward } from '@mui/icons-material';
 import { checklistsAPI, submissionsAPI } from '../services/api';
+import { TextField } from '../components/ui';
 
 interface ChecklistItem {
   id: number;
@@ -174,6 +174,7 @@ export const ChecklistSubmit: React.FC = () => {
           ) : (
             <TextField
               fullWidth
+              size="md"
               multiline
               rows={4}
               value={currentAnswer}

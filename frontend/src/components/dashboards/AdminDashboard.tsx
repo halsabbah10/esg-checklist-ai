@@ -33,6 +33,7 @@ import {
 import { analyticsAPI, uploadsAPI, searchAPI } from '../../services/api';
 import { SystemStatusCard } from '../SystemStatusCard';
 import { UserActivityFeed } from '../UserActivityFeed';
+import { PageTransition } from '../ui';
 
 interface Upload {
   id: number;
@@ -170,12 +171,13 @@ export const AdminDashboard: React.FC = () => {
   const uploads = recentUploads?.data?.results || [];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-        <Box>
-          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-            Administrator Dashboard
-          </Typography>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+              Administrator Dashboard
+            </Typography>
           <Typography variant="body1" color="text.secondary">
             Comprehensive system overview and management console
           </Typography>
@@ -349,6 +351,7 @@ export const AdminDashboard: React.FC = () => {
           </Button>
         </Box>
       </Paper>
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };

@@ -134,62 +134,221 @@ export const UserManagement: React.FC = () => {
             Manage user accounts, roles, and permissions
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button variant="outlined" startIcon={<Download />} onClick={() => handleExport('csv')}>
-            Export CSV
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 1, sm: 2 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'stretch', sm: 'center' },
+        }}>
+          <Button 
+            variant="outlined" 
+            startIcon={<Download />} 
+            onClick={() => handleExport('csv')}
+            sx={{
+              minHeight: 44,
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+              px: { xs: 2, sm: 3 },
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Export 
+            </Box>
+            CSV
           </Button>
-          <Button variant="outlined" startIcon={<Download />} onClick={() => handleExport('xlsx')}>
-            Export Excel
+          <Button 
+            variant="outlined" 
+            startIcon={<Download />} 
+            onClick={() => handleExport('xlsx')}
+            sx={{
+              minHeight: 44,
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+              px: { xs: 2, sm: 3 },
+            }}
+          >
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Export 
+            </Box>
+            Excel
           </Button>
-          <Button variant="contained" startIcon={<PersonAdd />}>
+          <Button 
+            variant="contained" 
+            startIcon={<PersonAdd />}
+            sx={{
+              minHeight: 44,
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+              px: { xs: 2, sm: 3 },
+              fontWeight: 'medium',
+            }}
+          >
             Add User
           </Button>
         </Box>
       </Box>
 
       <Card elevation={2}>
-        <CardContent>
-          <TableContainer>
-            <Table>
+        <CardContent sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+          <TableContainer sx={{ 
+            overflowX: 'auto',
+            maxWidth: '100%',
+            '&::-webkit-scrollbar': {
+              height: 8,
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'grey.200',
+              borderRadius: 4,
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'grey.400',
+              borderRadius: 4,
+              '&:hover': {
+                backgroundColor: 'grey.600',
+              },
+            },
+          }}>
+            <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
               <TableHead>
                 <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Email</TableCell>
-                  <TableCell>Role</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Last Login</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 120,
+                  }}>
+                    Name
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 200,
+                    display: { xs: 'none', sm: 'table-cell' },
+                  }}>
+                    Email
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 100,
+                  }}>
+                    Role
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 80,
+                    display: { xs: 'none', md: 'table-cell' },
+                  }}>
+                    Status
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 120,
+                    display: { xs: 'none', lg: 'table-cell' },
+                  }}>
+                    Last Login
+                  </TableCell>
+                  <TableCell sx={{ 
+                    fontWeight: 'bold',
+                    whiteSpace: 'nowrap',
+                    minWidth: 120,
+                    textAlign: 'center',
+                  }}>
+                    Actions
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {paginatedUsers.map((user: User) => (
-                  <TableRow key={user.id} hover>
-                    <TableCell>{user.full_name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
+                  <TableRow key={user.id} hover sx={{ 
+                    '&:hover': { 
+                      backgroundColor: 'action.hover',
+                    },
+                  }}>
+                    <TableCell sx={{ 
+                      maxWidth: { xs: 120, sm: 200 },
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">
+                          {user.full_name}
+                        </Typography>
+                        {/* Show email on mobile when hidden column */}
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ display: { xs: 'block', sm: 'none' } }}
+                        >
+                          {user.email}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell sx={{ 
+                      display: { xs: 'none', sm: 'table-cell' },
+                      maxWidth: 200,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {user.email}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={user.role.replace('_', ' ').toUpperCase()}
                         color={getRoleColor(user.role)}
                         size="small"
+                        sx={{ 
+                          fontSize: { xs: '0.65rem', sm: '0.75rem' },
+                          height: { xs: 24, sm: 'auto' },
+                        }}
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                       <Chip
                         label={user.is_active ? 'Active' : 'Inactive'}
                         color={user.is_active ? 'success' : 'default'}
                         size="small"
                       />
                     </TableCell>
-                    <TableCell>
+                    <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
                       {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                     </TableCell>
-                    <TableCell>
-                      <IconButton size="small" onClick={() => handleEditUser(user)} color="primary">
-                        <Edit />
-                      </IconButton>
-                      <IconButton size="small" color="error">
-                        <Delete />
-                      </IconButton>
+                    <TableCell sx={{ textAlign: 'center' }}>
+                      <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                        <IconButton 
+                          size="small" 
+                          onClick={() => handleEditUser(user)} 
+                          color="primary"
+                          sx={{ 
+                            minWidth: 44,
+                            minHeight: 44,
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              backgroundColor: 'primary.light',
+                            },
+                            transition: 'all 0.2s ease-in-out',
+                          }}
+                          aria-label={`Edit ${user.full_name}`}
+                        >
+                          <Edit fontSize="small" />
+                        </IconButton>
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          sx={{ 
+                            minWidth: 44,
+                            minHeight: 44,
+                            '&:hover': {
+                              transform: 'scale(1.1)',
+                              backgroundColor: 'error.light',
+                            },
+                            transition: 'all 0.2s ease-in-out',
+                          }}
+                          aria-label={`Delete ${user.full_name}`}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}

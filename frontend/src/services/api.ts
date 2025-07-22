@@ -91,7 +91,7 @@ export const authAPI = {
     });
   },
 
-  logout: () => api.post('/v1/auth/logout'),
+  logout: () => api.post('/v1/users/logout'),
 
   getCurrentUser: () => api.get('/v1/users/me'),
 };
@@ -214,7 +214,7 @@ export const reviewsAPI = {
 
 // Uploads API endpoints (updated to match backend)
 export const uploadsAPI = {
-  search: (params?: Record<string, unknown>) => api.get('/v1/search/file-uploads', { params }),
+  search: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/file-uploads', { params }),
 
   addComment: (uploadId: string, data: { comment: string; comment_type?: string }) =>
     api.post(`/v1/uploads/${uploadId}/comment`, data),
@@ -230,11 +230,9 @@ export const uploadsAPI = {
 
   getStatus: (uploadId: string) => api.get(`/v1/uploads/${uploadId}/status`),
 
-  // Status update would need to be implemented in backend
-  updateStatus: (uploadId: string, data: { status: string; comment?: string; reviewer_notes?: string }) => {
-    console.warn('Upload status update not implemented in backend yet', { uploadId, data });
-    return Promise.resolve({ data: { success: true } });
-  },
+  // Status update using new upload management endpoints
+  updateStatus: (uploadId: string, data: { status: string; comment?: string; reviewer_notes?: string }) =>
+    api.post(`/v1/uploads/${uploadId}/status`, data),
 
   // Use new file download endpoint
   download: (uploadId: string) => 
@@ -275,7 +273,7 @@ export const commentsAPI = {
   getByUpload: (uploadId: string) => api.get(`/v1/uploads/${uploadId}/comments`),
 
   addComment: (uploadId: string, comment: string, status?: string) =>
-    api.post(`/v1/uploads/${uploadId}/comment`, { comment, status }),
+    api.post(`/v1/uploads/${uploadId}/comment`, { comment, comment_type: status }),
 
   updateComment: (commentId: string, data: { content: string }) =>
     api.put(`/v1/comments/${commentId}`, data),
@@ -434,37 +432,37 @@ export const analyticsAPI = {
   getDashboardData: () => api.get('/v1/analytics/dashboard-data'),
 };
 
-// Enhanced Search API
+// Enhanced Search API (Advanced Search with comprehensive filtering)
 export const searchAPI = {
-  fileUploads: (params?: Record<string, unknown>) => api.get('/v1/search/file-uploads', { params }),
+  fileUploads: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/file-uploads', { params }),
 
-  submissions: (params?: Record<string, unknown>) => api.get('/v1/search/submissions', { params }),
+  submissions: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/submissions', { params }),
 
-  aiResults: (params?: Record<string, unknown>) => api.get('/v1/search/ai-results', { params }),
+  aiResults: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/ai-results', { params }),
 
-  getAIResult: (id: number) => api.get(`/v1/search/ai-results/${id}`),
+  getAIResult: (id: number) => api.get(`/v1/advanced-search/ai-results/${id}`),
 
-  users: (params?: Record<string, unknown>) => api.get('/v1/search/users', { params }),
+  users: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/users', { params }),
 
   notifications: (params?: Record<string, unknown>) =>
-    api.get('/v1/search/notifications', { params }),
+    api.get('/v1/advanced-search/notifications', { params }),
 
   submissionAnswers: (params?: Record<string, unknown>) =>
-    api.get('/v1/search/submission-answers', { params }),
+    api.get('/v1/advanced-search/submission-answers', { params }),
 
-  checklists: (params?: Record<string, unknown>) => api.get('/v1/search/checklists', { params }),
+  checklists: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/checklists', { params }),
 
   checklistItems: (params?: Record<string, unknown>) =>
-    api.get('/v1/search/checklist-items', { params }),
+    api.get('/v1/advanced-search/checklist-items', { params }),
 
-  comments: (params?: Record<string, unknown>) => api.get('/v1/search/comments', { params }),
+  comments: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/comments', { params }),
 
-  auditLogs: (params?: Record<string, unknown>) => api.get('/v1/search/audit-logs', { params }),
+  auditLogs: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/audit-logs', { params }),
 
   systemConfig: (params?: Record<string, unknown>) =>
-    api.get('/v1/search/system-config', { params }),
+    api.get('/v1/advanced-search/system-config', { params }),
 
-  globalSearch: (params?: Record<string, unknown>) => api.get('/v1/search/global', { params }),
+  globalSearch: (params?: Record<string, unknown>) => api.get('/v1/advanced-search/global', { params }),
 };
 
 // Audit API endpoints

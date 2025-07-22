@@ -27,6 +27,7 @@ import {
 } from '@mui/icons-material';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { exportAPI, analyticsAPI, brdReportsAPI } from '../services/api';
+import { PageTransition } from '../components/ui';
 
 interface Report {
   id: string;
@@ -697,6 +698,19 @@ export const Reports: React.FC = () => {
     );
   };
 
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'ready':
+        return <CheckCircle color="success" sx={{ fontSize: 20 }} />;
+      case 'generating':
+        return <CircularProgress size={20} color="warning" />;
+      case 'failed':
+        return <ErrorIcon color="error" sx={{ fontSize: 20 }} />;
+      default:
+        return <Warning color="warning" sx={{ fontSize: 20 }} />;
+    }
+  };
+
   const getStatusChip = (status: string) => {
     const statusConfig: Record<string, { color: 'success' | 'warning' | 'error'; label: string }> =
       {
@@ -707,7 +721,12 @@ export const Reports: React.FC = () => {
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.ready;
 
-    return <Chip label={config.label} size="small" color={config.color} sx={{ minWidth: 80 }} />;
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        {getStatusIcon(status)}
+        <Chip label={config.label} size="small" color={config.color} sx={{ minWidth: 80 }} />
+      </Box>
+    );
   };
 
   const getTypeChip = (type: string) => (
@@ -733,8 +752,9 @@ export const Reports: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
-      {/* Error/Success Messages */}
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: { xs: 2, sm: 3 } }}>
+        {/* Error/Success Messages */}
       {exportDashboardMutation.isError && (
         <Alert severity="error" sx={{ mb: 3 }}>
           Failed to export dashboard. Please try again.
@@ -943,6 +963,7 @@ export const Reports: React.FC = () => {
           )}
         </Box>
       </Paper>
-    </Box>
+      </Box>
+    </PageTransition>
   );
 };

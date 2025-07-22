@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -11,6 +11,7 @@ import {
   IconButton,
   Tabs,
   Tab,
+  Fade,
 } from '@mui/material';
 import {
   Close,
@@ -20,6 +21,13 @@ import {
 import { aiAPI } from '../services/api';
 import ComprehensiveStep4ResultsDisplay from './ai-analysis/ComprehensiveStep4ResultsDisplay';
 import { DocumentViewer } from './DocumentViewer';
+
+const FadeTransition = React.forwardRef<
+  HTMLDivElement,
+  { children: React.ReactElement; in?: boolean }
+>((props, ref) => {
+  return <Fade ref={ref} {...props} timeout={{ enter: 300, exit: 500 }} />;
+});
 
 interface TabbedDocumentViewerProps {
   open: boolean;
@@ -52,23 +60,9 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
   const [aiAnalysis, setAIAnalysis] = useState<AIAnalysis | null>(null);
   const [aiLoading, setAILoading] = useState(false);
 
-  // Reset state when dialog closes
-  React.useEffect(() => {
-    if (!open) {
-      setActiveTab(0);
-      setAIAnalysis(null);
-      setAILoading(false);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (open && uploadId && activeTab === 1) {
-      fetchAIAnalysis();
-    }
-  }, [open, uploadId, activeTab]);
-
-
-  const fetchAIAnalysis = async () => {
+  const fetchAIAnalysis = useCallback(async () => {
+    if (!uploadId) return;
+    
     setAILoading(true);
     try {
       const response = await aiAPI.getResultByUpload(uploadId.toString());
@@ -84,11 +78,33 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
     } finally {
       setAILoading(false);
     }
-  };
+  }, [uploadId]);
 
-  const renderDocumentViewer = () => {
+  const handleClose = useCallback(() => {
+    // Close immediately - MUI Dialog will handle the fade-out animation
+    onClose();
+  }, [onClose]);
+
+  // Reset state when dialog closes
+  React.useEffect(() => {
+    if (!open) {
+      setActiveTab(0);
+      setAIAnalysis(null);
+      setAILoading(false);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (open && uploadId && activeTab === 1) {
+      fetchAIAnalysis();
+    }
+  }, [open, uploadId, activeTab, fetchAIAnalysis]);
+
+  const renderDocumentViewer = useMemo(() => {
+    if (activeTab !== 0) return null;
+    
     return (
-      <Box sx={{ display: activeTab === 0 ? 'block' : 'none', height: '100%' }}>
+      <Box sx={{ height: '100%' }}>
         <DocumentViewer
           key={`doc-viewer-${uploadId}`}
           uploadId={uploadId}
@@ -98,12 +114,14 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
         />
       </Box>
     );
-  };
+  }, [activeTab, uploadId, filename, fileSize]);
 
-  const renderAIAnalysis = () => {
+  const renderAIAnalysis = useMemo(() => {
+    if (activeTab !== 1) return null;
+    
     if (aiLoading) {
       return (
-        <Box sx={{ display: activeTab === 1 ? 'flex' : 'none', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
           <Box sx={{ textAlign: 'center' }}>
             <CircularProgress />
             <Typography variant="h6" sx={{ mt: 2 }}>Loading AI Analysis...</Typography>
@@ -158,15 +176,19 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
         </Box>
       );
     }
-  };
+  }, [activeTab, aiLoading, aiAnalysis]);
 
   return (
     <Dialog 
       key={`dialog-${uploadId}`}
       open={open} 
-      onClose={onClose} 
+      onClose={handleClose}
       maxWidth="lg" 
       fullWidth
+      TransitionComponent={FadeTransition}
+      disableEscapeKeyDown={false}
+      disableRestoreFocus={false}
+      keepMounted={false}
       sx={{
         '& .MuiDialog-paper': {
           height: '90vh',
@@ -179,7 +201,7 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
           <Typography variant="h6" component="span">
             {filename}
           </Typography>
-          <IconButton onClick={onClose}>
+          <IconButton onClick={handleClose}>
             <Close />
           </IconButton>
         </Box>
@@ -193,12 +215,12 @@ export const TabbedDocumentViewer: React.FC<TabbedDocumentViewerProps> = ({
       </Box>
 
       <DialogContent sx={{ p: 0, overflow: 'hidden', height: '100%' }}>
-        {renderDocumentViewer()}
-        {renderAIAnalysis()}
+        {renderDocumentViewer}
+        {renderAIAnalysis}
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="contained">
+        <Button onClick={handleClose} variant="contained">
           Close
         </Button>
       </DialogActions>

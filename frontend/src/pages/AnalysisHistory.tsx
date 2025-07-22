@@ -14,7 +14,6 @@ import {
   TableSortLabel,
   Paper,
   Chip,
-  TextField,
   InputAdornment,
   IconButton,
   Menu,
@@ -42,6 +41,7 @@ import {
 import { searchAPI } from '../services/api';
 import { AnalysisResultDialog } from '../components/AnalysisResultDialog';
 import { TabbedDocumentViewer } from '../components/TabbedDocumentViewer';
+import { PageTransition, TextField } from '../components/ui';
 
 interface AIAnalysis {
   id: number;
@@ -236,9 +236,20 @@ export const AnalysisHistory = () => {
   };
 
   const getModelDisplayName = (modelVersion: string): string => {
+    if (!modelVersion || modelVersion === 'Unknown') return 'Unknown';
+    
+    // Extract model name from format like "gemini-department-name" or "deepseek-department-name"
+    if (modelVersion.startsWith('gemini')) return 'Gemini 2.0 Flash';
+    if (modelVersion.startsWith('deepseek')) return 'DeepSeek R1';
+    if (modelVersion.startsWith('eand')) return 'e& ChatGPT';
+    if (modelVersion.startsWith('openai')) return 'OpenAI GPT';
+    
+    // Fallback for other formats
     if (modelVersion.includes('gemini')) return 'Gemini 2.0 Flash';
     if (modelVersion.includes('deepseek')) return 'DeepSeek R1';
     if (modelVersion.includes('eand')) return 'e& ChatGPT';
+    if (modelVersion.includes('openai') || modelVersion.includes('gpt')) return 'OpenAI GPT';
+    
     return modelVersion;
   };
 
@@ -261,9 +272,10 @@ export const AnalysisHistory = () => {
     return 'Missing';  // Below 50% = missing
   };
 
-  const getQualityScore = (analysis: AIAnalysis): number => {
-    return analysis.metadata?.quality_score || analysis.score;
-  };
+  // Quality score extraction - reserved for future use
+  // const getQualityScore = (analysis: AIAnalysis): number => {
+  //   return analysis.metadata?.quality_score || analysis.score;
+  // };
 
   const getCompletenessColor = (status: string) => {
     switch (status) {
@@ -291,11 +303,12 @@ export const AnalysisHistory = () => {
   }
 
   return (
-    <Box sx={{ p: 3, height: '100vh', overflow: 'auto' }}>
-      {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4" component="h1" gutterBottom>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Box sx={{ p: 3, height: '100vh', overflow: 'auto' }}>
+        {/* Header */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Box>
+            <Typography variant="h4" component="h1" gutterBottom>
             AI Analysis History
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -374,7 +387,7 @@ export const AnalysisHistory = () => {
         <CardContent>
           <Box display="flex" gap={2} alignItems="center" flexWrap="wrap">
             <TextField
-              size="small"
+              size="sm"
               placeholder="Search by filename..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -589,7 +602,8 @@ export const AnalysisHistory = () => {
           filename={`Analysis ${selectedAnalysis.id}`}
         />
       )}
-    </Box>
+      </Box>
+    </PageTransition>
   );
 };
 

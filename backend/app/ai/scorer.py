@@ -2389,6 +2389,192 @@ Governance structures demonstrate basic compliance but need strengthening in "
             self.provider, f"Unknown provider: {self.provider} (falls back to Gemini)"
         )
 
+    def evaluate_checklist_completeness(
+        self, document_text: str, questionnaire_items: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """
+        Evaluate how well a document addresses checklist questionnaire items.
+        
+        Args:
+            document_text: The document content to evaluate
+            questionnaire_items: List of questionnaire items to check against
+            
+        Returns:
+            Dict containing completeness analysis with proper scoring
+        """
+        if not questionnaire_items:
+            return {
+                "items": [],
+                "summary": {"complete": 0, "incomplete": 0, "missing": 0, "total": 0},
+                "completion_rate": 0.0,
+            }
+
+        logger.info(f"Evaluating completeness for {len(questionnaire_items)} questionnaire items")
+        
+        evaluated_items = []
+        complete_count = 0
+        incomplete_count = 0
+        missing_count = 0
+        
+        for item in questionnaire_items:
+            question_text = item.get("question_text", "")
+            item_id = item.get("id", 0)
+            
+            # Evaluate this specific question against the document
+            completeness_score, status, evidence_found, recommendations = self._evaluate_single_item_completeness(
+                document_text, question_text, item_id
+            )
+            
+            # Count status for summary
+            if status == "Complete":
+                complete_count += 1
+            elif status == "Incomplete":
+                incomplete_count += 1
+            else:  # Missing
+                missing_count += 1
+            
+            evaluated_items.append({
+                "item_id": item_id,
+                "question_text": question_text,
+                "status": status,
+                "completeness_score": completeness_score,
+                "evidence_found": evidence_found,
+                "weight": item.get("weight", 1.0),
+                "recommendations": recommendations,
+            })
+        
+        total_items = len(questionnaire_items)
+        completion_rate = complete_count / total_items if total_items > 0 else 0.0
+        
+        result = {
+            "items": evaluated_items,
+            "summary": {
+                "complete": complete_count,
+                "incomplete": incomplete_count,
+                "missing": missing_count,
+                "total": total_items,
+            },
+            "completion_rate": completion_rate,
+        }
+        
+        logger.info(f"Completeness evaluation completed: {complete_count}/{total_items} complete ({completion_rate:.1%})")
+        return result
+
+    def _evaluate_single_item_completeness(
+        self, document_text: str, question_text: str, item_id: int
+    ) -> Tuple[float, str, List[str], List[str]]:
+        """
+        Evaluate a single questionnaire item against the document content.
+        
+        Returns:
+            Tuple of (completeness_score, status, evidence_found, recommendations)
+        """
+        if not document_text or not question_text:
+            return 0.0, "Missing", [], ["Document or question content is empty"]
+        
+        # Extract key terms from the question for keyword matching
+        question_keywords = self._extract_keywords_from_question(question_text)
+        
+        # Find evidence in the document
+        evidence_found = []
+        keyword_matches = 0
+        
+        document_lower = document_text.lower()
+        question_lower = question_text.lower()
+        
+        # Check for direct keyword matches
+        for keyword in question_keywords:
+            if keyword.lower() in document_lower:
+                keyword_matches += 1
+                evidence_found.append(f"Found keyword: '{keyword}'")
+        
+        # Check for semantic matches (simple approach)
+        semantic_matches = self._find_semantic_matches(document_text, question_text)
+        evidence_found.extend(semantic_matches)
+        
+        total_evidence = keyword_matches + len(semantic_matches)
+        
+        # Calculate completeness score based on evidence
+        if total_evidence >= 5:
+            completeness_score = 0.9  # High completeness
+            status = "Complete"
+        elif total_evidence >= 3:
+            completeness_score = 0.6  # Partial completeness
+            status = "Incomplete"
+        elif total_evidence >= 1:
+            completeness_score = 0.3  # Some evidence found
+            status = "Incomplete"
+        else:
+            completeness_score = 0.0  # No evidence
+            status = "Missing"
+        
+        # Generate recommendations based on status
+        recommendations = self._generate_item_recommendations(question_text, status, evidence_found)
+        
+        # Add evidence summary
+        if evidence_found:
+            evidence_summary = f"Found {total_evidence} relevant keywords/concepts in document"
+            evidence_found = [evidence_summary] + evidence_found[:5]  # Limit evidence list
+        else:
+            evidence_found = ["No relevant keywords or concepts found in document"]
+        
+        logger.debug(f"Item {item_id}: score={completeness_score:.1f}, status={status}, evidence={total_evidence}")
+        
+        return completeness_score, status, evidence_found, recommendations
+
+    def _extract_keywords_from_question(self, question_text: str) -> List[str]:
+        """Extract important keywords from a question."""
+        # Remove question words and extract meaningful terms
+        stop_words = {
+            'is', 'are', 'was', 'were', 'there', 'the', 'a', 'an', 'and', 'or', 'but', 
+            'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'does', 'do', 'did',
+            'what', 'where', 'when', 'why', 'how', 'who', 'which', 'that', 'this'
+        }
+        
+        # Extract words and filter
+        words = re.findall(r'\b\w+\b', question_text.lower())
+        keywords = [word for word in words if len(word) > 3 and word not in stop_words]
+        
+        # Return unique keywords, prioritize longer ones
+        return list(set(keywords))[:10]  # Limit to top 10
+
+    def _find_semantic_matches(self, document_text: str, question_text: str) -> List[str]:
+        """Find semantic matches between question and document content."""
+        matches = []
+        document_lower = document_text.lower()
+        
+        # ESG-specific semantic matching
+        esg_mappings = {
+            'environment': ['carbon', 'emission', 'energy', 'renewable', 'waste', 'water', 'climate'],
+            'social': ['employee', 'diversity', 'safety', 'training', 'community', 'customer'],
+            'governance': ['policy', 'compliance', 'risk', 'audit', 'management', 'board', 'ethics']
+        }
+        
+        question_lower = question_text.lower()
+        for category, related_terms in esg_mappings.items():
+            if category in question_lower:
+                for term in related_terms:
+                    if term in document_lower:
+                        matches.append(f"Found {category}-related term: '{term}'")
+        
+        return matches[:3]  # Limit to top 3 semantic matches
+
+    def _generate_item_recommendations(self, question_text: str, status: str, evidence_found: List[str]) -> List[str]:
+        """Generate recommendations for a specific questionnaire item."""
+        recommendations = []
+        
+        if status == "Missing":
+            recommendations.append("Develop comprehensive policy documentation")
+            recommendations.append("Create regular reporting mechanisms")
+        elif status == "Incomplete":
+            recommendations.append("Enhance existing documentation with more specific details")
+            recommendations.append("Implement more robust monitoring and reporting procedures")
+        else:  # Complete
+            recommendations.append("Maintain current high standards and documentation")
+            recommendations.append("Consider opportunities for continuous improvement")
+        
+        return recommendations[:2]  # Limit to 2 recommendations per item
+
 
 # Example usage in FastAPI endpoints:
 #

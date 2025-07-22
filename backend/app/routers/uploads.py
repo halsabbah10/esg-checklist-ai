@@ -29,7 +29,7 @@ from app.models import (
 )
 from app.rate_limiting import search_rate_limit
 
-router = APIRouter(prefix="/search", tags=["Advanced Search"])
+router = APIRouter(prefix="/advanced-search", tags=["Advanced Search"])
 
 # Explicit model validation to ensure all imports are recognized as used
 

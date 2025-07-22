@@ -13,11 +13,11 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  Button,
   Alert,
   Chip,
-  Grid,
 } from '@mui/material';
+import { Grid } from '@mui/material';
+import { PageTransition, Button } from '../components/ui';
 import {
   ExpandMore,
   Description,
@@ -47,6 +47,7 @@ export const Documentation: React.FC = () => {
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Button
+          size="md"
           startIcon={<ArrowBack />}
           onClick={() => navigate('/help')}
           sx={{ mb: 2 }}
@@ -560,7 +561,8 @@ export const Documentation: React.FC = () => {
           <Typography variant="body2" paragraph>
             If you can't find what you're looking for in this documentation, please contact our support team:
           </Typography>
-          <Button 
+          <Button
+            size="md" 
             variant="contained" 
             onClick={() => window.open('mailto:husam.alsabbah@gmail.com?subject=ESG Checklist AI Support - Documentation Question', '_blank')}
           >

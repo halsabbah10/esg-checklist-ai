@@ -20,8 +20,6 @@ import {
 } from '@mui/material';
 import {
   Download,
-  ZoomIn,
-  ZoomOut,
 } from '@mui/icons-material';
 import * as XLSX from 'xlsx';
 import { filesAPI } from '../services/api';
@@ -62,7 +60,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
   const [workbook, setWorkbook] = useState<WorkbookData | null>(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [selectedCell, setSelectedCell] = useState<{ row: number; col: number } | null>(null);
-  const [zoom, setZoom] = useState(100);
   const [contextMenu, setContextMenu] = useState<{ mouseX: number; mouseY: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
@@ -106,9 +103,9 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
       const rows = range.e.r + 1;
       const cols = range.e.c + 1;
       
-      // Limit processing to prevent browser freeze (max 500 rows x 50 columns)
-      const maxRows = Math.min(rows, 500);
-      const maxCols = Math.min(cols, 50);
+      // Aggressive limits to prevent lag (max 50 rows x 20 columns initially)
+      const maxRows = Math.min(rows, 50);
+      const maxCols = Math.min(cols, 20);
       
       // Initialize data array with limited size
       const data: CellData[][] = Array(maxRows).fill(null).map(() => 
@@ -162,9 +159,9 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
           }
         }
         
-        // Yield control every 100 rows to prevent freezing
-        if (row % 100 === 0) {
-          await new Promise(resolve => setTimeout(resolve, 0));
+        // Yield control every 20 rows to prevent freezing
+        if (row % 20 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 1));
         }
       }
 
@@ -307,7 +304,7 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
     }
   }, []);
 
-  // Handle cell click
+  // Handle cell click - optimized with React.memo
   const handleCellClick = useCallback((row: number, col: number) => {
     setSelectedCell({ row, col });
   }, []);
@@ -422,35 +419,42 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
         
         <Divider orientation="vertical" flexItem />
         
-        <Tooltip title="Zoom Out">
-          <IconButton 
-            size="small" 
-            onClick={() => setZoom(Math.max(50, zoom - 10))}
-            disabled={zoom <= 50}
-          >
-            <ZoomOut />
-          </IconButton>
-        </Tooltip>
-        
-        <Typography variant="caption" sx={{ minWidth: '50px', textAlign: 'center' }}>
-          {zoom}%
-        </Typography>
-        
-        <Tooltip title="Zoom In">
-          <IconButton 
-            size="small" 
-            onClick={() => setZoom(Math.min(200, zoom + 10))}
-            disabled={zoom >= 200}
-          >
-            <ZoomIn />
-          </IconButton>
-        </Tooltip>
-        
-        <Divider orientation="vertical" flexItem />
-        
         <Tooltip title="Download File">
-          <IconButton size="small" onClick={handleDownload}>
-            <Download />
+          <IconButton 
+            size="small" 
+            onClick={handleDownload}
+            sx={{
+              color: '#000000 !important',
+              backgroundColor: '#FFFFFF !important',
+              border: '2px solid #000000 !important',
+              padding: '6px !important',
+              '& .MuiSvgIcon-root': {
+                fontSize: '20px !important',
+                color: '#000000 !important',
+              },
+              '&:hover': {
+                backgroundColor: '#F0F0F0 !important',
+                '& .MuiSvgIcon-root': {
+                  color: '#000000 !important',
+                },
+              },
+              '@media (prefers-color-scheme: dark)': {
+                color: '#FFFFFF !important',
+                backgroundColor: '#2D2D2D !important',
+                borderColor: '#FFFFFF !important',
+                '& .MuiSvgIcon-root': {
+                  color: '#FFFFFF !important',
+                },
+                '&:hover': {
+                  backgroundColor: '#404040 !important',
+                  '& .MuiSvgIcon-root': {
+                    color: '#FFFFFF !important',
+                  },
+                }
+              }
+            }}
+          >
+            <Download sx={{ fontSize: 20, color: 'inherit' }} />
           </IconButton>
         </Tooltip>
         
@@ -524,20 +528,40 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
           flex: 1, 
           overflow: 'auto', 
           backgroundColor: 'white',
-          fontSize: `${zoom}%`,
         }}
         onContextMenu={handleContextMenu}
       >
-        <TableContainer>
+        <TableContainer sx={{ 
+            maxHeight: '50vh', 
+            overflow: 'auto',
+            // Performance optimizations
+            willChange: 'scroll-position',
+            transform: 'translateZ(0)',
+            backfaceVisibility: 'hidden',
+            // Custom scrollbars
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              backgroundColor: 'rgba(0,0,0,0.1)',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(0,0,0,0.3)',
+              borderRadius: '4px',
+            },
+          }}>
           <Table 
             size="small" 
             stickyHeader
             sx={{ 
               borderCollapse: 'separate',
               borderSpacing: 0,
+              tableLayout: 'fixed', // Fixed layout for better performance
               '& .MuiTableCell-root': {
-                padding: 0,
-                border: '1px solid #d0d0d0',
+                padding: '4px 6px', // Reduced padding
+                border: '1px solid #e0e0e0',
+                fontSize: '13px',
               }
             }}
           >
@@ -548,25 +572,21 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
                 <TableCell 
                   sx={{ 
                     width: '50px',
-                    minWidth: '50px',
                     backgroundColor: '#e8f0fe', 
                     fontWeight: 'bold',
                     textAlign: 'center',
-                    fontSize: '12px',
                     color: '#1a73e8',
                   }}
                 />
                 {Array.from({ length: currentSheet.cols }, (_, index) => (
                   <TableCell 
-                    key={`header-${index}`}
+                    key={index} // Simpler key
                     sx={{ 
                       backgroundColor: '#e8f0fe',
                       fontWeight: 'bold',
                       textAlign: 'center',
-                      fontSize: '13px',
                       color: '#1a73e8',
-                      minWidth: '100px',
-                      padding: '8px 4px',
+                      width: '120px', // Fixed width
                       cursor: 'pointer',
                       '&:hover': {
                         backgroundColor: '#d2e3fc',
@@ -580,7 +600,7 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
             </TableHead>
 
             <TableBody>
-              {currentSheet.data.slice(0, 1000).map((row, rowIndex) => (
+              {currentSheet.data.map((row, rowIndex) => (
                 <TableRow key={rowIndex}>
                   {/* Row number */}
                   <TableCell 
@@ -588,9 +608,7 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
                       backgroundColor: '#e8f0fe',
                       fontWeight: 'bold',
                       textAlign: 'center',
-                      fontSize: '13px',
                       color: '#1a73e8',
-                      padding: '4px 8px',
                       cursor: 'pointer',
                       '&:hover': {
                         backgroundColor: '#d2e3fc',
@@ -605,29 +623,22 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
                     
                     return (
                       <TableCell
-                        key={`${rowIndex}-${colIndex}`}
+                        key={colIndex} // Simpler key
                         onClick={() => handleCellClick(rowIndex, colIndex)}
                         sx={{
-                          padding: '6px 8px',
-                          fontSize: '14px',
                           fontFamily: cellData.type === 'number' ? 'monospace' : 'inherit',
                           backgroundColor: isSelected 
                             ? '#e3f2fd' 
-                            : cellData.style?.backgroundColor || 'white',
+                            : cellData.style?.backgroundColor || 'transparent',
                           color: cellData.style?.color || 'inherit',
                           fontWeight: cellData.style?.fontWeight || 'normal',
                           textAlign: cellData.type === 'number' ? 'right' : (cellData.style?.textAlign || 'left'),
                           cursor: 'cell',
-                          minWidth: '100px',
-                          maxWidth: '300px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
-                          '&:hover': {
-                            backgroundColor: isSelected ? '#e3f2fd' : '#f5f5f5',
-                          },
-                          position: 'relative',
+                          borderColor: isSelected ? '#1976d2' : '#e0e0e0',
+                          borderWidth: isSelected ? '2px' : '1px',
                         }}
                         title={`${getColumnLabel(colIndex)}${rowIndex + 1}: ${formatCellValue(cellData)}${cellData.formula ? ` (=${cellData.formula})` : ''}`}
                       >
@@ -658,8 +669,11 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
         <Box sx={{ display: 'flex', gap: 3 }}>
           <span>📊 {currentSheet.name}</span>
           <span>{currentSheet.rows} rows × {currentSheet.cols} columns</span>
-          {currentSheet.rows > 1000 && (
-            <span style={{ color: '#f57c00' }}>Showing first 1000 rows</span>
+          {currentSheet.rows > 50 && (
+            <span style={{ color: '#f57c00' }}>Showing first 50 rows (for performance)</span>
+          )}
+          {currentSheet.cols > 20 && (
+            <span style={{ color: '#f57c00' }}>• First 20 columns</span>
           )}
         </Box>
         
@@ -681,7 +695,6 @@ const ExcelViewer: React.FC<ExcelViewerProps> = ({ uploadId, filename }) => {
               )}
             </Box>
           )}
-          <span>Zoom: {zoom}%</span>
         </Box>
       </Box>
 

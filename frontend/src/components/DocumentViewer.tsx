@@ -7,7 +7,6 @@ import {
   Button,
   Typography,
   Box,
-  CircularProgress,
   Alert,
   IconButton,
   Chip,
@@ -40,6 +39,7 @@ import {
   Slideshow,
 } from '@mui/icons-material';
 import { uploadsAPI } from '../services/api';
+import { LoadingState } from './ui';
 import * as XLSX from 'xlsx';
 
 // Helper component to load and display file content
@@ -73,7 +73,7 @@ const FileContentLoader: React.FC<{ uploadId: number | undefined }> = ({ uploadI
   }, [uploadId]);
   
   if (loading) {
-    return <CircularProgress size={20} />;
+    return <LoadingState variant="inline" message="" showMessage={false} size="small" />;
   }
   
   return <>{content}</>;
@@ -130,6 +130,92 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       fetchFileData();
     }
   }, [open, actualUploadId]);
+
+  // Keyboard navigation support
+  useEffect(() => {
+    if (!open) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't handle keyboard events if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+        case 'PageUp':
+          e.preventDefault();
+          if (currentPage > 1) {
+            handlePrevPage();
+          }
+          break;
+        case 'ArrowRight':
+        case 'PageDown':
+        case ' ': // Space bar
+          e.preventDefault();
+          if (currentPage < totalPages) {
+            handleNextPage();
+          }
+          break;
+        case 'Home':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleFirstPage();
+          }
+          break;
+        case 'End':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleLastPage();
+          }
+          break;
+        case '0':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleZoomFit();
+          }
+          break;
+        case '=':
+        case '+':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleZoomIn();
+          }
+          break;
+        case '-':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleZoomOut();
+          }
+          break;
+        case 'r':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            handleRotate();
+          }
+          break;
+        case 'f':
+          if (e.ctrlKey) {
+            e.preventDefault();
+            // Focus search input
+            const searchInput = document.querySelector('[placeholder=\"Search in document...\"]') as HTMLInputElement;
+            if (searchInput) {
+              searchInput.focus();
+              searchInput.select();
+            }
+          }
+          break;
+        case 'Escape':
+          if (embedded) {
+            onClose();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, currentPage, totalPages, embedded, onClose]);
 
   const fetchFileData = async () => {
     if (loading || fileData) return; // Prevent duplicate fetches
@@ -312,13 +398,25 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Toolbar variant="dense" sx={{ minHeight: 48, bgcolor: '#f5f5f5', borderBottom: 1, borderColor: 'divider' }}>
           <ButtonGroup size="small" variant="outlined">
-            <Tooltip title="First Page">
-              <IconButton onClick={handleFirstPage} disabled={currentPage <= 1}>
+            <Tooltip title="First Page (Ctrl+Home)">
+              <IconButton 
+                onClick={handleFirstPage} 
+                disabled={currentPage <= 1}
+                aria-label="Go to first page"
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <FirstPage />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Previous Page">
-              <IconButton onClick={handlePrevPage} disabled={currentPage <= 1}>
+            <Tooltip title="Previous Page (Page Up)">
+              <IconButton 
+                onClick={handlePrevPage} 
+                disabled={currentPage <= 1}
+                aria-label="Go to previous page"
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <NavigateBefore />
               </IconButton>
             </Tooltip>
@@ -331,19 +429,44 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   setCurrentPage(page);
                 }
               }}
-              sx={{ width: 60, mx: 1 }}
-              inputProps={{ style: { textAlign: 'center' } }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              sx={{ width: 80, mx: 1 }}
+              inputProps={{ 
+                style: { textAlign: 'center' },
+                'aria-label': `Page number, ${currentPage} of ${totalPages}`,
+                min: 1,
+                max: totalPages,
+                step: 1
+              }}
+              label="Page"
+              variant="outlined"
             />
             <Typography variant="body2" sx={{ px: 1, alignSelf: 'center' }}>
               of {totalPages}
             </Typography>
-            <Tooltip title="Next Page">
-              <IconButton onClick={handleNextPage} disabled={currentPage >= totalPages}>
+            <Tooltip title="Next Page (Page Down)">
+              <IconButton 
+                onClick={handleNextPage} 
+                disabled={currentPage >= totalPages}
+                aria-label="Go to next page"
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <NavigateNext />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Last Page">
-              <IconButton onClick={handleLastPage} disabled={currentPage >= totalPages}>
+            <Tooltip title="Last Page (Ctrl+End)">
+              <IconButton 
+                onClick={handleLastPage} 
+                disabled={currentPage >= totalPages}
+                aria-label="Go to last page"
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <LastPage />
               </IconButton>
             </Tooltip>
@@ -352,26 +475,48 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
           
           <ButtonGroup size="small" variant="outlined">
-            <Tooltip title="Zoom Out">
-              <IconButton onClick={handleZoomOut} disabled={zoom <= 25}>
+            <Tooltip title="Zoom Out (Ctrl+-)">
+              <IconButton 
+                onClick={handleZoomOut} 
+                disabled={zoom <= 25}
+                aria-label={`Zoom out, current zoom ${zoom}%`}
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <ZoomOut />
               </IconButton>
             </Tooltip>
             <Typography variant="body2" sx={{ px: 2, alignSelf: 'center', minWidth: 50, textAlign: 'center' }}>
               {zoom}%
             </Typography>
-            <Tooltip title="Zoom In">
-              <IconButton onClick={handleZoomIn} disabled={zoom >= 500}>
+            <Tooltip title="Zoom In (Ctrl++)">
+              <IconButton 
+                onClick={handleZoomIn} 
+                disabled={zoom >= 500}
+                aria-label={`Zoom in, current zoom ${zoom}%`}
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <ZoomIn />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Fit to Screen">
-              <IconButton onClick={handleZoomFit}>
+            <Tooltip title="Fit to Screen (Ctrl+0)">
+              <IconButton 
+                onClick={handleZoomFit}
+                aria-label="Fit document to screen"
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <FitScreen />
               </IconButton>
             </Tooltip>
-            <Tooltip title="Rotate">
-              <IconButton onClick={handleRotate}>
+            <Tooltip title="Rotate 90° (Ctrl+R)">
+              <IconButton 
+                onClick={handleRotate}
+                aria-label={`Rotate document, current rotation ${rotation} degrees`}
+                size="large"
+                sx={{ minWidth: 44, minHeight: 44 }}
+              >
                 <RotateRight />
               </IconButton>
             </Tooltip>
@@ -382,29 +527,55 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
             <TextField
               size="small"
-              placeholder="Search in document..."
+              placeholder="Search in document... (Ctrl+F)"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              sx={{ mr: 1, flexGrow: 1, maxWidth: 300 }}
-              InputProps={{
-                startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
               }}
+              sx={{ mr: 1, flexGrow: 1, maxWidth: 300 }}
+              slotProps={{
+                input: {
+                  startAdornment: <Search sx={{ mr: 1, color: 'text.secondary' }} />,
+                  'aria-label': 'Search in document',
+                },
+              }}
+              label="Search"
+              variant="outlined"
             />
             <ButtonGroup size="small">
-              <Tooltip title="Find Previous">
-                <IconButton onClick={handleSearchPrev} disabled={searchResults.length === 0}>
+              <Tooltip title="Find Previous (Shift+F3)">
+                <IconButton 
+                  onClick={handleSearchPrev} 
+                  disabled={searchResults.length === 0}
+                  aria-label={`Find previous occurrence, ${currentSearchIndex} of ${searchResults.length} results`}
+                  size="large"
+                  sx={{ minWidth: 44, minHeight: 44 }}
+                >
                   <NavigateBefore />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Find Next">
-                <IconButton onClick={handleSearchNext} disabled={searchResults.length === 0}>
+              <Tooltip title="Find Next (F3)">
+                <IconButton 
+                  onClick={handleSearchNext} 
+                  disabled={searchResults.length === 0}
+                  aria-label={`Find next occurrence, ${currentSearchIndex + 1} of ${searchResults.length} results`}
+                  size="large"
+                  sx={{ minWidth: 44, minHeight: 44 }}
+                >
                   <NavigateNext />
                 </IconButton>
               </Tooltip>
             </ButtonGroup>
             {searchResults.length > 0 && (
-              <Typography variant="caption" sx={{ ml: 1 }}>
+              <Typography 
+                variant="caption" 
+                sx={{ ml: 1 }}
+                aria-live="polite"
+                aria-label={`Search results: ${currentSearchIndex + 1} of ${searchResults.length} matches found`}
+              >
                 {currentSearchIndex + 1} of {searchResults.length}
               </Typography>
             )}
@@ -446,7 +617,10 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             width="100%"
             height="100%"
             style={{ border: 'none' }}
-            title={filename || fileData?.filename}
+            title={`Document viewer: ${filename || fileData?.filename || 'Unknown document'}`}
+            aria-label={`PDF document: ${filename || fileData?.filename || 'Unknown document'}`}
+            role="document"
+            tabIndex={0}
             onLoad={() => {
               // Try to get total pages from PDF viewer if possible
               try {
@@ -600,19 +774,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const renderFileContent = () => {
     if (loading) {
       return (
-        <Box display="flex" justifyContent="center" alignItems="center" height="500px">
-          <CircularProgress size={40} />
-          <Typography variant="body1" sx={{ ml: 2 }}>
-            Loading document...
-          </Typography>
-        </Box>
+        <LoadingState
+          variant="spinner"
+          message="Loading document..."
+          size="medium"
+          minHeight="500px"
+        />
       );
     }
 
     if (error) {
       return (
-        <Box sx={{ textAlign: 'center', py: 4 }}>
-          <Alert severity="error" sx={{ mb: 2 }}>
+        <Box sx={{ textAlign: 'center', py: 4 }} role="alert" aria-live="assertive">
+          <Alert 
+            severity="error" 
+            sx={{ mb: 2 }}
+            aria-label={`Error loading document: ${error}`}
+          >
             {error}
           </Alert>
           <Typography variant="body2" sx={{ mt: 2 }}>
@@ -1579,17 +1757,12 @@ const GoogleSheetsSpreadsheetViewer: React.FC<{ fileId: number | undefined; file
 
   if (state.loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100%" bgcolor="#fafafa" sx={{ minHeight: '400px' }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <CircularProgress size={60} sx={{ mb: 2 }} />
-          <Typography variant="h6" sx={{ mb: 1 }}>
-            Loading Excel file...
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            File ID: {fileId}
-          </Typography>
-        </Box>
-      </Box>
+      <LoadingState
+        variant="spinner"
+        message={`Loading Excel file... (ID: ${fileId})`}
+        size="large"
+        minHeight="400px"
+      />
     );
   }
 
@@ -1664,11 +1837,51 @@ const GoogleSheetsSpreadsheetViewer: React.FC<{ fileId: number | undefined; file
               variant="outlined"
               onClick={() => setZoomLevel(Math.max(50, zoomLevel - 25))}
               disabled={zoomLevel <= 50}
-              sx={{ minWidth: '32px', height: '28px', fontSize: '12px' }}
+              sx={{ 
+                minWidth: '32px', 
+                height: '28px', 
+                fontSize: '12px',
+                color: '#333333 !important',
+                backgroundColor: '#F8F8F8 !important',
+                borderColor: '#E8E8E8 !important',
+                fontWeight: '400 !important',
+                '&:hover': {
+                  backgroundColor: '#F0F0F0 !important',
+                  borderColor: '#DDDDDD !important',
+                },
+                '&.Mui-disabled': {
+                  color: '#BBBBBB !important',
+                  backgroundColor: '#FAFAFA !important',
+                  borderColor: '#F0F0F0 !important',
+                },
+                '@media (prefers-color-scheme: dark)': {
+                  color: '#333333 !important',
+                  backgroundColor: '#E8E8E8 !important',
+                  borderColor: '#D0D0D0 !important',
+                  '&:hover': {
+                    backgroundColor: '#DDDDDD !important',
+                    borderColor: '#CCCCCC !important',
+                  },
+                  '&.Mui-disabled': {
+                    color: '#BBBBBB !important',
+                    backgroundColor: '#F0F0F0 !important',
+                    borderColor: '#E0E0E0 !important',
+                  }
+                }
+              }}
             >
               −
             </Button>
-            <Typography variant="body2" sx={{ minWidth: '60px', textAlign: 'center', fontSize: '12px' }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                minWidth: '60px', 
+                textAlign: 'center', 
+                fontSize: '12px',
+                color: '#333333 !important',
+                fontWeight: '400 !important',
+              }}
+            >
               {zoomLevel}%
             </Typography>
             <Button 
@@ -1676,7 +1889,38 @@ const GoogleSheetsSpreadsheetViewer: React.FC<{ fileId: number | undefined; file
               variant="outlined"
               onClick={() => setZoomLevel(Math.min(200, zoomLevel + 25))}
               disabled={zoomLevel >= 200}
-              sx={{ minWidth: '32px', height: '28px', fontSize: '12px' }}
+              sx={{ 
+                minWidth: '32px', 
+                height: '28px', 
+                fontSize: '12px',
+                color: '#333333 !important',
+                backgroundColor: '#F8F8F8 !important',
+                borderColor: '#E8E8E8 !important',
+                fontWeight: '400 !important',
+                '&:hover': {
+                  backgroundColor: '#F0F0F0 !important',
+                  borderColor: '#DDDDDD !important',
+                },
+                '&.Mui-disabled': {
+                  color: '#BBBBBB !important',
+                  backgroundColor: '#FAFAFA !important',
+                  borderColor: '#F0F0F0 !important',
+                },
+                '@media (prefers-color-scheme: dark)': {
+                  color: '#333333 !important',
+                  backgroundColor: '#E8E8E8 !important',
+                  borderColor: '#D0D0D0 !important',
+                  '&:hover': {
+                    backgroundColor: '#DDDDDD !important',
+                    borderColor: '#CCCCCC !important',
+                  },
+                  '&.Mui-disabled': {
+                    color: '#BBBBBB !important',
+                    backgroundColor: '#F0F0F0 !important',
+                    borderColor: '#E0E0E0 !important',
+                  }
+                }
+              }}
             >
               +
             </Button>

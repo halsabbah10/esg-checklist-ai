@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { TextField, Button, Typography, Box, Alert, CircularProgress, IconButton, Tooltip } from '@mui/material';
+import { Typography, Box, Alert, IconButton, Tooltip } from '@mui/material';
+import { LoadingState, PageTransition, TextField, Button } from '../components/ui';
 import { LightMode, DarkMode } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -17,6 +18,7 @@ export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const {
     register,
@@ -48,8 +50,11 @@ export const Login: React.FC = () => {
       await login(data.email, data.password);
       console.log('Login successful - waiting for auth state to settle');
 
-      // Wait for auth state to settle before navigation
-      await new Promise(resolve => setTimeout(resolve, 200));
+      // Start transition
+      setIsTransitioning(true);
+
+      // Wait for auth state to settle and transition to start
+      await new Promise(resolve => setTimeout(resolve, 600));
 
       console.log('Auth state settled - redirecting to dashboard');
       const from =
@@ -59,12 +64,13 @@ export const Login: React.FC = () => {
       console.error('Login failed:', error);
       // Error is handled by AuthContext and will be displayed
       // Don't rethrow to prevent potential form reset or page reload
+      setIsTransitioning(false);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDemoLogin = () => {
+  const handleDemoLogin = async () => {
     try {
       setIsSubmitting(true);
       // Mock successful login for demo purposes
@@ -72,58 +78,84 @@ export const Login: React.FC = () => {
       localStorage.setItem('authToken', 'demo-token');
       localStorage.setItem('userRole', 'admin');
 
+      // Start transition
+      setIsTransitioning(true);
+      
+      // Wait for transition to start
+      await new Promise(resolve => setTimeout(resolve, 600));
+
       // Navigate to dashboard
       navigate('/dashboard', { replace: true });
     } catch (error) {
       console.error('Demo login failed:', error);
+      setIsTransitioning(false);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading || isTransitioning) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <PageTransition in={!isTransitioning} variant="fade" duration={500}>
+        <LoadingState
+          variant="full-page"
+          message={isTransitioning ? "Redirecting to dashboard..." : "Loading application..."}
+          size="large"
+          critical={true}
+        />
+      </PageTransition>
     );
   }
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        minHeight: '100vh',
-        width: '100vw',
-        margin: 0,
-        padding: 0,
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-      }}
-    >
-      {/* Dark Mode Toggle - Top Right */}
+    <PageTransition in={!isTransitioning} variant="fade" duration={300}>
+      <Box
+        sx={{
+          display: 'flex',
+          minHeight: '100vh',
+          width: '100vw',
+          margin: 0,
+          padding: 0,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          // Landscape mobile optimization using media query
+          '@media (max-height: 600px) and (orientation: landscape)': {
+            flexDirection: 'row',
+          },
+        }}
+      >
+      {/* Dark Mode Toggle - Responsive positioning */}
       <Box
         sx={{
           position: 'absolute',
-          top: 16,
-          right: 16,
+          top: { xs: 12, sm: 16 },
+          right: { xs: 12, sm: 16 },
           zIndex: 1000,
         }}
       >
         <Tooltip title={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`} arrow>
           <IconButton
             onClick={toggleTheme}
+            aria-label={`Switch to ${isDarkMode ? 'light' : 'dark'} mode`}
             sx={{
               color: 'text.primary',
               backgroundColor: 'background.paper',
               boxShadow: 2,
               position: 'relative',
+              minWidth: { xs: 48, sm: 44 },
+              minHeight: { xs: 48, sm: 44 },
+              padding: { xs: '12px', sm: '8px' },
               '&:hover': {
                 backgroundColor: 'background.paper',
                 transform: 'scale(1.1)',
+              },
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: 2,
               },
               transition: 'all 0.2s ease-in-out',
             }}
@@ -158,7 +190,7 @@ export const Login: React.FC = () => {
           </IconButton>
         </Tooltip>
       </Box>
-      {/* Login Section - Left Half */}
+      {/* Login Section - Responsive Layout */}
       <Box
         sx={{
           width: { xs: '100%', md: '50%' },
@@ -166,36 +198,41 @@ export const Login: React.FC = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          padding: 4,
+          padding: { xs: 2, sm: 3, md: 4 },
           backgroundColor: 'background.default',
+          minHeight: { xs: '100vh', md: 'auto' },
+          overflowY: { xs: 'auto', md: 'hidden' },
         }}
       >
-        {/* Logo */}
+        {/* Logo - Responsive sizing */}
         <Box
           component="img"
           src="https://www.eand.com/content/dam/eand/assets/img/etand-icons/logo-new.svg"
           alt="e& Logo"
           sx={{
-            height: 60,
-            marginBottom: 4,
+            height: { xs: 48, sm: 56, md: 60 },
+            marginBottom: { xs: 3, sm: 4 },
             filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))',
+            maxWidth: '200px',
+            objectFit: 'contain',
           }}
         />
 
-        {/* Login Card */}
+        {/* Login Card - Mobile optimized */}
         <Box
           sx={{
             width: '100%',
-            maxWidth: 420,
-            padding: 4,
-            borderRadius: 3,
-            boxShadow: 3,
+            maxWidth: { xs: '100%', sm: 400, md: 420 },
+            padding: { xs: 3, sm: 4 },
+            borderRadius: { xs: 2, sm: 3 },
+            boxShadow: { xs: 1, sm: 3 },
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'divider',
+            margin: { xs: 0, sm: 'auto' },
           }}
         >
-          {/* Title */}
+          {/* Title - Responsive typography */}
           <Typography
             variant="h4"
             component="h1"
@@ -204,6 +241,8 @@ export const Login: React.FC = () => {
               color: 'text.primary',
               textAlign: 'center',
               marginBottom: 1,
+              fontSize: { xs: '1.75rem', sm: '2.125rem' },
+              lineHeight: 1.2,
             }}
           >
             ESG Checklist AI
@@ -214,19 +253,22 @@ export const Login: React.FC = () => {
             sx={{
               color: 'text.secondary',
               textAlign: 'center',
-              marginBottom: 4,
+              marginBottom: { xs: 3, sm: 4 },
+              fontSize: { xs: '0.95rem', sm: '1rem' },
             }}
           >
             Sign in to your account
           </Typography>
 
-          {/* Demo Credentials */}
+          {/* Demo Credentials - Mobile optimized */}
           <Alert
             severity="info"
             sx={{
-              marginBottom: 3,
+              marginBottom: { xs: 2, sm: 3 },
               '& .MuiAlert-message': {
-                fontSize: '0.875rem',
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                lineHeight: 1.4,
+                color: theme => theme.palette.mode === 'dark' ? '#E5E7EB' : 'inherit',
               },
             }}
           >
@@ -259,13 +301,16 @@ export const Login: React.FC = () => {
                 },
               })}
               fullWidth
+              size="lg"
               label="Email Address"
               type="email"
               autoComplete="email"
               autoFocus
               error={!!errors.email}
               helperText={errors.email?.message}
-              sx={{ marginBottom: 2 }}
+              sx={{
+                marginBottom: { xs: 1.5, sm: 2 },
+              }}
             />
 
             <TextField
@@ -277,47 +322,35 @@ export const Login: React.FC = () => {
                 },
               })}
               fullWidth
+              size="lg"
               label="Password"
               type="password"
               autoComplete="current-password"
               error={!!errors.password}
               helperText={errors.password?.message}
-              sx={{ marginBottom: 3 }}
+              sx={{
+                marginBottom: { xs: 2.5, sm: 3 },
+              }}
             />
 
             <Button
               type="submit"
               fullWidth
+              size="lg"
               variant="contained"
-              disabled={isSubmitting}
-              sx={{
-                height: 48,
-                fontSize: '1rem',
-                fontWeight: 500,
-                textTransform: 'none',
-              }}
+              loading={isSubmitting}
             >
-              {isSubmitting ? <CircularProgress size={24} /> : 'Sign In'}
+              Sign In
             </Button>
 
             <Button
               fullWidth
+              size="lg"
               variant="outlined"
               onClick={handleDemoLogin}
-              disabled={isSubmitting}
+              loading={isSubmitting}
               sx={{
-                height: 48,
-                fontSize: '1rem',
-                fontWeight: 500,
-                textTransform: 'none',
-                marginTop: 2,
-                borderColor: 'primary.main',
-                color: 'primary.main',
-                '&:hover': {
-                  borderColor: 'primary.dark',
-                  backgroundColor: 'primary.light',
-                  opacity: 0.1,
-                },
+                marginTop: { xs: 1.5, sm: 2 },
               }}
             >
               Continue with Demo Mode
@@ -325,14 +358,15 @@ export const Login: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Copyright */}
+        {/* Copyright - Mobile spacing */}
         <Typography
           variant="body2"
           sx={{
             color: 'text.secondary',
             textAlign: 'center',
-            marginTop: 3,
-            fontSize: '0.875rem',
+            marginTop: { xs: 2, sm: 3 },
+            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+            px: { xs: 2, sm: 0 },
           }}
         >
           © 2025 e&. All Rights Reserved.
@@ -391,5 +425,6 @@ export const Login: React.FC = () => {
         </Box>
       </Box>
     </Box>
+    </PageTransition>
   );
 };

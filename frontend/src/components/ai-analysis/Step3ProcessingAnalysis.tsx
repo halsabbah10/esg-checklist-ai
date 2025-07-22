@@ -154,10 +154,11 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
                 <Typography variant="h6">Processing Progress</Typography>
               </Box>
               <Chip 
-                icon={<Clock size={16} />}
+                icon={<Clock size={16} style={{ color: 'currentColor' }} />}
                 label={formatTime(processingTime)}
                 variant="outlined"
                 size="small"
+                sx={{ color: 'text.secondary' }}
               />
             </Box>
           }
@@ -206,7 +207,12 @@ export default function Step3ProcessingAnalysis({ state, onComplete, onError }: 
                           borderRadius: '50%',
                           bgcolor: isCompleted ? 'success.main' : isCurrent ? 'primary.main' : 'grey.300',
                           color: 'white',
-                          mr: 2
+                          mr: 2,
+                          width: 40,
+                          height: 40,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                       >
                         {isCompleted ? (

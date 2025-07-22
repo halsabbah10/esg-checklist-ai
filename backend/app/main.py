@@ -23,7 +23,8 @@ from app.routers.export import router as export_router
 from app.routers.files import router as files_router
 from app.routers.realtime_analytics import router as realtime_analytics_router
 from app.routers.uploads import router as uploads_router
-# from app.routers.search import router as search_router
+from app.routers.upload_management import router as upload_management_router
+from app.routers.search import router as search_router
 from app.utils.audit import router as audit_router
 
 from .config import (
@@ -277,7 +278,8 @@ app.include_router(realtime_analytics_router, prefix=api_prefix)
 app.include_router(audit_router, prefix=api_prefix)
 app.include_router(export_router, prefix=api_prefix)
 app.include_router(uploads_router, prefix=api_prefix)
-# app.include_router(search_router, prefix=api_prefix)
+app.include_router(upload_management_router, prefix=api_prefix)
+app.include_router(search_router, prefix=api_prefix)
 app.include_router(files_router, prefix=api_prefix)
 app.include_router(departments_router, prefix=api_prefix)
 app.include_router(brd_reports_router, prefix=api_prefix)

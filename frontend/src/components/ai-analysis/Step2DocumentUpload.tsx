@@ -130,35 +130,35 @@ export default function Step2DocumentUpload({ state, onComplete, onError, onBack
   return (
     <Box>
       {/* Selected Configuration Summary */}
-      <Card sx={{ mb: 3, bgcolor: 'primary.50', borderColor: 'primary.200' }}>
+      <Card sx={{ mb: 3, bgcolor: 'grey.50' }}>
         <CardHeader>
-          <Typography variant="h6" color="primary.main">
+          <Typography variant="h6" color="text.primary">
             Analysis Configuration
           </Typography>
         </CardHeader>
         <CardContent>
           <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: 'repeat(3, 1fr)' }} gap={2}>
             <Box>
-              <Typography variant="body2" fontWeight="medium" color="primary.main">
+              <Typography variant="body2" fontWeight="medium" color="text.primary">
                 AI Model
               </Typography>
-              <Typography variant="body2" color="primary.600">
+              <Typography variant="body2" color="text.secondary">
                 {state.selectedModel}
               </Typography>
             </Box>
             <Box>
-              <Typography variant="body2" fontWeight="medium" color="primary.main">
+              <Typography variant="body2" fontWeight="medium" color="text.primary">
                 Department
               </Typography>
-              <Typography variant="body2" color="primary.600">
+              <Typography variant="body2" color="text.secondary">
                 {state.selectedDepartment}
               </Typography>
             </Box>
             <Box>
-              <Typography variant="body2" fontWeight="medium" color="primary.main">
+              <Typography variant="body2" fontWeight="medium" color="text.primary">
                 Analysis Type
               </Typography>
-              <Typography variant="body2" color="primary.600">
+              <Typography variant="body2" color="text.secondary">
                 ESG Checklist Document
               </Typography>
             </Box>

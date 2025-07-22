@@ -8,8 +8,6 @@ import {
   Tabs,
   Switch,
   FormControlLabel,
-  TextField,
-  Button,
   Divider,
   Alert,
   Card,
@@ -24,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authAPI } from '../services/api';
+import { PageTransition, TextField, Button } from '../components/ui';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -208,6 +207,7 @@ export const Settings: React.FC = () => {
   };
 
   return (
+    <PageTransition in={true} variant="fade" duration={500}>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Box sx={{ mb: 4, textAlign: 'center' }}>
           <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
@@ -259,6 +259,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Full Name"
                   value={profile.name}
                   onChange={e => setProfile({ ...profile, name: e.target.value })}
@@ -268,6 +269,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Email"
                   value={profile.email}
                   disabled
@@ -278,6 +280,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Department"
                   value={profile.department}
                   onChange={e => setProfile({ ...profile, department: e.target.value })}
@@ -287,6 +290,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Phone Number"
                   value={profile.phone}
                   onChange={e => setProfile({ ...profile, phone: e.target.value })}
@@ -310,6 +314,7 @@ export const Settings: React.FC = () => {
               </Box>
               <Box sx={{ width: '100%', pt: 2 }}>
                 <Button
+                  size="md"
                   variant="contained"
                   startIcon={<Save />}
                   onClick={handleSaveProfile}
@@ -345,6 +350,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Session Timeout (minutes)"
                   type="number"
                   value={security.sessionTimeout}
@@ -357,6 +363,7 @@ export const Settings: React.FC = () => {
               <Box sx={{ flex: '1 1 300px' }}>
                 <TextField
                   fullWidth
+                  size="md"
                   label="Password Expiry (days)"
                   type="number"
                   value={security.passwordExpiry}
@@ -368,7 +375,7 @@ export const Settings: React.FC = () => {
               </Box>
               <Box sx={{ width: '100%' }}>
                 <Divider sx={{ my: 2 }} />
-                <Button variant="outlined" color="primary">
+                <Button size="md" variant="outlined" color="primary">
                   Change Password
                 </Button>
               </Box>
@@ -568,6 +575,7 @@ export const Settings: React.FC = () => {
           <Box sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Button
+                size="md"
                 variant="outlined"
                 startIcon={<Restore />}
                 onClick={handleResetSettings}
@@ -576,6 +584,7 @@ export const Settings: React.FC = () => {
                 Reset to Defaults
               </Button>
               <Button
+                size="md"
                 variant="contained"
                 startIcon={<Save />}
                 onClick={handleSaveSettings}
@@ -590,6 +599,7 @@ export const Settings: React.FC = () => {
           </Box>
         </Paper>
       </Container>
+    </PageTransition>
   );
 };
 

@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import { Assignment, Description, Analytics, People } from '@mui/icons-material';
 import { GlobalSearch } from '../components/GlobalSearch';
+import { PageTransition } from '../components/ui';
 
 export const Search: React.FC = () => {
   const [searchType, setSearchType] = useState<string>('all');
@@ -88,7 +89,8 @@ export const Search: React.FC = () => {
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4, textAlign: 'center' }}>
         <Typography variant="h3" component="h1" gutterBottom fontWeight="bold">
@@ -244,7 +246,8 @@ export const Search: React.FC = () => {
           </Box>
         </Paper>
       </Box>
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };
 

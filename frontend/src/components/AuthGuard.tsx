@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { clearAllAuthData, validateAuthState } from '../utils/authUtils';
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { LoadingState } from './ui';
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -34,22 +34,12 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   if (isValidating || isLoading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="100vh"
-        flexDirection="column"
-        gap={2}
-        sx={{
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        }}
-      >
-        <CircularProgress size={48} thickness={4} />
-        <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
-          Securing your session...
-        </Typography>
-      </Box>
+      <LoadingState
+        variant="full-page"
+        message="Securing your session..."
+        size="large"
+        critical={true}
+      />
     );
   }
 

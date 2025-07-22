@@ -1,7 +1,8 @@
-import React, { useState, lazy } from 'react';
+import React, { useState, lazy, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Box, Toolbar, useMediaQuery, useTheme as useMuiTheme, CircularProgress, Typography } from '@mui/material';
+import { useScrollLock } from './hooks/useScrollLock';
 
 // Contexts
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -115,8 +116,45 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // Default to collapsed
   const [sidebarHovered, setSidebarHovered] = useState(false);
+  const [hasOpenModal, setHasOpenModal] = useState(false); // Track if any modal is open
   const muiTheme = useMuiTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
+  // Global scroll lock for modals/dialogs - only when explicitly requested
+  useScrollLock(hasOpenModal);
+
+  // Debug modal state
+  useEffect(() => {
+    console.log('Modal state changed:', hasOpenModal);
+  }, [hasOpenModal]);
+
+  // Global modal state management
+  useEffect(() => {
+    const handleModalStateChange = (event: CustomEvent<{ isOpen: boolean }>) => {
+      setHasOpenModal(event.detail.isOpen);
+    };
+
+    // Listen for global modal state changes
+    window.addEventListener('modalStateChange', handleModalStateChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('modalStateChange', handleModalStateChange as EventListener);
+    };
+  }, []);
+
+  // Prevent scroll when sidebar is open on mobile
+  useEffect(() => {
+    if (isMobile && sidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobile, sidebarOpen]);
 
   // Determine if sidebar should show expanded (either manually expanded or hovered)
   const isExpanded = !isMobile && (!sidebarCollapsed || sidebarHovered);
@@ -146,6 +184,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       />
       <Box
         component="main"
+        id="main-content"
+        tabIndex={-1}
         sx={{
           flexGrow: 1,
           bgcolor: 'background.default',
@@ -157,6 +197,19 @@ function AppLayout({ children }: { children: React.ReactNode }) {
             isMobile ? 0 : isExpanded ? 240 : 64
           }px)`,
           transition: 'width 0.25s ease', // Slightly faster transition
+          // Prevent scroll when modal is open
+          overflow: hasOpenModal ? 'hidden' : 'auto',
+          // Handle touch events properly
+          '&:focus-within': {
+            outline: 'none',
+          },
+        }}
+        onScroll={(e) => {
+          // Prevent scroll bubbling when modals are open
+          if (hasOpenModal) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
         }}
       >
         <Toolbar />
@@ -200,52 +253,20 @@ function Home() {
 }
 
 function AppContent() {
-  // Prevent unwanted scroll-based navigation
-  React.useEffect(() => {
-    const preventScrollNavigation = (e: WheelEvent) => {
-      // Allow scrolling within tables and scrollable containers
-      const target = e.target as Element;
-      if (target.closest('table') || target.closest('[data-scrollable]') || target.closest('.MuiTableContainer-root') || target.closest('.MuiDataGrid-root')) {
-        return;
-      }
-      
-      // Only prevent very fast horizontal scrolling that might trigger navigation
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 50) {
-        e.preventDefault();
-      }
-    };
+  // Scroll navigation prevention removed to restore normal scrolling
 
-    const preventSwipeNavigation = (e: TouchEvent) => {
-      // Prevent swipe gestures on main content areas
-      if (e.touches.length > 1) {
-        e.preventDefault();
-      }
-    };
-
-    // Add event listeners
-    document.addEventListener('wheel', preventScrollNavigation, { passive: false });
-    document.addEventListener('touchstart', preventSwipeNavigation, { passive: false });
-
-    return () => {
-      document.removeEventListener('wheel', preventScrollNavigation);
-      document.removeEventListener('touchstart', preventSwipeNavigation);
-    };
-  }, []);
-
-  // Reset problematic global styles
+  // Minimal global styles reset
   const globalStylesReset = `
     body {
-      margin: 0 !important;
-      padding: 0 !important;
-      min-height: 100vh !important;
-      background-color: #f5f5f5 !important;
-      overscroll-behavior: none;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
     }
     #root {
-      margin: 0 !important;
-      padding: 0 !important;
-      min-height: 100vh !important;
-      width: 100% !important;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      width: 100%;
     }
     * {
       box-sizing: border-box;

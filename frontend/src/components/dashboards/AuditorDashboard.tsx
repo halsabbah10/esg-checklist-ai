@@ -7,7 +7,6 @@ import {
   CardContent,
   Typography,
   Box,
-  CircularProgress,
   Alert,
   Button,
   Chip,
@@ -38,6 +37,7 @@ import {
   Refresh,
 } from '@mui/icons-material';
 import { analyticsAPI, aiAPI, uploadsAPI } from '../../services/api';
+import { LoadingState, PageTransition } from '../ui';
 
 interface AIResult {
   id: number;
@@ -208,12 +208,12 @@ export const AuditorDashboard: React.FC = () => {
   if (isInitialLoading) {
     return (
       <Container maxWidth="lg" sx={{ py: 4 }}>
-        <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
-          <Box sx={{ textAlign: 'center' }}>
-            <CircularProgress size={60} />
-            <Typography variant="h6" sx={{ mt: 2 }}>Loading Dashboard...</Typography>
-          </Box>
-        </Box>
+        <LoadingState
+          variant="spinner"
+          message="Loading Dashboard..."
+          size="large"
+          minHeight="50vh"
+        />
       </Container>
     );
   }
@@ -354,28 +354,29 @@ export const AuditorDashboard: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
-            Auditor Dashboard
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            ESG compliance monitoring and audit analytics
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Last updated: {lastRefresh.toLocaleTimeString()}
-          </Typography>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
+              Auditor Dashboard
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              ESG compliance monitoring and audit analytics
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </Typography>
+          </Box>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            disabled={metricsLoading || aiLoading || uploadsLoading}
+          >
+            Refresh Data
+          </Button>
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={handleRefresh}
-          disabled={metricsLoading || aiLoading || uploadsLoading}
-        >
-          Refresh Data
-        </Button>
-      </Box>
 
       {/* Key Metrics - Completeness */}
       <Typography variant="h5" component="h2" fontWeight={600} gutterBottom sx={{ mb: 2 }}>
@@ -625,9 +626,13 @@ export const AuditorDashboard: React.FC = () => {
               Compliance Activity Overview
             </Typography>
             {uploadsLoading ? (
-              <Box display="flex" justifyContent="center" p={2}>
-                <CircularProgress size={30} />
-              </Box>
+              <LoadingState
+                variant="spinner"
+                message=""
+                showMessage={false}
+                size="small"
+                minHeight="60px"
+              />
             ) : uploadsError ? (
               <Alert severity="error">
                 Error loading file uploads: {uploadsError?.message || 'Unknown error'}
@@ -847,6 +852,7 @@ export const AuditorDashboard: React.FC = () => {
           </Button>
         </Box>
       </Paper>
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };

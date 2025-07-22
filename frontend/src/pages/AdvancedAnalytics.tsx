@@ -55,6 +55,7 @@ import {
   Download,
 } from '@mui/icons-material';
 import { analyticsAPI, exportAPI } from '../services/api';
+import { PageTransition } from '../components/ui';
 
 interface User {
   id: number;
@@ -399,7 +400,8 @@ export const AdvancedAnalytics: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <PageTransition in={true} variant="fade" duration={500}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
           <Typography variant="h4" component="h1" fontWeight={600} gutterBottom>
@@ -454,6 +456,7 @@ export const AdvancedAnalytics: React.FC = () => {
           )}
         </Box>
       </Paper>
-    </Container>
+      </Container>
+    </PageTransition>
   );
 };
